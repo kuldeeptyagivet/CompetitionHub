@@ -341,6 +341,9 @@
         return;
       }
 
+      console.log('[3a] books array:', registry.books);
+      console.log('[3b] type:', typeof registry.books, Array.isArray(registry.books));
+
       bookData = [];
       for (const book of (Array.isArray(registry) ? registry : [])) {
         console.log('[loop-start] book.code:', book.code);
