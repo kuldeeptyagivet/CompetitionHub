@@ -143,9 +143,13 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   chapter data into bookData, renders book title, subject/
   class/board subheading, and chapter list with counts
 - Filter UI complete: multi-select Books, Chapters, Type,
-  Difficulty, Bloom Level, Source Type; live count bar with
-  ~ approximation prefix; filterState object with Sets;
-  filterUpdateCount(), filterInitState(), filterRenderChapters()
+  Difficulty, Bloom Level, Source Type
+- Question JSON loaded on demand per selected chapter via
+  filterLoadSelectedChapters(); stored in loadedQuestions{}
+- Exact filter counts computed from loadedQuestions across
+  all four fields (type, difficulty, bloom_level, source_type)
+- Faceted counts shown next to every checkbox via
+  filterUpdateFacets(); updates in place without DOM rebuild
 
 **Not yet built:**
 - Test parameters (question count, marks, negative marking,
@@ -158,44 +162,53 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
 
 ---
 
-## Conventions
-- Single CONFIG object controls all environment switching
-- All data access through getData(path) — never direct FSA or
-  fetch calls outside this function
-- Function naming: filterXxx() for filter tab, selectXxx() for
-  selector tab, paperXxx() for assembler tab
-- No external JS framework — all DOM manipulation is vanilla JS
-- Inline styles used sparingly; static styles in style block
+## Decisions Log
+
+2026-04-26 — Single CONFIG object controls local vs remote
+  mode; all data access through getData(path) so switching
+  modes requires no other code changes.
+2026-04-26 — Chapter keys use bookCode::filename format to
+  remain unambiguous when multiple books are loaded.
+2026-04-26 — Question JSON loaded on demand per selected
+  chapter (not at folder-load time) to keep remote mode
+  efficient; in-memory filtering for type/difficulty/bloom/
+  source requires no re-fetch when those filters change.
+2026-04-26 — DEVLOG.md removed; decisions appended here
+  instead; git history covers what changed and when.
 
 ---
 
 ## Workflow
 
-Each development part follows this sequence:
+Every development part follows this sequence:
 
 1. Open Claude Code with the session-opening prompt from the
-   planning layer. Claude Code reads CLAUDE.md and last DEVLOG
-   entry, confirms state, awaits instruction.
+   planning layer. Claude Code reads CLAUDE.md, confirms
+   current state, awaits instruction.
 
 2. Receive scoped part prompt from planning layer. Paste into
-   Claude Code. Claude Code states understanding in two sentences,
-   awaits confirmation before writing any code.
+   Claude Code. Claude Code states understanding in two
+   sentences, awaits confirmation before writing any code.
 
-3. Claude Code builds the part. When done, push a wip: commit
-   with git add <changed files> only — never git add .
+3. Claude Code builds the part. Push a wip: commit with
+   git add index.html only.
 
-4. Verify live at https://competitionhub.pages.dev. Screenshot
-   or describe what is visible. Report back to planning layer.
+4. Verify live at https://competitionhub.pages.dev. Report
+   back to planning layer.
 
-5. Planning layer reviews. If fixes needed, a bug-fix prompt is
-   generated and taken to Claude Code. Repeat steps 3-4 until
-   clean.
+5. Planning layer reviews. If fixes needed, a fix prompt is
+   generated. Repeat steps 3-4 until clean.
 
-6. Planning layer generates the session log entry. Paste into
-   Claude Code as option 3 from the menu below.
+6. Planning layer generates a single update prompt with new
+   Current State text and any Decisions Log entries.
 
-7. Claude Code updates CLAUDE.md and DEVLOG.md with the provided
-   content. Then run option 4 to push.
+7. Claude Code updates CLAUDE.md, then runs:
+   git add index.html CLAUDE.md
+   git commit -m "docs: update after part N"
+   git push
+   Confirms with commit hash.
+
+8. User copies updated CLAUDE.md into project knowledge.
 
 ---
 
@@ -206,21 +219,21 @@ and nothing else:
 
 1. Continue current part
 2. Fix a bug
-3. Update session log (CLAUDE.md + DEVLOG.md)
+3. Update CLAUDE.md (Current State + Decisions Log)
 4. Push to GitHub
 
 When I write a number, execute that option immediately.
 
 Option 1: Await the next instruction or scoped prompt.
 
-Option 2: State the bug in one sentence and which file you will
-touch. Await confirmation before making any change.
+Option 2: State the bug in one sentence and which file you
+will touch. Await confirmation before making any change.
 
-Option 3: Await the full log entry and CLAUDE.md Current State
-content to be pasted. Write exactly what is provided into the
-correct files. Make no other changes.
+Option 3: Await the Current State text and any Decisions Log
+entries to be pasted. Write exactly what is provided into
+CLAUDE.md. Make no other changes.
 
 Option 4: Run the following and confirm with commit hash:
-git add CLAUDE.md DEVLOG.md
-git commit -m "docs: session log update"
+git add index.html CLAUDE.md
+git commit -m "docs: update after part"
 git push
