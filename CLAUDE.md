@@ -160,25 +160,58 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
 
 ---
 
-## Shortcut Commands
-When I write any of the following, treat it as an instruction:
+## Workflow
 
-**/start** — Read this file and the last entry of DEVLOG.md.
-Confirm current state and await task.
+Each development part follows this sequence:
 
-**/done** — Append a session entry to DEVLOG.md covering: what
-changed, decisions made, next step. Then update only the Current
-State section of this file where something has changed. Always
-append a COMMIT: line as the absolute last line of DEVLOG.md
-(no blank line after it) with a conventional commit message.
+1. Open Claude Code with the session-opening prompt from the
+   planning layer. Claude Code reads CLAUDE.md and last DEVLOG
+   entry, confirms state, awaits instruction.
 
-**/plan [task]** — Before writing any code, outline the approach
-for [task], list which functions and sections of index.html will
-be touched, and wait for confirmation before proceeding.
+2. Receive scoped part prompt from planning layer. Paste into
+   Claude Code. Claude Code states understanding in two sentences,
+   awaits confirmation before writing any code.
 
-**/next** — Based on the not yet built sections above, suggest
-the single most logical next development task with a brief
-rationale.
+3. Claude Code builds the part. When done, push a wip: commit
+   with git add <changed files> only — never git add .
 
-**/state** — Summarise current app state from this file in five
-lines or fewer.
+4. Verify live at https://competitionhub.pages.dev. Screenshot
+   or describe what is visible. Report back to planning layer.
+
+5. Planning layer reviews. If fixes needed, a bug-fix prompt is
+   generated and taken to Claude Code. Repeat steps 3-4 until
+   clean.
+
+6. Planning layer generates the session log entry. Paste into
+   Claude Code as option 3 from the menu below.
+
+7. Claude Code updates CLAUDE.md and DEVLOG.md with the provided
+   content. Then run option 4 to push.
+
+---
+
+## Claude Code Menu
+
+When I write "menu" in Claude Code, respond with exactly this
+and nothing else:
+
+1. Continue current part
+2. Fix a bug
+3. Update session log (CLAUDE.md + DEVLOG.md)
+4. Push to GitHub
+
+When I write a number, execute that option immediately.
+
+Option 1: Await the next instruction or scoped prompt.
+
+Option 2: State the bug in one sentence and which file you will
+touch. Await confirmation before making any change.
+
+Option 3: Await the full log entry and CLAUDE.md Current State
+content to be pasted. Write exactly what is provided into the
+correct files. Make no other changes.
+
+Option 4: Run the following and confirm with commit hash:
+git add CLAUDE.md DEVLOG.md
+git commit -m "docs: session log update"
+git push

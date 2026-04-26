@@ -64,9 +64,13 @@ Placeholder index.html only. No app functionality built.
 - All functionality will be added to this single file
 - inset:0 unreliable in some rendering contexts — use explicit
   positional properties going forward
+- Workflow revised: menu-driven prompts replace shortcut commands.
+  Planning layer owns part sequencing, prompt generation, and log
+  content. Claude Code executes only. Log entry content always
+  provided by planning layer, never inferred by Claude Code.
 
 **Next immediate step:**
 Part 02 — Local data layer: FSA folder picker, read _index.json,
 list available books and chapters.
 
-COMMIT: feat: app shell with tab navigation, CONFIG, getData stub, auth overlay
+COMMIT: feat: app shell with tab navigation, CONFIG, getData stub, auth overlay | docs: workflow revised to menu-driven model
