@@ -133,6 +133,13 @@
       font-family: 'DM Serif Display', serif;
       font-size: 1.1rem;
       color: var(--ink);
+      margin-bottom: 0.2rem;
+    }
+
+    .book-subheading {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      color: var(--muted);
       margin-bottom: 0.5rem;
     }
 
@@ -239,6 +246,7 @@
     };
 
     let folderHandle = null;
+    let bookData = [];
 
     async function getData(path) {
       if (CONFIG.mode === 'local') {
@@ -263,27 +271,37 @@
     }
 
     // Filter tab — folder picker
-    function filterRenderIndex(index) {
+    function filterRenderIndex() {
       const display = document.getElementById('index-display');
-      const block = document.createElement('div');
-      block.className = 'book-block';
+      display.innerHTML = '';
 
-      const heading = document.createElement('div');
-      heading.className = 'book-heading';
-      heading.textContent = index.title || index.book;
-      block.appendChild(heading);
+      bookData.forEach(book => {
+        const block = document.createElement('div');
+        block.className = 'book-block';
 
-      const ul = document.createElement('ul');
-      ul.className = 'chapter-list';
-      (index.files || []).forEach(f => {
-        const li = document.createElement('li');
-        li.innerHTML =
-          `Ch ${f.chapter} — ${f.chapter_name}` +
-          `<span class="ch-count">${f.count} q</span>`;
-        ul.appendChild(li);
+        const heading = document.createElement('div');
+        heading.className = 'book-heading';
+        heading.textContent = book.title;
+        block.appendChild(heading);
+
+        const subheading = document.createElement('div');
+        subheading.className = 'book-subheading';
+        subheading.textContent = [book.subject, book.class, book.board]
+          .filter(Boolean).join(' · ');
+        block.appendChild(subheading);
+
+        const ul = document.createElement('ul');
+        ul.className = 'chapter-list';
+        book.files.forEach(f => {
+          const li = document.createElement('li');
+          li.innerHTML =
+            `Ch ${f.chapter} — ${f.chapter_name}` +
+            `<span class="ch-count">${f.count} q</span>`;
+          ul.appendChild(li);
+        });
+        block.appendChild(ul);
+        display.appendChild(block);
       });
-      block.appendChild(ul);
-      display.appendChild(block);
     }
 
     function filterShowError(msg) {
@@ -304,12 +322,34 @@
       const display = document.getElementById('index-display');
       display.innerHTML = '';
 
-      const index = await getData('_index.json');
-      if (index === null) {
-        filterShowError('No index file found in this folder');
+      const registry = await getData('_books_registry.json');
+      if (!registry) {
+        filterShowError('_books_registry.json not found in selected folder');
         return;
       }
-      filterRenderIndex(index);
+
+      try {
+        await folderHandle.getDirectoryHandle('GithubUpload');
+      } catch {
+        filterShowError('GithubUpload subfolder not found');
+        return;
+      }
+
+      bookData = [];
+      for (const book of (Array.isArray(registry) ? registry : [])) {
+        const index = await getData('GithubUpload/' + book.code + '/_index.json');
+        if (!index) continue;
+        bookData.push({
+          title: book.title,
+          subject: book.subject || '',
+          class: book.class || '',
+          board: book.board || '',
+          code: book.code,
+          files: index.files || []
+        });
+      }
+
+      filterRenderIndex();
     }
 
     document.getElementById('btn-pick-folder')
