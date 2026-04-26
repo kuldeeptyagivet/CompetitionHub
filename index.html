@@ -343,7 +343,11 @@
 
       bookData = [];
       for (const book of (Array.isArray(registry) ? registry : [])) {
-        const index = await getData('GithubUpload/' + book.code + '/_index.json');
+        console.log('[loop-start] book.code:', book.code);
+        const path = 'GithubUpload/' + book.code + '/_index.json';
+        console.log('[loop-before-getData] path:', path);
+        const index = await getData(path);
+        console.log('[loop-after-getData] returned:', index);
         console.log('[3] book.code:', book.code, 'index:', index);
         if (!index) continue;
         bookData.push({
