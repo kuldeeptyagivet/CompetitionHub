@@ -1,1 +1,198 @@
-<html><body><h1>Competition Hub</h1></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CompetitionHub</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --ink:     #1a1a2e;
+      --paper:   #ffffff;
+      --cream:   #faf7f2;
+      --accent:  #4f46e5;
+      --accent2: #7c3aed;
+      --gold:    #d97706;
+      --muted:   #6b7280;
+      --border:  #e5e7eb;
+      --success: #059669;
+      --warn:    #dc2626;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--ink);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--paper);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    .app-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.4rem;
+      color: var(--accent);
+      padding: 1rem 0;
+      white-space: nowrap;
+    }
+
+    /* ── Tab bar ── */
+    .tab-bar {
+      display: flex;
+      gap: 0;
+      flex: 1;
+    }
+
+    .tab-btn {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--muted);
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      padding: 1.1rem 1.25rem;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .tab-btn:hover {
+      color: var(--ink);
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* ── Tab panels ── */
+    .tab-panel {
+      display: none;
+      padding: 2rem 1.5rem;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    .tab-panel p {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    /* ── Auth overlay ── */
+    #auth-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--ink);
+      color: var(--paper);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      z-index: 9999;
+    }
+
+    #auth-overlay p {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.5rem;
+      opacity: 0.85;
+    }
+
+    #auth-overlay button {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      background: var(--accent);
+      color: var(--paper);
+      border: none;
+      border-radius: 6px;
+      padding: 0.6rem 1.4rem;
+      cursor: pointer;
+      opacity: 0.7;
+    }
+
+    #auth-overlay button:hover {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Auth overlay (visible by default; dismiss for dev access) -->
+  <div id="auth-overlay">
+    <p>Access control placeholder</p>
+    <button onclick="document.getElementById('auth-overlay').style.display='none'">
+      Dismiss (dev only)
+    </button>
+  </div>
+
+  <header>
+    <span class="app-title">CompetitionHub</span>
+    <nav class="tab-bar" role="tablist">
+      <button class="tab-btn active" role="tab" data-tab="filter">Filter</button>
+      <button class="tab-btn"        role="tab" data-tab="select">Select</button>
+      <button class="tab-btn"        role="tab" data-tab="assemble">Assemble</button>
+      <button class="tab-btn"        role="tab" data-tab="preview">Preview / Print</button>
+    </nav>
+  </header>
+
+  <main>
+    <div id="tab-filter"  class="tab-panel active"><p>Filter tab</p></div>
+    <div id="tab-select"  class="tab-panel"><p>Select tab</p></div>
+    <div id="tab-assemble" class="tab-panel"><p>Assemble tab</p></div>
+    <div id="tab-preview" class="tab-panel"><p>Preview / Print tab</p></div>
+  </main>
+
+  <script>
+    const CONFIG = {
+      mode: 'local',
+      workerUrl: 'https://qbank.yourname.workers.dev',
+      accessKey: ''
+    };
+
+    async function getData(path) {
+      if (CONFIG.mode === 'local') {
+        console.log('FSA not yet implemented');
+      } else {
+        console.log('Worker not yet implemented');
+      }
+      return null;
+    }
+
+    // Tab switching
+    const tabBtns   = document.querySelectorAll('.tab-btn');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabPanels.forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      });
+    });
+  </script>
+
+</body>
+</html>
