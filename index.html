@@ -99,6 +99,65 @@
       color: var(--muted);
     }
 
+    /* ── Filter tab ── */
+    #btn-pick-folder {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      background: var(--accent);
+      color: var(--paper);
+      border: none;
+      border-radius: 6px;
+      padding: 0.65rem 1.4rem;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    #btn-pick-folder:hover { opacity: 0.85; }
+
+    #index-display {
+      margin-top: 1.5rem;
+    }
+
+    .index-error {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--warn);
+    }
+
+    .book-block {
+      margin-bottom: 1.5rem;
+    }
+
+    .book-heading {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.1rem;
+      color: var(--ink);
+      margin-bottom: 0.5rem;
+    }
+
+    .chapter-list {
+      list-style: none;
+      border-left: 2px solid var(--border);
+      padding-left: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .chapter-list li {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem;
+      color: var(--ink);
+    }
+
+    .chapter-list li .ch-count {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-left: 0.5rem;
+    }
+
     /* ── Auth overlay ── */
     #auth-overlay {
       position: fixed;
@@ -163,7 +222,10 @@
   </header>
 
   <main>
-    <div id="tab-filter"  class="tab-panel active"><p>Filter tab</p></div>
+    <div id="tab-filter" class="tab-panel active">
+      <button id="btn-pick-folder">Select Question Bank Folder</button>
+      <div id="index-display"></div>
+    </div>
     <div id="tab-select"  class="tab-panel"><p>Select tab</p></div>
     <div id="tab-assemble" class="tab-panel"><p>Assemble tab</p></div>
     <div id="tab-preview" class="tab-panel"><p>Preview / Print tab</p></div>
@@ -176,14 +238,82 @@
       accessKey: ''
     };
 
+    let folderHandle = null;
+
     async function getData(path) {
       if (CONFIG.mode === 'local') {
-        console.log('FSA not yet implemented');
+        if (!folderHandle) return null;
+        try {
+          const parts = path.split('/');
+          let dir = folderHandle;
+          for (let i = 0; i < parts.length - 1; i++) {
+            dir = await dir.getDirectoryHandle(parts[i]);
+          }
+          const fileHandle = await dir.getFileHandle(parts[parts.length - 1]);
+          const file = await fileHandle.getFile();
+          const text = await file.text();
+          return JSON.parse(text);
+        } catch {
+          return null;
+        }
       } else {
         console.log('Worker not yet implemented');
+        return null;
       }
-      return null;
     }
+
+    // Filter tab — folder picker
+    function filterRenderIndex(index) {
+      const display = document.getElementById('index-display');
+      const block = document.createElement('div');
+      block.className = 'book-block';
+
+      const heading = document.createElement('div');
+      heading.className = 'book-heading';
+      heading.textContent = index.title || index.book;
+      block.appendChild(heading);
+
+      const ul = document.createElement('ul');
+      ul.className = 'chapter-list';
+      (index.files || []).forEach(f => {
+        const li = document.createElement('li');
+        li.innerHTML =
+          `Ch ${f.chapter} — ${f.chapter_name}` +
+          `<span class="ch-count">${f.count} q</span>`;
+        ul.appendChild(li);
+      });
+      block.appendChild(ul);
+      display.appendChild(block);
+    }
+
+    function filterShowError(msg) {
+      const display = document.getElementById('index-display');
+      const el = document.createElement('p');
+      el.className = 'index-error';
+      el.textContent = msg;
+      display.appendChild(el);
+    }
+
+    async function filterPickFolder() {
+      try {
+        folderHandle = await window.showDirectoryPicker();
+      } catch {
+        return; // cancelled — no UI change
+      }
+
+      const display = document.getElementById('index-display');
+      display.innerHTML = '';
+
+      const index = await getData('_index.json');
+      if (index === null) {
+        filterShowError('No index file found in this folder');
+        return;
+      }
+      filterRenderIndex(index);
+    }
+
+    document.getElementById('btn-pick-folder')
+      .addEventListener('click', filterPickFolder);
 
     // Tab switching
     const tabBtns   = document.querySelectorAll('.tab-btn');
