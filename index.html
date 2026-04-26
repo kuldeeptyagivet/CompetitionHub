@@ -99,7 +99,7 @@
       color: var(--muted);
     }
 
-    /* ── Filter tab ── */
+    /* ── Filter tab toolbar ── */
     #btn-pick-folder {
       font-family: 'DM Sans', sans-serif;
       font-size: 0.9rem;
@@ -116,7 +116,7 @@
     #btn-pick-folder:hover { opacity: 0.85; }
 
     #index-display {
-      margin-top: 1.5rem;
+      margin-top: 1rem;
     }
 
     .index-error {
@@ -125,45 +125,100 @@
       color: var(--warn);
     }
 
-    .book-block {
+    /* ── Filter panel ── */
+    #filter-panel {
+      display: none;
+      margin-top: 1.5rem;
+    }
+
+    .filter-count-bar {
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+      padding: 0.75rem 1.1rem;
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 8px;
       margin-bottom: 1.5rem;
     }
 
-    .book-heading {
+    .filter-count-number {
       font-family: 'DM Serif Display', serif;
-      font-size: 1.1rem;
-      color: var(--ink);
-      margin-bottom: 0.2rem;
+      font-size: 1.6rem;
+      color: var(--accent);
+      line-height: 1;
     }
 
-    .book-subheading {
+    .filter-count-label {
       font-family: 'DM Sans', sans-serif;
-      font-size: 0.85rem;
-      color: var(--ink);
-      opacity: 0.55;
-      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--muted);
     }
 
-    .chapter-list {
-      list-style: none;
-      border-left: 2px solid var(--border);
-      padding-left: 1rem;
+    .filter-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .filter-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .filter-group-label {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    .filter-list {
       display: flex;
       flex-direction: column;
       gap: 0.3rem;
+      border-left: 2px solid var(--border);
+      padding-left: 0.75rem;
+      max-height: 200px;
+      overflow-y: auto;
     }
 
-    .chapter-list li {
+    .filter-inline-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem 1.1rem;
+    }
+
+    .filter-checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
       font-family: 'DM Sans', sans-serif;
       font-size: 0.875rem;
       color: var(--ink);
+      cursor: pointer;
+      user-select: none;
     }
 
-    .chapter-list li .ch-count {
-      font-family: 'DM Mono', monospace;
-      font-size: 0.75rem;
-      color: var(--muted);
-      margin-left: 0.5rem;
+    .filter-checkbox-item input[type="checkbox"] {
+      accent-color: var(--accent);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .filter-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 1.25rem 0;
     }
 
     /* ── Auth overlay ── */
@@ -231,12 +286,56 @@
 
   <main>
     <div id="tab-filter" class="tab-panel active">
+
       <button id="btn-pick-folder">Select Question Bank Folder</button>
       <div id="index-display"></div>
+
+      <div id="filter-panel">
+
+        <div class="filter-count-bar">
+          <span id="filter-count-number" class="filter-count-number">0</span>
+          <span class="filter-count-label">questions matching filters</span>
+        </div>
+
+        <div class="filter-grid">
+          <div class="filter-group">
+            <span class="filter-group-label">Books</span>
+            <div id="filter-books-list" class="filter-list"></div>
+          </div>
+          <div class="filter-group">
+            <span class="filter-group-label">Chapters</span>
+            <div id="filter-chapters-list" class="filter-list"></div>
+          </div>
+        </div>
+
+        <hr class="filter-divider">
+
+        <div class="filter-group">
+          <span class="filter-group-label">Type</span>
+          <div id="filter-types-list" class="filter-inline-list"></div>
+        </div>
+
+        <div class="filter-group">
+          <span class="filter-group-label">Difficulty</span>
+          <div id="filter-difficulties-list" class="filter-inline-list"></div>
+        </div>
+
+        <div class="filter-group">
+          <span class="filter-group-label">Bloom Level</span>
+          <div id="filter-bloom-list" class="filter-inline-list"></div>
+        </div>
+
+        <div class="filter-group">
+          <span class="filter-group-label">Source Type</span>
+          <div id="filter-source-list" class="filter-inline-list"></div>
+        </div>
+
+      </div><!-- #filter-panel -->
+
     </div>
-    <div id="tab-select"  class="tab-panel"><p>Select tab</p></div>
+    <div id="tab-select"   class="tab-panel"><p>Select tab</p></div>
     <div id="tab-assemble" class="tab-panel"><p>Assemble tab</p></div>
-    <div id="tab-preview" class="tab-panel"><p>Preview / Print tab</p></div>
+    <div id="tab-preview"  class="tab-panel"><p>Preview / Print tab</p></div>
   </main>
 
   <script>
@@ -248,6 +347,20 @@
 
     let folderHandle = null;
     let bookData = [];
+
+    const FILTER_TYPES       = ['mcq_single', 'mcq_multi', 'assertion_reason', 'statement_based', 'match_following'];
+    const FILTER_DIFFICULTIES = ['easy', 'medium', 'hard'];
+    const FILTER_BLOOM        = ['remember', 'understand', 'apply', 'analyze', 'evaluate'];
+    const FILTER_SOURCE       = ['extracted', 'modified', 'created'];
+
+    let filterState = {
+      books:       new Set(),
+      chapters:    new Set(),
+      types:       new Set(),
+      difficulties: new Set(),
+      bloomLevels: new Set(),
+      sourceTypes: new Set()
+    };
 
     async function getData(path) {
       if (CONFIG.mode === 'local') {
@@ -271,39 +384,135 @@
       }
     }
 
-    // Filter tab — folder picker
-    function filterRenderIndex() {
-      const display = document.getElementById('index-display');
-      display.innerHTML = '';
+    // ── Filter state helpers ────────────────────────────────────────────────
 
-      bookData.forEach(book => {
-        const block = document.createElement('div');
-        block.className = 'book-block';
+    function filterInitState() {
+      filterState.books       = new Set(bookData.map(b => b.code));
+      filterState.chapters    = new Set();
+      bookData.forEach(b => b.files.forEach(f => filterState.chapters.add(b.code + '::' + f.file)));
+      filterState.types       = new Set(FILTER_TYPES);
+      filterState.difficulties = new Set(FILTER_DIFFICULTIES);
+      filterState.bloomLevels = new Set(FILTER_BLOOM);
+      filterState.sourceTypes = new Set(FILTER_SOURCE);
+    }
 
-        const heading = document.createElement('div');
-        heading.className = 'book-heading';
-        heading.textContent = book.title;
-        block.appendChild(heading);
-
-        const subheading = document.createElement('div');
-        subheading.className = 'book-subheading';
-        subheading.textContent = [book.subject, book.class, book.board]
-          .filter(Boolean).join(' · ');
-        block.appendChild(subheading);
-
-        const ul = document.createElement('ul');
-        ul.className = 'chapter-list';
-        book.files.forEach(f => {
-          const li = document.createElement('li');
-          li.innerHTML =
-            `Ch ${f.chapter} — ${f.chapter_name}` +
-            `<span class="ch-count">${f.count} questions</span>`;
-          ul.appendChild(li);
+    function filterUpdateCount() {
+      let count = 0;
+      bookData.forEach(b => {
+        if (!filterState.books.has(b.code)) return;
+        b.files.forEach(f => {
+          if (filterState.chapters.has(b.code + '::' + f.file)) count += f.count;
         });
-        block.appendChild(ul);
-        display.appendChild(block);
+      });
+
+      const approx =
+        filterState.types.size       < FILTER_TYPES.length       ||
+        filterState.difficulties.size < FILTER_DIFFICULTIES.length ||
+        filterState.bloomLevels.size  < FILTER_BLOOM.length        ||
+        filterState.sourceTypes.size  < FILTER_SOURCE.length;
+
+      document.getElementById('filter-count-number').textContent =
+        (approx ? '~' : '') + count;
+    }
+
+    // ── Filter render functions ─────────────────────────────────────────────
+
+    function filterRenderChapters() {
+      const container = document.getElementById('filter-chapters-list');
+      container.innerHTML = '';
+
+      bookData.forEach(b => {
+        if (!filterState.books.has(b.code)) return;
+        b.files.forEach(f => {
+          const key = b.code + '::' + f.file;
+          const label = document.createElement('label');
+          label.className = 'filter-checkbox-item';
+
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.checked = filterState.chapters.has(key);
+          cb.addEventListener('change', () => {
+            if (cb.checked) filterState.chapters.add(key);
+            else            filterState.chapters.delete(key);
+            filterUpdateCount();
+          });
+
+          const text = bookData.length > 1
+            ? `Ch ${f.chapter} — ${f.chapter_name} (${b.title})`
+            : `Ch ${f.chapter} — ${f.chapter_name}`;
+
+          label.appendChild(cb);
+          label.appendChild(document.createTextNode(' ' + text));
+          container.appendChild(label);
+        });
       });
     }
+
+    function filterRenderInlineGroup(containerId, values, stateSet) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+      values.forEach(v => {
+        const label = document.createElement('label');
+        label.className = 'filter-checkbox-item';
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = true;
+        cb.addEventListener('change', () => {
+          if (cb.checked) stateSet.add(v);
+          else            stateSet.delete(v);
+          filterUpdateCount();
+        });
+
+        label.appendChild(cb);
+        label.appendChild(document.createTextNode(' ' + v.replace(/_/g, ' ')));
+        container.appendChild(label);
+      });
+    }
+
+    function filterRenderPanel() {
+      filterInitState();
+
+      // Books
+      const booksList = document.getElementById('filter-books-list');
+      booksList.innerHTML = '';
+      bookData.forEach(b => {
+        const label = document.createElement('label');
+        label.className = 'filter-checkbox-item';
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = true;
+        cb.addEventListener('change', () => {
+          if (cb.checked) {
+            filterState.books.add(b.code);
+            b.files.forEach(f => filterState.chapters.add(b.code + '::' + f.file));
+          } else {
+            filterState.books.delete(b.code);
+            b.files.forEach(f => filterState.chapters.delete(b.code + '::' + f.file));
+          }
+          filterRenderChapters();
+          filterUpdateCount();
+        });
+
+        label.appendChild(cb);
+        label.appendChild(document.createTextNode(' ' + b.title));
+        booksList.appendChild(label);
+      });
+
+      filterRenderChapters();
+
+      filterRenderInlineGroup('filter-types-list',        FILTER_TYPES,        filterState.types);
+      filterRenderInlineGroup('filter-difficulties-list', FILTER_DIFFICULTIES, filterState.difficulties);
+      filterRenderInlineGroup('filter-bloom-list',        FILTER_BLOOM,        filterState.bloomLevels);
+      filterRenderInlineGroup('filter-source-list',       FILTER_SOURCE,       filterState.sourceTypes);
+
+      filterUpdateCount();
+
+      document.getElementById('filter-panel').style.display = 'block';
+    }
+
+    // ── Folder picker ───────────────────────────────────────────────────────
 
     function filterShowError(msg) {
       const display = document.getElementById('index-display');
@@ -317,11 +526,12 @@
       try {
         folderHandle = await window.showDirectoryPicker();
       } catch {
-        return; // cancelled — no UI change
+        return;
       }
 
       const display = document.getElementById('index-display');
       display.innerHTML = '';
+      document.getElementById('filter-panel').style.display = 'none';
 
       const registry = await getData('_books_registry.json');
       if (!registry) {
@@ -341,22 +551,22 @@
         const index = await getData('GithubUpload/' + book.code + '/_index.json');
         if (!index) continue;
         bookData.push({
-          title: book.title,
+          title:   book.title,
           subject: book.subject || '',
-          class: book.class || '',
-          board: book.board || '',
-          code: book.code,
-          files: index.files || []
+          class:   book.class   || '',
+          board:   book.board   || '',
+          code:    book.code,
+          files:   index.files  || []
         });
       }
 
-      filterRenderIndex();
+      filterRenderPanel();
     }
 
     document.getElementById('btn-pick-folder')
       .addEventListener('click', filterPickFolder);
 
-    // Tab switching
+    // ── Tab switching ───────────────────────────────────────────────────────
     const tabBtns   = document.querySelectorAll('.tab-btn');
     const tabPanels = document.querySelectorAll('.tab-panel');
 
