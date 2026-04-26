@@ -149,6 +149,10 @@
       line-height: 1;
     }
 
+    .filter-count-loading {
+      color: var(--muted);
+    }
+
     .filter-count-label {
       font-family: 'DM Sans', sans-serif;
       font-size: 0.875rem;
@@ -347,6 +351,7 @@
 
     let folderHandle = null;
     let bookData = [];
+    let loadedQuestions = {};
 
     const FILTER_TYPES       = ['mcq_single', 'mcq_multi', 'assertion_reason', 'statement_based', 'match_following'];
     const FILTER_DIFFICULTIES = ['easy', 'medium', 'hard'];
@@ -387,32 +392,59 @@
     // ── Filter state helpers ────────────────────────────────────────────────
 
     function filterInitState() {
-      filterState.books       = new Set(bookData.map(b => b.code));
-      filterState.chapters    = new Set();
+      filterState.books        = new Set(bookData.map(b => b.code));
+      filterState.chapters     = new Set();
       bookData.forEach(b => b.files.forEach(f => filterState.chapters.add(b.code + '::' + f.file)));
-      filterState.types       = new Set(FILTER_TYPES);
+      filterState.types        = new Set(FILTER_TYPES);
       filterState.difficulties = new Set(FILTER_DIFFICULTIES);
-      filterState.bloomLevels = new Set(FILTER_BLOOM);
-      filterState.sourceTypes = new Set(FILTER_SOURCE);
+      filterState.bloomLevels  = new Set(FILTER_BLOOM);
+      filterState.sourceTypes  = new Set(FILTER_SOURCE);
+      loadedQuestions = {};
     }
 
     function filterUpdateCount() {
       let count = 0;
-      bookData.forEach(b => {
-        if (!filterState.books.has(b.code)) return;
-        b.files.forEach(f => {
-          if (filterState.chapters.has(b.code + '::' + f.file)) count += f.count;
-        });
-      });
+      for (const key of Object.keys(loadedQuestions)) {
+        if (!filterState.chapters.has(key)) continue;
+        for (const q of loadedQuestions[key]) {
+          if (
+            filterState.types.has(q.type) &&
+            filterState.difficulties.has(q.difficulty) &&
+            filterState.bloomLevels.has(q.bloom_level) &&
+            filterState.sourceTypes.has(q.source_type)
+          ) count++;
+        }
+      }
+      const el = document.getElementById('filter-count-number');
+      el.textContent = count;
+      el.classList.remove('filter-count-loading');
+    }
 
-      const approx =
-        filterState.types.size       < FILTER_TYPES.length       ||
-        filterState.difficulties.size < FILTER_DIFFICULTIES.length ||
-        filterState.bloomLevels.size  < FILTER_BLOOM.length        ||
-        filterState.sourceTypes.size  < FILTER_SOURCE.length;
+    async function filterLoadSelectedChapters() {
+      const el = document.getElementById('filter-count-number');
+      el.textContent = '…';
+      el.classList.add('filter-count-loading');
 
-      document.getElementById('filter-count-number').textContent =
-        (approx ? '~' : '') + count;
+      // Evict chapters no longer selected
+      for (const key of Object.keys(loadedQuestions)) {
+        if (!filterState.chapters.has(key)) delete loadedQuestions[key];
+      }
+
+      // Fetch chapters not yet loaded
+      const fetches = [];
+      for (const key of filterState.chapters) {
+        if (loadedQuestions[key]) continue;
+        const [bookCode, filename] = key.split('::');
+        fetches.push(
+          getData('GithubUpload/' + bookCode + '/' + filename).then(data => {
+            if (Array.isArray(data))                        loadedQuestions[key] = data;
+            else if (data && Array.isArray(data.questions)) loadedQuestions[key] = data.questions;
+            else                                            loadedQuestions[key] = [];
+          })
+        );
+      }
+      await Promise.all(fetches);
+      filterUpdateCount();
     }
 
     // ── Filter render functions ─────────────────────────────────────────────
@@ -434,7 +466,7 @@
           cb.addEventListener('change', () => {
             if (cb.checked) filterState.chapters.add(key);
             else            filterState.chapters.delete(key);
-            filterUpdateCount();
+            filterLoadSelectedChapters();
           });
 
           const text = bookData.length > 1
@@ -492,7 +524,7 @@
             b.files.forEach(f => filterState.chapters.delete(b.code + '::' + f.file));
           }
           filterRenderChapters();
-          filterUpdateCount();
+          filterLoadSelectedChapters();
         });
 
         label.appendChild(cb);
@@ -507,9 +539,8 @@
       filterRenderInlineGroup('filter-bloom-list',        FILTER_BLOOM,        filterState.bloomLevels);
       filterRenderInlineGroup('filter-source-list',       FILTER_SOURCE,       filterState.sourceTypes);
 
-      filterUpdateCount();
-
       document.getElementById('filter-panel').style.display = 'block';
+      filterLoadSelectedChapters();
     }
 
     // ── Folder picker ───────────────────────────────────────────────────────
