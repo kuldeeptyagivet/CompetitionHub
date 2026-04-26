@@ -128,3 +128,50 @@ filter by type/difficulty/bloom_level/source_type, live
 question count display.
 
 COMMIT: feat: local data layer complete | docs: session 02 log
+
+---
+
+## Session 03 — 2026-04-26
+
+**State at session start:**
+App shell complete. Local data layer complete. Filter tab shows
+book titles, subject/class/board subheading, chapter list with
+counts after folder load.
+
+**What was done this session:**
+- Built filter panel inside Filter tab panel
+- Books — vertical checkbox list, one per book in bookData
+- Chapters — vertical checkbox list, re-renders on book toggle;
+  chapter labels include book title when multiple books loaded
+- Chapter keys use bookCode::filename format for uniqueness
+  across books
+- Type / Difficulty / Bloom Level / Source Type — horizontal
+  wrapping checkbox groups with fixed values
+- Live count bar — sums chapter counts from selected chapters;
+  prefixed with ~ when any type/difficulty/bloom/source filter
+  is not fully selected
+- filterState object with Sets for books, chapters, types,
+  difficulties, bloomLevels, sourceTypes
+- filterUpdateCount() is single recompute function for all
+  filter changes
+- filterInitState() resets all Sets to all-selected on each
+  folder load
+- filterRenderChapters() re-renders chapter list on book toggle
+- Deselecting a book clears its chapters from filterState and
+  re-renders chapter list
+- Verified: 110 count matches sum of chapter counts in index
+
+**Decisions made:**
+- Chapter keys are bookCode::filename — unambiguous across books
+- Count approximation uses ~ prefix only when subset of
+  type/difficulty/bloom/source is selected; chapter-level
+  breakdown by these fields not available without loading JSON
+- Filter panel hidden until folder is loaded, shown by
+  filterRenderPanel()
+
+**Next immediate step:**
+Part 04 — Test parameters: number of questions input, marks per
+question, negative marking toggle, duration auto-calculated
+from avg_time_sec of selected questions.
+
+COMMIT: wip: part 03 filter UI

@@ -142,10 +142,12 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   book.code as subfolder name, merges registry metadata with
   chapter data into bookData, renders book title, subject/
   class/board subheading, and chapter list with counts
+- Filter UI complete: multi-select Books, Chapters, Type,
+  Difficulty, Bloom Level, Source Type; live count bar with
+  ~ approximation prefix; filterState object with Sets;
+  filterUpdateCount(), filterInitState(), filterRenderChapters()
 
 **Not yet built:**
-- Filter UI (multi-select books, chapters, type, difficulty,
-  bloom_level, source_type, live question count)
 - Test parameters (question count, marks, negative marking,
   duration from avg_time_sec)
 - Test generation (random selection, paper assembly)
