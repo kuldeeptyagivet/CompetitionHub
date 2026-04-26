@@ -150,6 +150,10 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   all four fields (type, difficulty, bloom_level, source_type)
 - Faceted counts shown next to every checkbox via
   filterUpdateFacets(); updates in place without DOM rebuild
+- Books and chapters default to unselected on folder load;
+  no JSON fetch fires until user selects at least one chapter;
+  count bar shows "Select books and chapters to begin" until
+  a chapter is selected
 
 **Not yet built:**
 - Test parameters (question count, marks, negative marking,
@@ -175,6 +179,9 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   source requires no re-fetch when those filters change.
 2026-04-26 — DEVLOG.md removed; decisions appended here
   instead; git history covers what changed and when.
+2026-04-26 — Books and chapters default to unselected on folder
+  load; JSON fetch deferred until user makes explicit selection
+  to keep the app performant with large question banks.
 
 ---
 
