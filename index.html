@@ -305,7 +305,7 @@
 
         <div class="filter-count-bar">
           <span id="filter-count-number" class="filter-count-number">0</span>
-          <span class="filter-count-label">questions matching filters</span>
+          <span id="filter-count-label" class="filter-count-label">Select books and chapters to begin</span>
         </div>
 
         <div class="filter-grid">
@@ -399,9 +399,8 @@
     // ── Filter state helpers ────────────────────────────────────────────────
 
     function filterInitState() {
-      filterState.books        = new Set(bookData.map(b => b.code));
+      filterState.books        = new Set();
       filterState.chapters     = new Set();
-      bookData.forEach(b => b.files.forEach(f => filterState.chapters.add(b.code + '::' + f.file)));
       filterState.types        = new Set(FILTER_TYPES);
       filterState.difficulties = new Set(FILTER_DIFFICULTIES);
       filterState.bloomLevels  = new Set(FILTER_BLOOM);
@@ -410,6 +409,17 @@
     }
 
     function filterUpdateCount() {
+      const numEl   = document.getElementById('filter-count-number');
+      const labelEl = document.getElementById('filter-count-label');
+
+      if (filterState.chapters.size === 0) {
+        numEl.textContent = '0';
+        numEl.classList.remove('filter-count-loading');
+        labelEl.textContent = 'Select books and chapters to begin';
+        filterUpdateFacets();
+        return;
+      }
+
       let count = 0;
       for (const key of Object.keys(loadedQuestions)) {
         if (!filterState.chapters.has(key)) continue;
@@ -422,9 +432,9 @@
           ) count++;
         }
       }
-      const el = document.getElementById('filter-count-number');
-      el.textContent = count;
-      el.classList.remove('filter-count-loading');
+      numEl.textContent = count;
+      numEl.classList.remove('filter-count-loading');
+      labelEl.textContent = 'questions matching filters';
       filterUpdateFacets();
     }
 
@@ -653,7 +663,7 @@
 
         const cb = document.createElement('input');
         cb.type = 'checkbox';
-        cb.checked = true;
+        cb.checked = filterState.books.has(b.code);
         cb.addEventListener('change', () => {
           if (cb.checked) {
             filterState.books.add(b.code);
@@ -683,7 +693,7 @@
       filterRenderInlineGroup('filter-source-list',       FILTER_SOURCE,       filterState.sourceTypes,  'source');
 
       document.getElementById('filter-panel').style.display = 'block';
-      filterLoadSelectedChapters();
+      filterUpdateCount();
     }
 
     // ── Folder picker ───────────────────────────────────────────────────────
