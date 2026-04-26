@@ -296,7 +296,7 @@
           const li = document.createElement('li');
           li.innerHTML =
             `Ch ${f.chapter} — ${f.chapter_name}` +
-            `<span class="ch-count">${f.count} q</span>`;
+            `<span class="ch-count">${f.count} questions</span>`;
           ul.appendChild(li);
         });
         block.appendChild(ul);
@@ -337,6 +337,7 @@
 
       bookData = [];
       for (const book of (registry.books || [])) {
+        console.log('[book]', JSON.stringify(book));
         const index = await getData('GithubUpload/' + book.code + '/_index.json');
         if (!index) continue;
         bookData.push({
