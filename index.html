@@ -138,8 +138,9 @@
 
     .book-subheading {
       font-family: 'DM Sans', sans-serif;
-      font-size: 0.8rem;
-      color: var(--muted);
+      font-size: 0.85rem;
+      color: var(--ink);
+      opacity: 0.55;
       margin-bottom: 0.5rem;
     }
 
@@ -337,7 +338,6 @@
 
       bookData = [];
       for (const book of (registry.books || [])) {
-        console.log('[book]', JSON.stringify(book));
         const index = await getData('GithubUpload/' + book.code + '/_index.json');
         if (!index) continue;
         bookData.push({
