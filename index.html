@@ -219,6 +219,13 @@
       flex-shrink: 0;
     }
 
+    .facet-count {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-left: 0.25rem;
+    }
+
     .filter-divider {
       border: none;
       border-top: 1px solid var(--border);
@@ -418,6 +425,124 @@
       const el = document.getElementById('filter-count-number');
       el.textContent = count;
       el.classList.remove('filter-count-loading');
+      filterUpdateFacets();
+    }
+
+    function computeFacet(group, value) {
+      if (group === 'book') {
+        const book = bookData.find(b => b.code === value);
+        if (!book) return 0;
+        let exact = 0, approx = 0;
+        book.files.forEach(f => {
+          const key = book.code + '::' + f.file;
+          if (loadedQuestions[key]) {
+            for (const q of loadedQuestions[key]) {
+              if (
+                filterState.types.has(q.type) &&
+                filterState.difficulties.has(q.difficulty) &&
+                filterState.bloomLevels.has(q.bloom_level) &&
+                filterState.sourceTypes.has(q.source_type)
+              ) exact++;
+            }
+          } else {
+            approx += f.count;
+          }
+        });
+        return approx > 0 ? '~' + (exact + approx) : exact;
+      }
+
+      if (group === 'chapter') {
+        if (!loadedQuestions[value]) {
+          const [bookCode, filename] = value.split('::');
+          const book = bookData.find(b => b.code === bookCode);
+          const file = book && book.files.find(f => f.file === filename);
+          return file ? '~' + file.count : '';
+        }
+        let count = 0;
+        for (const q of loadedQuestions[value]) {
+          if (
+            filterState.types.has(q.type) &&
+            filterState.difficulties.has(q.difficulty) &&
+            filterState.bloomLevels.has(q.bloom_level) &&
+            filterState.sourceTypes.has(q.source_type)
+          ) count++;
+        }
+        return count;
+      }
+
+      if (group === 'type') {
+        let count = 0;
+        for (const key of Object.keys(loadedQuestions)) {
+          if (!filterState.chapters.has(key)) continue;
+          for (const q of loadedQuestions[key]) {
+            if (
+              q.type === value &&
+              filterState.difficulties.has(q.difficulty) &&
+              filterState.bloomLevels.has(q.bloom_level) &&
+              filterState.sourceTypes.has(q.source_type)
+            ) count++;
+          }
+        }
+        return count;
+      }
+
+      if (group === 'difficulty') {
+        let count = 0;
+        for (const key of Object.keys(loadedQuestions)) {
+          if (!filterState.chapters.has(key)) continue;
+          for (const q of loadedQuestions[key]) {
+            if (
+              filterState.types.has(q.type) &&
+              q.difficulty === value &&
+              filterState.bloomLevels.has(q.bloom_level) &&
+              filterState.sourceTypes.has(q.source_type)
+            ) count++;
+          }
+        }
+        return count;
+      }
+
+      if (group === 'bloom') {
+        let count = 0;
+        for (const key of Object.keys(loadedQuestions)) {
+          if (!filterState.chapters.has(key)) continue;
+          for (const q of loadedQuestions[key]) {
+            if (
+              filterState.types.has(q.type) &&
+              filterState.difficulties.has(q.difficulty) &&
+              q.bloom_level === value &&
+              filterState.sourceTypes.has(q.source_type)
+            ) count++;
+          }
+        }
+        return count;
+      }
+
+      if (group === 'source') {
+        let count = 0;
+        for (const key of Object.keys(loadedQuestions)) {
+          if (!filterState.chapters.has(key)) continue;
+          for (const q of loadedQuestions[key]) {
+            if (
+              filterState.types.has(q.type) &&
+              filterState.difficulties.has(q.difficulty) &&
+              filterState.bloomLevels.has(q.bloom_level) &&
+              q.source_type === value
+            ) count++;
+          }
+        }
+        return count;
+      }
+
+      return 0;
+    }
+
+    function filterUpdateFacets() {
+      document.querySelectorAll('.facet-count').forEach(span => {
+        const label = span.closest('[data-group]');
+        if (!label) return;
+        span.textContent = computeFacet(label.dataset.group, label.dataset.value);
+      });
     }
 
     async function filterLoadSelectedChapters() {
@@ -459,6 +584,8 @@
           const key = b.code + '::' + f.file;
           const label = document.createElement('label');
           label.className = 'filter-checkbox-item';
+          label.dataset.group = 'chapter';
+          label.dataset.value = key;
 
           const cb = document.createElement('input');
           cb.type = 'checkbox';
@@ -473,19 +600,25 @@
             ? `Ch ${f.chapter} — ${f.chapter_name} (${b.title})`
             : `Ch ${f.chapter} — ${f.chapter_name}`;
 
+          const facet = document.createElement('span');
+          facet.className = 'facet-count';
+
           label.appendChild(cb);
           label.appendChild(document.createTextNode(' ' + text));
+          label.appendChild(facet);
           container.appendChild(label);
         });
       });
     }
 
-    function filterRenderInlineGroup(containerId, values, stateSet) {
+    function filterRenderInlineGroup(containerId, values, stateSet, group) {
       const container = document.getElementById(containerId);
       container.innerHTML = '';
       values.forEach(v => {
         const label = document.createElement('label');
         label.className = 'filter-checkbox-item';
+        label.dataset.group = group;
+        label.dataset.value = v;
 
         const cb = document.createElement('input');
         cb.type = 'checkbox';
@@ -496,8 +629,12 @@
           filterUpdateCount();
         });
 
+        const facet = document.createElement('span');
+        facet.className = 'facet-count';
+
         label.appendChild(cb);
         label.appendChild(document.createTextNode(' ' + v.replace(/_/g, ' ')));
+        label.appendChild(facet);
         container.appendChild(label);
       });
     }
@@ -511,6 +648,8 @@
       bookData.forEach(b => {
         const label = document.createElement('label');
         label.className = 'filter-checkbox-item';
+        label.dataset.group = 'book';
+        label.dataset.value = b.code;
 
         const cb = document.createElement('input');
         cb.type = 'checkbox';
@@ -527,17 +666,21 @@
           filterLoadSelectedChapters();
         });
 
+        const facet = document.createElement('span');
+        facet.className = 'facet-count';
+
         label.appendChild(cb);
         label.appendChild(document.createTextNode(' ' + b.title));
+        label.appendChild(facet);
         booksList.appendChild(label);
       });
 
       filterRenderChapters();
 
-      filterRenderInlineGroup('filter-types-list',        FILTER_TYPES,        filterState.types);
-      filterRenderInlineGroup('filter-difficulties-list', FILTER_DIFFICULTIES, filterState.difficulties);
-      filterRenderInlineGroup('filter-bloom-list',        FILTER_BLOOM,        filterState.bloomLevels);
-      filterRenderInlineGroup('filter-source-list',       FILTER_SOURCE,       filterState.sourceTypes);
+      filterRenderInlineGroup('filter-types-list',        FILTER_TYPES,        filterState.types,        'type');
+      filterRenderInlineGroup('filter-difficulties-list', FILTER_DIFFICULTIES, filterState.difficulties, 'difficulty');
+      filterRenderInlineGroup('filter-bloom-list',        FILTER_BLOOM,        filterState.bloomLevels,  'bloom');
+      filterRenderInlineGroup('filter-source-list',       FILTER_SOURCE,       filterState.sourceTypes,  'source');
 
       document.getElementById('filter-panel').style.display = 'block';
       filterLoadSelectedChapters();
