@@ -134,9 +134,10 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
 **Working:**
 - Placeholder index.html deployed to Cloudflare Pages
 - Auto-deploy pipeline confirmed working
+- App shell built: tab navigation, CONFIG object, getData stub,
+  auth overlay with dismiss button
 
 **Not yet built:**
-- App shell and tab navigation
 - Local data layer (FSA)
 - Question filter UI
 - Question selector

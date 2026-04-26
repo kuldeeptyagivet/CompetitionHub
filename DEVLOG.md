@@ -35,3 +35,38 @@ No app functionality built yet.
 
 **Next immediate step:**
 Part 01 — App shell: tab navigation, CONFIG object, basic layout.
+
+---
+
+## Session 02 — 2026-04-26
+
+**State at session start:**
+Placeholder index.html only. No app functionality built.
+
+**What was done this session:**
+- Built full app shell in index.html
+- Full DOCTYPE, charset, viewport, title set
+- Google Fonts imported: DM Serif Display, DM Sans, DM Mono
+- All 10 CSS variables defined in :root
+- Header with app title and four tab buttons
+- Tab switching via data-tab attributes, one active at a time
+- CONFIG object added exactly as specified in CLAUDE.md
+- getData(path) stub added, logs per mode, returns null
+- Each tab panel contains placeholder text only
+- #auth-overlay added with full viewport coverage and dismiss
+  button for dev access
+- Fixed auth overlay not appearing on first load: replaced
+  inset:0 with explicit top/right/bottom/left:0 plus
+  width/height 100%
+
+**Decisions made:**
+- No framework, no build step confirmed
+- All functionality will be added to this single file
+- inset:0 unreliable in some rendering contexts — use explicit
+  positional properties going forward
+
+**Next immediate step:**
+Part 02 — Local data layer: FSA folder picker, read _index.json,
+list available books and chapters.
+
+COMMIT: feat: app shell with tab navigation, CONFIG, getData stub, auth overlay
