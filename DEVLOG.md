@@ -74,3 +74,57 @@ Part 02 — Local data layer: FSA folder picker, read _index.json,
 list available books and chapters.
 
 COMMIT: feat: app shell with tab navigation, CONFIG, getData stub, auth overlay | docs: workflow revised to menu-driven model
+
+---
+
+## Session 02 — 2026-04-26
+
+**State at session start:**
+Placeholder index.html only. No app functionality built.
+
+**What was done this session:**
+- Built full app shell in index.html
+- Full DOCTYPE, charset, viewport, title set
+- Google Fonts imported: DM Serif Display, DM Sans, DM Mono
+- All 10 CSS variables defined in :root
+- Header with app title and four tab buttons
+- Tab switching via data-tab attributes, one active at a time
+- CONFIG object added exactly as specified in CLAUDE.md
+- getData(path) stub added, logs per mode, returns null
+- Each tab panel contains placeholder text only
+- #auth-overlay added with full viewport coverage and dismiss
+  button for dev access
+- Fixed auth overlay not appearing on first load: replaced
+  inset:0 with explicit top/right/bottom/left:0 plus
+  width/height 100%
+- Implemented local data layer: FSA picker at QuestionBank
+  root, reads _books_registry.json, navigates GithubUpload/,
+  reads each book's _index.json using book.code as subfolder
+  name, merges into bookData module-level variable
+- Fixed book loop bug: registry.books used instead of registry
+- Rendered book title, subject/class/board subheading,
+  chapter list with question counts
+- Fixed subheading visibility: color and opacity adjusted
+- Chapter count label changed from "q" to "questions"
+
+**Decisions made:**
+- No framework, no build step confirmed
+- All functionality will be added to this single file
+- inset:0 unreliable in some rendering contexts — use explicit
+  positional properties going forward
+- Workflow revised: menu-driven prompts replace shortcut
+  commands. Planning layer owns part sequencing, prompt
+  generation, and log content. Claude Code executes only.
+- User picks QuestionBank root folder. App navigates into
+  GithubUpload/ automatically. book.code is the subfolder name.
+- _books_registry.json is the authoritative book list.
+  getData() traverses path segments from root folderHandle.
+- Development sequence revised: Parts 03-05 redesigned to
+  match actual UX flow — filter, test parameters, generation.
+
+**Next immediate step:**
+Part 03 — Filter UI: multi-select books, multi-select chapters,
+filter by type/difficulty/bloom_level/source_type, live
+question count display.
+
+COMMIT: feat: local data layer complete | docs: session 02 log

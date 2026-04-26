@@ -136,12 +136,19 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
 - Auto-deploy pipeline confirmed working
 - App shell built: tab navigation, CONFIG object, getData stub,
   auth overlay with dismiss button
+- Local data layer complete: FSA folder picker points to
+  QuestionBank root, reads _books_registry.json, navigates
+  into GithubUpload/, reads each book's _index.json via
+  book.code as subfolder name, merges registry metadata with
+  chapter data into bookData, renders book title, subject/
+  class/board subheading, and chapter list with counts
 
 **Not yet built:**
-- Local data layer (FSA)
-- Question filter UI
-- Question selector
-- Paper assembler
+- Filter UI (multi-select books, chapters, type, difficulty,
+  bloom_level, source_type, live question count)
+- Test parameters (question count, marks, negative marking,
+  duration from avg_time_sec)
+- Test generation (random selection, paper assembly)
 - KaTeX rendering
 - Print layout
 - Remote data layer (Cloudflare Worker)
