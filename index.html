@@ -255,13 +255,16 @@
           const parts = path.split('/');
           let dir = folderHandle;
           for (let i = 0; i < parts.length - 1; i++) {
+            console.log('[getData] entering dir segment:', parts[i]);
             dir = await dir.getDirectoryHandle(parts[i]);
           }
+          console.log('[getData] getting file:', parts[parts.length - 1]);
           const fileHandle = await dir.getFileHandle(parts[parts.length - 1]);
           const file = await fileHandle.getFile();
           const text = await file.text();
           return JSON.parse(text);
-        } catch {
+        } catch (e) {
+          console.log('[getData] ERROR for path "' + path + '":', e.name, e.message);
           return null;
         }
       } else {
