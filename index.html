@@ -472,7 +472,7 @@
             <span id="param-total-marks" class="param-computed">—</span>
           </div>
           <div class="param-group">
-            <span class="param-label">Duration</span>
+            <span class="param-label">Est. Duration</span>
             <span id="param-duration" class="param-computed">—</span>
           </div>
         </div>
@@ -859,17 +859,19 @@
     }
 
     function paramComputeDuration(pool) {
+      if (pool.length === 0) return '—';
       let totalSec = 0;
-      const n = Math.min(paperParams.questionCount, pool.length);
-      for (let i = 0; i < n; i++) {
-        totalSec += (pool[i].avg_time_sec != null ? pool[i].avg_time_sec : 90);
+      for (const q of pool) {
+        totalSec += (q.avg_time_sec != null ? q.avg_time_sec : 90);
       }
-      const totalMin = Math.round(totalSec / 60);
+      const mean   = totalSec / pool.length;
+      const estSec = mean * paperParams.questionCount;
+      const totalMin = Math.round(estSec / 60);
       const hr  = Math.floor(totalMin / 60);
       const min = totalMin % 60;
-      if (hr === 0) return min + ' min';
-      if (min === 0) return hr + ' hr';
-      return hr + ' hr ' + min + ' min';
+      if (hr === 0) return '~' + min + ' min';
+      if (min === 0) return '~' + hr + ' hr';
+      return '~' + hr + ' hr ' + min + ' min';
     }
 
     function paramUpdateDerived() {
