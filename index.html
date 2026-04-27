@@ -602,6 +602,15 @@
 
     .history-btns { display: flex; gap: 0.5rem; flex-shrink: 0; }
 
+    .history-section-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.1rem;
+      color: var(--ink);
+      margin: 1.5rem 0 0.75rem;
+    }
+
+    .history-section-title:first-child { margin-top: 0; }
+
     /* ── Preview / Print tab — screen ── */
     .preview-actions {
       display: flex;
@@ -2191,84 +2200,147 @@
       const tab = document.getElementById('tab-history');
       tab.innerHTML = '';
 
+      // ── Saved Papers ──
+      const papersTitle = document.createElement('div');
+      papersTitle.className   = 'history-section-title';
+      papersTitle.textContent = 'Saved Papers';
+      tab.appendChild(papersTitle);
+
       const papers = JSON.parse(localStorage.getItem('ch_papers') || '[]');
 
       if (papers.length === 0) {
         const msg = document.createElement('p');
         msg.textContent = 'No saved papers yet.';
         tab.appendChild(msg);
-        return;
+      } else {
+        const list = document.createElement('div');
+        list.className = 'history-list';
+
+        [...papers].reverse().forEach(entry => {
+          const item = document.createElement('div');
+          item.className = 'history-entry';
+
+          const info = document.createElement('div');
+          info.className = 'history-info';
+
+          const titleEl = document.createElement('div');
+          titleEl.className   = 'history-title';
+          titleEl.textContent = entry.title || 'Untitled Test';
+          info.appendChild(titleEl);
+
+          const meta = document.createElement('div');
+          meta.className   = 'history-meta';
+          meta.textContent = `${entry.date} · ${entry.totalMarks} marks · ${entry.questionCount} questions · ${entry.duration}`;
+          info.appendChild(meta);
+
+          const created = document.createElement('div');
+          created.className   = 'history-created';
+          created.textContent = `Saved ${new Date(entry.createdAt).toLocaleString('en-IN')}`;
+          info.appendChild(created);
+
+          item.appendChild(info);
+
+          const btns = document.createElement('div');
+          btns.className = 'history-btns';
+
+          const btnLoad = document.createElement('button');
+          btnLoad.className   = 'btn-primary';
+          btnLoad.textContent = 'Load';
+          btnLoad.addEventListener('click', () => {
+            paper = {
+              id:        entry.id,
+              generated: entry.createdAt,
+              meta: {
+                title:             entry.title,
+                date:              entry.date,
+                duration:          entry.duration,
+                totalMarks:        entry.totalMarks,
+                marksPerQ:         entry.marksPerQ         || 1,
+                negativeMarking:   entry.negativeMarking   || false,
+                negativeMarksPerQ: entry.negativeMarksPerQ || 0.25
+              },
+              questions: entry.questions
+            };
+            selectRender();
+            switchTab('select');
+          });
+
+          const btnDelete = document.createElement('button');
+          btnDelete.className   = 'btn-secondary';
+          btnDelete.textContent = 'Delete';
+          btnDelete.addEventListener('click', () => {
+            const all     = JSON.parse(localStorage.getItem('ch_papers') || '[]');
+            const updated = all.filter(p => p.id !== entry.id);
+            localStorage.setItem('ch_papers', JSON.stringify(updated));
+            historyRender();
+          });
+
+          btns.appendChild(btnLoad);
+          btns.appendChild(btnDelete);
+          item.appendChild(btns);
+          list.appendChild(item);
+        });
+
+        tab.appendChild(list);
       }
 
-      const list = document.createElement('div');
-      list.className = 'history-list';
+      // ── Past Attempts ──
+      const attemptsTitle = document.createElement('div');
+      attemptsTitle.className   = 'history-section-title';
+      attemptsTitle.textContent = 'Past Attempts';
+      tab.appendChild(attemptsTitle);
 
-      [...papers].reverse().forEach(entry => {
-        const item = document.createElement('div');
-        item.className = 'history-entry';
+      const attempts = JSON.parse(localStorage.getItem('ch_attempts') || '[]');
 
-        const info = document.createElement('div');
-        info.className = 'history-info';
+      if (attempts.length === 0) {
+        const msg = document.createElement('p');
+        msg.textContent = 'No past attempts yet.';
+        tab.appendChild(msg);
+      } else {
+        const aList = document.createElement('div');
+        aList.className = 'history-list';
 
-        const titleEl = document.createElement('div');
-        titleEl.className   = 'history-title';
-        titleEl.textContent = entry.title || 'Untitled Test';
-        info.appendChild(titleEl);
+        [...attempts].reverse().forEach(attempt => {
+          const item = document.createElement('div');
+          item.className = 'history-entry';
 
-        const meta = document.createElement('div');
-        meta.className   = 'history-meta';
-        meta.textContent = `${entry.date} · ${entry.totalMarks} marks · ${entry.questionCount} questions · ${entry.duration}`;
-        info.appendChild(meta);
+          const info = document.createElement('div');
+          info.className = 'history-info';
 
-        const created = document.createElement('div');
-        created.className   = 'history-created';
-        created.textContent = `Saved ${new Date(entry.createdAt).toLocaleString('en-IN')}`;
-        info.appendChild(created);
+          const titleEl = document.createElement('div');
+          titleEl.className   = 'history-title';
+          titleEl.textContent = attempt.title || 'Untitled Test';
+          info.appendChild(titleEl);
 
-        item.appendChild(info);
+          const meta = document.createElement('div');
+          meta.className   = 'history-meta';
+          meta.textContent =
+            `${attempt.date} · Score: ${attempt.score} / ${attempt.totalMarks} · ` +
+            `${attempt.correct}✓ ${attempt.incorrect}✗ ${attempt.unattempted}—`;
+          info.appendChild(meta);
 
-        const btns = document.createElement('div');
-        btns.className = 'history-btns';
+          const ts = document.createElement('div');
+          ts.className   = 'history-created';
+          ts.textContent = `Attempted ${new Date(attempt.attemptedAt).toLocaleString('en-IN')}`;
+          info.appendChild(ts);
 
-        const btnLoad = document.createElement('button');
-        btnLoad.className   = 'btn-primary';
-        btnLoad.textContent = 'Load';
-        btnLoad.addEventListener('click', () => {
-          paper = {
-            id:        entry.id,
-            generated: entry.createdAt,
-            meta: {
-              title:             entry.title,
-              date:              entry.date,
-              duration:          entry.duration,
-              totalMarks:        entry.totalMarks,
-              marksPerQ:         entry.marksPerQ         || 1,
-              negativeMarking:   entry.negativeMarking   || false,
-              negativeMarksPerQ: entry.negativeMarksPerQ || 0.25
-            },
-            questions: entry.questions
-          };
-          selectRender();
-          switchTab('select');
+          item.appendChild(info);
+
+          const btns = document.createElement('div');
+          btns.className = 'history-btns';
+
+          const btnView = document.createElement('button');
+          btnView.className   = 'btn-primary';
+          btnView.textContent = 'View Result';
+          btnView.addEventListener('click', () => cbtViewAttempt(attempt));
+
+          btns.appendChild(btnView);
+          item.appendChild(btns);
+          aList.appendChild(item);
         });
 
-        const btnDelete = document.createElement('button');
-        btnDelete.className   = 'btn-secondary';
-        btnDelete.textContent = 'Delete';
-        btnDelete.addEventListener('click', () => {
-          const all     = JSON.parse(localStorage.getItem('ch_papers') || '[]');
-          const updated = all.filter(p => p.id !== entry.id);
-          localStorage.setItem('ch_papers', JSON.stringify(updated));
-          historyRender();
-        });
-
-        btns.appendChild(btnLoad);
-        btns.appendChild(btnDelete);
-        item.appendChild(btns);
-        list.appendChild(item);
-      });
-
-      tab.appendChild(list);
+        tab.appendChild(aList);
+      }
     }
 
     // ── CBT ─────────────────────────────────────────────────────────────────
@@ -2764,6 +2836,33 @@
         }
       });
 
+      // Save attempt to localStorage
+      const attemptEntry = {
+        attemptId:     crypto.randomUUID(),
+        paperId:       paper.id,
+        title:         paper.meta.title || 'Untitled Test',
+        date:          paper.meta.date,
+        attemptedAt:   new Date().toISOString(),
+        score:         totalScore,
+        correct,
+        incorrect,
+        unattempted,
+        totalMarks:    paper.meta.totalMarks,
+        questionCount: paper.questions.length,
+        responses:     paper.questions.map((q, i) => {
+          const bd = breakdown[i];
+          return {
+            question_id:    q.question_id || '',
+            your_answer:    Array.isArray(bd.userAns) ? bd.userAns : (bd.userAns || ''),
+            correct_answer: q.correct || '',
+            marks_awarded:  bd.marks
+          };
+        })
+      };
+      const existingAttempts = JSON.parse(localStorage.getItem('ch_attempts') || '[]');
+      existingAttempts.push(attemptEntry);
+      localStorage.setItem('ch_attempts', JSON.stringify(existingAttempts));
+
       const container = document.createElement('div');
       container.className = 'cbt-result';
 
@@ -2934,6 +3033,210 @@
       btnBackHist.textContent = 'Back to History';
       btnBackHist.addEventListener('click', () => { switchTab('history'); historyRender(); });
       container.appendChild(btnBackHist);
+
+      tab.appendChild(container);
+      renderMath(container);
+    }
+
+    function cbtViewAttempt(attempt) {
+      switchTab('cbt');
+      const tab = document.getElementById('tab-cbt');
+      tab.innerHTML = '';
+
+      // Look up full question objects from ch_papers
+      const papers   = JSON.parse(localStorage.getItem('ch_papers') || '[]');
+      const saved    = papers.find(p => p.id === attempt.paperId);
+      const questions = saved ? saved.questions : null;
+
+      const ROMAN_V  = ['i','ii','iii','iv','v','vi','vii','viii','ix','x'];
+      const AR_OPTS  = [
+        { key: 'A', text: 'Both A and R are true and R is the correct explanation of A' },
+        { key: 'B', text: 'Both A and R are true but R is not the correct explanation of A' },
+        { key: 'C', text: 'A is true but R is false' },
+        { key: 'D', text: 'A is false but R is true' }
+      ];
+
+      const container = document.createElement('div');
+      container.className = 'cbt-result';
+
+      const titleEl = document.createElement('div');
+      titleEl.className   = 'cbt-result-header';
+      titleEl.textContent = `Result — ${attempt.title || 'Untitled Test'}`;
+      container.appendChild(titleEl);
+
+      const tsEl = document.createElement('div');
+      tsEl.style.cssText  = 'font-family:"DM Sans",sans-serif;font-size:0.85rem;color:var(--muted);margin-bottom:1rem;';
+      tsEl.textContent    = `Attempted ${new Date(attempt.attemptedAt).toLocaleString('en-IN')}`;
+      container.appendChild(tsEl);
+
+      // Summary cards
+      const summary = document.createElement('div');
+      summary.className = 'cbt-result-summary';
+      [
+        { val: Number(attempt.score).toFixed(2), label: 'Score' },
+        { val: attempt.correct,                  label: 'Correct' },
+        { val: attempt.incorrect,                label: 'Incorrect' },
+        { val: attempt.unattempted,              label: 'Unattempted' }
+      ].forEach(({ val, label }) => {
+        const card = document.createElement('div');
+        card.className = 'cbt-result-card';
+        const v = document.createElement('div');
+        v.className   = 'cbt-result-card-val';
+        v.textContent = val;
+        const l = document.createElement('div');
+        l.className   = 'cbt-result-card-label';
+        l.textContent = label;
+        card.appendChild(v);
+        card.appendChild(l);
+        summary.appendChild(card);
+      });
+      container.appendChild(summary);
+
+      // Breakdown
+      const bk = document.createElement('div');
+      bk.className = 'cbt-breakdown';
+
+      const hRow = document.createElement('div');
+      hRow.className = 'cbt-breakdown-row header';
+      ['#', 'Question', 'Your Answer', 'Correct', 'Marks'].forEach(h => {
+        const d = document.createElement('div');
+        d.textContent = h;
+        hRow.appendChild(d);
+      });
+      bk.appendChild(hRow);
+
+      attempt.responses.forEach((resp, i) => {
+        const row = document.createElement('div');
+        row.className = 'cbt-breakdown-row';
+
+        const numD = document.createElement('div');
+        numD.textContent = i + 1;
+
+        // Question column
+        const qD = document.createElement('div');
+        const q  = questions ? questions[i] : null;
+
+        if (q) {
+          const type = q.type || 'mcq_single';
+          const qBlock = document.createElement('div');
+          qBlock.style.cssText = 'display:flex;flex-direction:column;gap:0.35rem;';
+
+          if (type === 'assertion_reason') {
+            const aLbl = document.createElement('div');
+            aLbl.className = 'cbt-q-label';
+            aLbl.textContent = 'Assertion (A):';
+            qBlock.appendChild(aLbl);
+            const aText = document.createElement('div');
+            aText.style.cssText = 'font-size:10.5pt;';
+            aText.textContent = q.assertion || '';
+            qBlock.appendChild(aText);
+            const rLbl = document.createElement('div');
+            rLbl.className = 'cbt-q-label';
+            rLbl.textContent = 'Reason (R):';
+            qBlock.appendChild(rLbl);
+            const rText = document.createElement('div');
+            rText.style.cssText = 'font-size:10.5pt;';
+            rText.textContent = q.reason || '';
+            qBlock.appendChild(rText);
+          } else if (type === 'match_following') {
+            const tbl   = document.createElement('table');
+            tbl.className = 'cbt-match-table';
+            const thead  = document.createElement('thead');
+            const hrow   = document.createElement('tr');
+            ['List I', 'List II'].forEach(h => {
+              const th = document.createElement('th');
+              th.textContent = h;
+              hrow.appendChild(th);
+            });
+            thead.appendChild(hrow);
+            tbl.appendChild(thead);
+            const tbody  = document.createElement('tbody');
+            const listI  = q.list_i  || [];
+            const listII = q.list_ii || [];
+            const rc = Math.max(listI.length, listII.length);
+            for (let r = 0; r < rc; r++) {
+              const tr  = document.createElement('tr');
+              const tdI = document.createElement('td');
+              tdI.textContent  = listI[r]  ? `${r + 1}. ${listI[r]}`       : '';
+              const tdII = document.createElement('td');
+              tdII.textContent = listII[r] ? `${ROMAN_V[r]}. ${listII[r]}` : '';
+              tr.appendChild(tdI);
+              tr.appendChild(tdII);
+              tbody.appendChild(tr);
+            }
+            tbl.appendChild(tbody);
+            qBlock.appendChild(tbl);
+            const stemEl = document.createElement('div');
+            stemEl.style.cssText = 'font-size:10.5pt;';
+            stemEl.textContent = q.stem || '';
+            qBlock.appendChild(stemEl);
+          } else {
+            const stemEl = document.createElement('div');
+            stemEl.style.cssText = 'font-size:10.5pt;';
+            stemEl.textContent = q.stem || '';
+            qBlock.appendChild(stemEl);
+          }
+
+          // Options with highlighting
+          let opts = (type === 'assertion_reason') ? AR_OPTS : (q.options || []);
+          const correctKeys = (resp.correct_answer || '').split('').filter(k => /[A-Za-z]/.test(k));
+          const userKeys    = Array.isArray(resp.your_answer)
+            ? resp.your_answer
+            : (resp.your_answer ? resp.your_answer.split(',').map(k => k.trim()) : []);
+          const result = !resp.your_answer || (Array.isArray(resp.your_answer) && resp.your_answer.length === 0)
+            ? 'unattempted'
+            : resp.marks_awarded > 0 ? 'correct' : 'incorrect';
+
+          const optsDiv = document.createElement('div');
+          optsDiv.style.cssText = 'display:flex;flex-direction:column;gap:0.2rem;margin-top:0.25rem;';
+          opts.forEach(opt => {
+            const optDiv = document.createElement('div');
+            optDiv.className   = 'bk-opt';
+            optDiv.textContent = `${opt.key}. ${opt.text}`;
+            if (correctKeys.includes(opt.key)) {
+              optDiv.classList.add('bk-opt-correct');
+            } else if (userKeys.includes(opt.key) && result === 'incorrect') {
+              optDiv.classList.add('bk-opt-wrong');
+            }
+            optsDiv.appendChild(optDiv);
+          });
+          qBlock.appendChild(optsDiv);
+          qD.appendChild(qBlock);
+        } else {
+          qD.style.cssText = 'font-size:0.85rem;color:var(--muted);';
+          qD.textContent   = resp.question_id || `Q${i + 1}`;
+        }
+
+        // Your answer
+        const yourD = document.createElement('div');
+        yourD.textContent = Array.isArray(resp.your_answer)
+          ? resp.your_answer.join(', ')
+          : (resp.your_answer || '—');
+        if (resp.marks_awarded > 0) yourD.className = 'cbt-result-correct';
+        if (resp.marks_awarded < 0) yourD.className = 'cbt-result-incorrect';
+
+        // Correct answer
+        const corrD = document.createElement('div');
+        corrD.textContent = resp.correct_answer || '—';
+
+        // Marks
+        const marksD = document.createElement('div');
+        marksD.textContent = resp.marks_awarded > 0 ? `+${resp.marks_awarded}` : String(resp.marks_awarded);
+        if (resp.marks_awarded > 0) marksD.className = 'cbt-result-correct';
+        if (resp.marks_awarded < 0) marksD.className = 'cbt-result-incorrect';
+
+        [numD, qD, yourD, corrD, marksD].forEach(d => row.appendChild(d));
+        bk.appendChild(row);
+      });
+
+      container.appendChild(bk);
+      renderMath(bk);
+
+      const btnBack = document.createElement('button');
+      btnBack.className   = 'btn-secondary';
+      btnBack.textContent = 'Back to History';
+      btnBack.addEventListener('click', () => { switchTab('history'); historyRender(); });
+      container.appendChild(btnBack);
 
       tab.appendChild(container);
       renderMath(container);
