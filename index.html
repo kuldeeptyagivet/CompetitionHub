@@ -1521,7 +1521,15 @@
       titleInput.className   = 'select-title-input';
       titleInput.placeholder = 'Untitled Test';
       titleInput.value       = paper.meta.title;
-      titleInput.addEventListener('input', () => { paper.meta.title = titleInput.value; });
+      titleInput.addEventListener('input', () => {
+        paper.meta.title = titleInput.value;
+        const all = JSON.parse(localStorage.getItem('ch_papers') || '[]');
+        const entry = all.find(p => p.id === paper.id);
+        if (entry) {
+          entry.title = titleInput.value;
+          localStorage.setItem('ch_papers', JSON.stringify(all));
+        }
+      });
       titleWrap.appendChild(titleInput);
       bar.appendChild(titleWrap);
 
