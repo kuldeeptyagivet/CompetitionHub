@@ -561,6 +561,47 @@
       opacity: 1;
     }
 
+    /* ── History tab ── */
+    .history-list { display: flex; flex-direction: column; gap: 0.75rem; max-width: 800px; }
+
+    .history-entry {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+    }
+
+    .history-info { flex: 1; min-width: 0; }
+
+    .history-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1rem;
+      color: var(--ink);
+      margin-bottom: 0.2rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-meta {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+
+    .history-created {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+
+    .history-btns { display: flex; gap: 0.5rem; flex-shrink: 0; }
+
     /* ── Preview / Print tab — screen ── */
     .preview-actions {
       display: flex;
@@ -805,6 +846,7 @@
       <button class="tab-btn"        role="tab" data-tab="select">Select</button>
       <button class="tab-btn"        role="tab" data-tab="assemble">Assemble</button>
       <button class="tab-btn"        role="tab" data-tab="preview">Preview / Print</button>
+      <button class="tab-btn"        role="tab" data-tab="history">History</button>
     </nav>
   </header>
 
@@ -903,6 +945,7 @@
     <div id="tab-select" class="tab-panel"></div>
     <div id="tab-assemble" class="tab-panel"><p>Assemble tab</p></div>
     <div id="tab-preview"  class="tab-panel"><p>Preview / Print tab</p></div>
+    <div id="tab-history"  class="tab-panel"></div>
   </main>
 
   <script>
@@ -1440,8 +1483,27 @@
         questions: selected
       };
 
+      paperSave();
       selectRender();
       switchTab('select');
+    }
+
+    function paperSave() {
+      const existing = JSON.parse(localStorage.getItem('ch_papers') || '[]');
+      existing.push({
+        id:            paper.id,
+        title:         paper.meta.title,
+        date:          paper.meta.date,
+        duration:      paper.meta.duration,
+        totalMarks:    paper.meta.totalMarks,
+        marksPerQ:         paper.meta.marksPerQ,
+        negativeMarking:   paper.meta.negativeMarking,
+        negativeMarksPerQ: paper.meta.negativeMarksPerQ,
+        questionCount: paper.questions.length,
+        questions:     paper.questions,
+        createdAt:     new Date().toISOString()
+      });
+      localStorage.setItem('ch_papers', JSON.stringify(existing));
     }
 
     function selectRender() {
@@ -1831,6 +1893,90 @@
       renderMath(card);
     }
 
+    function historyRender() {
+      const tab = document.getElementById('tab-history');
+      tab.innerHTML = '';
+
+      const papers = JSON.parse(localStorage.getItem('ch_papers') || '[]');
+
+      if (papers.length === 0) {
+        const msg = document.createElement('p');
+        msg.textContent = 'No saved papers yet.';
+        tab.appendChild(msg);
+        return;
+      }
+
+      const list = document.createElement('div');
+      list.className = 'history-list';
+
+      [...papers].reverse().forEach(entry => {
+        const item = document.createElement('div');
+        item.className = 'history-entry';
+
+        const info = document.createElement('div');
+        info.className = 'history-info';
+
+        const titleEl = document.createElement('div');
+        titleEl.className   = 'history-title';
+        titleEl.textContent = entry.title || 'Untitled Test';
+        info.appendChild(titleEl);
+
+        const meta = document.createElement('div');
+        meta.className   = 'history-meta';
+        meta.textContent = `${entry.date} · ${entry.totalMarks} marks · ${entry.questionCount} questions · ${entry.duration}`;
+        info.appendChild(meta);
+
+        const created = document.createElement('div');
+        created.className   = 'history-created';
+        created.textContent = `Saved ${new Date(entry.createdAt).toLocaleString('en-IN')}`;
+        info.appendChild(created);
+
+        item.appendChild(info);
+
+        const btns = document.createElement('div');
+        btns.className = 'history-btns';
+
+        const btnLoad = document.createElement('button');
+        btnLoad.className   = 'btn-primary';
+        btnLoad.textContent = 'Load';
+        btnLoad.addEventListener('click', () => {
+          paper = {
+            id:        entry.id,
+            generated: entry.createdAt,
+            meta: {
+              title:             entry.title,
+              date:              entry.date,
+              duration:          entry.duration,
+              totalMarks:        entry.totalMarks,
+              marksPerQ:         entry.marksPerQ         || 1,
+              negativeMarking:   entry.negativeMarking   || false,
+              negativeMarksPerQ: entry.negativeMarksPerQ || 0.25
+            },
+            questions: entry.questions
+          };
+          selectRender();
+          switchTab('select');
+        });
+
+        const btnDelete = document.createElement('button');
+        btnDelete.className   = 'btn-secondary';
+        btnDelete.textContent = 'Delete';
+        btnDelete.addEventListener('click', () => {
+          const all     = JSON.parse(localStorage.getItem('ch_papers') || '[]');
+          const updated = all.filter(p => p.id !== entry.id);
+          localStorage.setItem('ch_papers', JSON.stringify(updated));
+          historyRender();
+        });
+
+        btns.appendChild(btnLoad);
+        btns.appendChild(btnDelete);
+        item.appendChild(btns);
+        list.appendChild(item);
+      });
+
+      tab.appendChild(list);
+    }
+
     // ── Folder picker ───────────────────────────────────────────────────────
 
     function filterShowError(msg) {
@@ -1895,6 +2041,7 @@
         tabPanels.forEach(p => p.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+        if (btn.dataset.tab === 'history') historyRender();
       });
     });
 
