@@ -159,9 +159,16 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   total marks computed; est. duration computed as mean
   avg_time_sec across filtered pool × questionCount, prefixed
   with ~; panel hidden when filtered count is 0
+- Test generation complete: paperGenerate() Fisher-Yates
+  shuffles filtered pool, slices N questions, computes exact
+  duration, assembles paper object with crypto.randomUUID();
+  switches to Select tab
+- Select tab complete: summary bar with editable title, date,
+  exact duration, total marks, question count; ordered question
+  list with type badge, stem, difficulty (colour-coded) and
+  bloom tags; Regenerate and Proceed to Print buttons
 
 **Not yet built:**
-- Test generation (random selection, paper assembly)
 - KaTeX rendering
 - Print layout
 - Paper logging (localStorage)
@@ -169,6 +176,7 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
 - Answer logging and scoring
 - Remote data layer (Cloudflare Worker)
 - User access control
+- D1 sync
 - D1 sync
 
 ---
