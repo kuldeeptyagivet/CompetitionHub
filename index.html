@@ -1074,6 +1074,17 @@
     .cbt-result-correct   { color: var(--success); font-weight: 600; }
     .cbt-result-incorrect { color: var(--warn);    font-weight: 600; }
 
+    .bk-opt {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      border: 1px solid transparent;
+      line-height: 1.4;
+    }
+    .bk-opt-correct { border-color: var(--success); color: var(--success); font-weight: 600; background: #f0fdf4; }
+    .bk-opt-wrong   { border-color: var(--warn);    color: var(--warn);    background: #fff7ed; }
+
     /* ── Print media ── */
     @media print {
       body > *:not(main)         { display: none !important; }
@@ -2795,35 +2806,128 @@
       });
       bk.appendChild(hRow);
 
+      const ROMAN_BK = ['i','ii','iii','iv','v','vi','vii','viii','ix','x'];
+
       breakdown.forEach(({ q, i, userAns, marks, result }) => {
         const row = document.createElement('div');
         row.className = 'cbt-breakdown-row';
 
+        // Col 1: number
         const numD = document.createElement('div');
         numD.textContent = i + 1;
 
-        const stemText = (q.stem || q.assertion || '').substring(0, 55);
-        const stemD = document.createElement('div');
-        stemD.textContent = stemText + (stemText.length >= 55 ? '…' : '');
-        stemD.style.cssText = 'font-size:0.8rem;color:var(--muted);overflow:hidden;';
+        // Col 2: full question block
+        const type = q.type || 'mcq_single';
+        const questionBlock = document.createElement('div');
+        questionBlock.style.cssText = 'display:flex;flex-direction:column;gap:0.35rem;';
 
+        if (type === 'assertion_reason') {
+          const aLbl = document.createElement('div');
+          aLbl.className   = 'cbt-q-label';
+          aLbl.textContent = 'Assertion (A):';
+          questionBlock.appendChild(aLbl);
+          const aText = document.createElement('div');
+          aText.style.cssText = 'font-size:10.5pt;';
+          aText.textContent = q.assertion || '';
+          questionBlock.appendChild(aText);
+          const rLbl = document.createElement('div');
+          rLbl.className   = 'cbt-q-label';
+          rLbl.textContent = 'Reason (R):';
+          questionBlock.appendChild(rLbl);
+          const rText = document.createElement('div');
+          rText.style.cssText = 'font-size:10.5pt;';
+          rText.textContent = q.reason || '';
+          questionBlock.appendChild(rText);
+        } else if (type === 'match_following') {
+          const tbl  = document.createElement('table');
+          tbl.className = 'cbt-match-table';
+          const thead = document.createElement('thead');
+          const hrow  = document.createElement('tr');
+          ['List I', 'List II'].forEach(h => {
+            const th = document.createElement('th');
+            th.textContent = h;
+            hrow.appendChild(th);
+          });
+          thead.appendChild(hrow);
+          tbl.appendChild(thead);
+          const tbody  = document.createElement('tbody');
+          const listI  = q.list_i  || [];
+          const listII = q.list_ii || [];
+          const rc = Math.max(listI.length, listII.length);
+          for (let r = 0; r < rc; r++) {
+            const tr = document.createElement('tr');
+            const tdI = document.createElement('td');
+            tdI.textContent  = listI[r]  ? `${r + 1}. ${listI[r]}`       : '';
+            const tdII = document.createElement('td');
+            tdII.textContent = listII[r] ? `${ROMAN_BK[r]}. ${listII[r]}` : '';
+            tr.appendChild(tdI);
+            tr.appendChild(tdII);
+            tbody.appendChild(tr);
+          }
+          tbl.appendChild(tbody);
+          questionBlock.appendChild(tbl);
+          const stemEl = document.createElement('div');
+          stemEl.style.cssText = 'font-size:10.5pt;';
+          stemEl.textContent = q.stem || '';
+          questionBlock.appendChild(stemEl);
+        } else {
+          const stemEl = document.createElement('div');
+          stemEl.style.cssText = 'font-size:10.5pt;';
+          stemEl.textContent = q.stem || '';
+          questionBlock.appendChild(stemEl);
+        }
+
+        // Options with highlighting
+        let opts = q.options || [];
+        if (type === 'assertion_reason') {
+          opts = [
+            { key: 'A', text: 'Both A and R are true and R is the correct explanation of A' },
+            { key: 'B', text: 'Both A and R are true but R is not the correct explanation of A' },
+            { key: 'C', text: 'A is true but R is false' },
+            { key: 'D', text: 'A is false but R is true' }
+          ];
+        }
+
+        const correctKeys = (q.correct || '').split('').filter(k => k.trim() && /[A-Z]/i.test(k));
+        const userKeys    = Array.isArray(userAns) ? userAns : (userAns ? [userAns] : []);
+
+        const optsDiv = document.createElement('div');
+        optsDiv.style.cssText = 'display:flex;flex-direction:column;gap:0.2rem;margin-top:0.25rem;';
+        opts.forEach(opt => {
+          const optDiv = document.createElement('div');
+          optDiv.className   = 'bk-opt';
+          optDiv.textContent = `${opt.key}. ${opt.text}`;
+          if (correctKeys.includes(opt.key)) {
+            optDiv.classList.add('bk-opt-correct');
+          } else if (userKeys.includes(opt.key) && result === 'incorrect') {
+            optDiv.classList.add('bk-opt-wrong');
+          }
+          optsDiv.appendChild(optDiv);
+        });
+        questionBlock.appendChild(optsDiv);
+
+        // Col 3: your answer
         const yourD = document.createElement('div');
         yourD.textContent = Array.isArray(userAns) ? userAns.join(', ') : (userAns || '—');
         if (result === 'correct')   yourD.className = 'cbt-result-correct';
         if (result === 'incorrect') yourD.className = 'cbt-result-incorrect';
 
+        // Col 4: correct answer
         const corrD = document.createElement('div');
         corrD.textContent = q.correct || '—';
 
+        // Col 5: marks
         const marksD = document.createElement('div');
         marksD.textContent = result === 'unattempted' ? '0' : (marks > 0 ? '+' + marks : marks);
         if (marks > 0) marksD.className = 'cbt-result-correct';
         if (marks < 0) marksD.className = 'cbt-result-incorrect';
 
-        [numD, stemD, yourD, corrD, marksD].forEach(d => row.appendChild(d));
+        [numD, questionBlock, yourD, corrD, marksD].forEach(d => row.appendChild(d));
         bk.appendChild(row);
       });
+
       container.appendChild(bk);
+      renderMath(bk);
 
       const btnBackHist = document.createElement('button');
       btnBackHist.className   = 'btn-secondary';
@@ -2832,6 +2936,7 @@
       container.appendChild(btnBackHist);
 
       tab.appendChild(container);
+      renderMath(container);
     }
 
     // ── Folder picker ───────────────────────────────────────────────────────
