@@ -809,6 +809,271 @@
       color: var(--ink);
     }
 
+    /* ── CBT attempt screen ── */
+    .cbt-container { display: flex; flex-direction: column; gap: 1rem; }
+
+    .cbt-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--ink);
+      color: var(--paper);
+      border-radius: 8px;
+      padding: 0.75rem 1.25rem;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .cbt-header-title {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      flex: 1;
+    }
+
+    .cbt-timer {
+      font-family: 'DM Mono', monospace;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--gold);
+      letter-spacing: 0.05em;
+    }
+
+    .cbt-timer.warning { color: #ef4444; }
+
+    .cbt-body {
+      display: grid;
+      grid-template-columns: 1fr 260px;
+      gap: 1rem;
+      align-items: start;
+    }
+
+    @media (max-width: 700px) { .cbt-body { grid-template-columns: 1fr; } }
+
+    .cbt-question-area {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+    }
+
+    .cbt-q-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .cbt-q-number {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1rem;
+      color: var(--ink);
+    }
+
+    .cbt-q-stem {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11pt;
+      color: var(--ink);
+      margin-bottom: 0.75rem;
+      line-height: 1.6;
+    }
+
+    .cbt-q-label {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin: 0.6rem 0 0.2rem;
+    }
+
+    .cbt-match-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 0.5rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 10.5pt;
+    }
+
+    .cbt-match-table th {
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+      padding: 0.25rem 0.5rem;
+    }
+
+    .cbt-match-table td { padding: 0.2rem 0.5rem; vertical-align: top; }
+
+    .cbt-options { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.5rem; }
+
+    .cbt-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 10.5pt;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .cbt-option:hover { border-color: var(--accent); }
+    .cbt-option.selected { border-color: var(--accent); background: #eef2ff; }
+    .cbt-option input { margin-top: 2px; flex-shrink: 0; accent-color: var(--accent); }
+
+    .cbt-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .cbt-nav-btn {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      background: var(--paper);
+      color: var(--ink);
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      padding: 0.5rem 0.9rem;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .cbt-nav-btn:hover { border-color: var(--accent); }
+    .cbt-nav-btn:disabled { opacity: 0.4; cursor: default; }
+
+    .cbt-palette-area {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .cbt-palette-title {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.75rem;
+    }
+
+    .cbt-palette-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.3rem;
+      margin-bottom: 1rem;
+    }
+
+    .palette-btn {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 4px;
+      padding: 0.35rem 0.2rem;
+      cursor: pointer;
+      transition: opacity 0.1s;
+    }
+
+    .palette-btn:hover { opacity: 0.8; }
+    .palette-btn.palette-current { outline: 2.5px solid var(--accent); outline-offset: 1px; }
+
+    .palette-not-visited    { background: var(--muted);   color: var(--paper); }
+    .palette-visited        { background: var(--paper);   color: var(--ink); border: 1.5px solid var(--border); }
+    .palette-answered       { background: var(--success); color: var(--paper); }
+    .palette-review         { background: var(--accent2); color: var(--paper); }
+    .palette-answered-review { background: var(--gold);   color: var(--paper); }
+
+    .cbt-legend { display: flex; flex-direction: column; gap: 0.3rem; }
+
+    .cbt-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .cbt-legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+
+    /* CBT result */
+    .cbt-result { max-width: 700px; }
+
+    .cbt-result-header {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.5rem;
+      color: var(--ink);
+      margin-bottom: 1rem;
+    }
+
+    .cbt-result-summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .cbt-result-card {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      text-align: center;
+    }
+
+    .cbt-result-card-val {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.5rem;
+      color: var(--accent);
+    }
+
+    .cbt-result-card-label {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .cbt-breakdown {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+
+    .cbt-breakdown-row {
+      display: grid;
+      grid-template-columns: 2.5rem 1fr 5rem 5rem 4rem;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-bottom: 1px solid var(--border);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      align-items: center;
+    }
+
+    .cbt-breakdown-row.header {
+      background: var(--cream);
+      font-weight: 600;
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .cbt-breakdown-row:last-child { border-bottom: none; }
+    .cbt-result-correct   { color: var(--success); font-weight: 600; }
+    .cbt-result-incorrect { color: var(--warn);    font-weight: 600; }
+
     /* ── Print media ── */
     @media print {
       body > *:not(main)         { display: none !important; }
@@ -847,6 +1112,7 @@
       <button class="tab-btn"        role="tab" data-tab="assemble">Assemble</button>
       <button class="tab-btn"        role="tab" data-tab="preview">Preview / Print</button>
       <button class="tab-btn"        role="tab" data-tab="history">History</button>
+      <button class="tab-btn"        role="tab" data-tab="cbt">CBT</button>
     </nav>
   </header>
 
@@ -946,6 +1212,7 @@
     <div id="tab-assemble" class="tab-panel"><p>Assemble tab</p></div>
     <div id="tab-preview"  class="tab-panel"><p>Preview / Print tab</p></div>
     <div id="tab-history"  class="tab-panel"></div>
+    <div id="tab-cbt"      class="tab-panel"></div>
   </main>
 
   <script>
@@ -981,6 +1248,7 @@
     };
 
     let paper = null;
+    let cbt   = null;
 
     async function getData(path) {
       if (CONFIG.mode === 'local') {
@@ -1436,6 +1704,7 @@
     }
 
     function switchTab(name) {
+      if (name !== 'cbt') cbtClearTimer();
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       const btn = document.querySelector(`.tab-btn[data-tab="${name}"]`);
@@ -1612,8 +1881,14 @@
       btnProceed.textContent = 'Proceed to Print';
       btnProceed.addEventListener('click', () => { switchTab('preview'); previewRender(); });
 
+      const btnStartCBT = document.createElement('button');
+      btnStartCBT.className   = 'btn-secondary';
+      btnStartCBT.textContent = 'Start CBT';
+      btnStartCBT.addEventListener('click', () => { cbt = null; switchTab('cbt'); cbtRender(); });
+
       actions.appendChild(btnRegen);
       actions.appendChild(btnProceed);
+      actions.appendChild(btnStartCBT);
       tab.appendChild(actions);
     }
 
@@ -1985,6 +2260,580 @@
       tab.appendChild(list);
     }
 
+    // ── CBT ─────────────────────────────────────────────────────────────────
+
+    function parseDuration(str) {
+      let secs = 0;
+      const hrMatch  = str.match(/(\d+)\s*hr/);
+      const minMatch = str.match(/(\d+)\s*min/);
+      if (hrMatch)  secs += parseInt(hrMatch[1])  * 3600;
+      if (minMatch) secs += parseInt(minMatch[1]) * 60;
+      return secs || 3600;
+    }
+
+    function cbtFormatTime(secs) {
+      const h = Math.floor(secs / 3600);
+      const m = Math.floor((secs % 3600) / 60);
+      const s = secs % 60;
+      return [h, m, s].map(v => String(v).padStart(2, '0')).join(':');
+    }
+
+    function cbtClearTimer() {
+      if (cbt && cbt.timerInterval) {
+        clearInterval(cbt.timerInterval);
+        cbt.timerInterval = null;
+      }
+    }
+
+    function cbtStatusClass(status) {
+      return {
+        'not-visited':     'palette-not-visited',
+        'visited':         'palette-visited',
+        'answered':        'palette-answered',
+        'review':          'palette-review',
+        'answered-review': 'palette-answered-review'
+      }[status] || 'palette-not-visited';
+    }
+
+    function cbtRender() {
+      const tab = document.getElementById('tab-cbt');
+      tab.innerHTML = '';
+
+      if (!paper) {
+        const msg = document.createElement('p');
+        msg.textContent = 'Load a paper from History to begin a CBT attempt.';
+        tab.appendChild(msg);
+        return;
+      }
+
+      // Init fresh if no CBT or different paper
+      if (!cbt || cbt.paperId !== paper.id) {
+        cbt = {
+          paperId:       paper.id,
+          current:       0,
+          answers:       {},
+          status:        {},
+          timerInterval: null,
+          timeLeft:      parseDuration(paper.meta.duration)
+        };
+        paper.questions.forEach((_, i) => { cbt.status[i] = 'not-visited'; });
+      }
+
+      cbtRenderAttempt();
+    }
+
+    function cbtRenderAttempt() {
+      const tab = document.getElementById('tab-cbt');
+      tab.innerHTML = '';
+
+      const container = document.createElement('div');
+      container.className = 'cbt-container';
+
+      // Header
+      const header = document.createElement('div');
+      header.className = 'cbt-header';
+
+      const headerTitle = document.createElement('div');
+      headerTitle.className   = 'cbt-header-title';
+      headerTitle.textContent = paper.meta.title || 'CBT Attempt';
+
+      const timerEl = document.createElement('div');
+      timerEl.className = 'cbt-timer';
+      timerEl.id        = 'cbt-timer-display';
+      timerEl.textContent = cbtFormatTime(cbt.timeLeft);
+
+      const btnSubmitHeader = document.createElement('button');
+      btnSubmitHeader.className   = 'btn-primary';
+      btnSubmitHeader.textContent = 'Submit';
+      btnSubmitHeader.addEventListener('click', cbtShowConfirm);
+
+      header.appendChild(headerTitle);
+      header.appendChild(timerEl);
+      header.appendChild(btnSubmitHeader);
+      container.appendChild(header);
+
+      // Body
+      const body = document.createElement('div');
+      body.className = 'cbt-body';
+
+      const qArea = document.createElement('div');
+      qArea.id        = 'cbt-question-area';
+      qArea.className = 'cbt-question-area';
+
+      const paletteArea = document.createElement('div');
+      paletteArea.className = 'cbt-palette-area';
+
+      const palTitle = document.createElement('div');
+      palTitle.className   = 'cbt-palette-title';
+      palTitle.textContent = 'Question Palette';
+      paletteArea.appendChild(palTitle);
+
+      const palGrid = document.createElement('div');
+      palGrid.className = 'cbt-palette-grid';
+      palGrid.id        = 'cbt-palette-grid';
+      paletteArea.appendChild(palGrid);
+
+      const legend = document.createElement('div');
+      legend.className = 'cbt-legend';
+      [
+        { cls: 'palette-not-visited',     label: 'Not visited' },
+        { cls: 'palette-visited',         label: 'Visited, not answered' },
+        { cls: 'palette-answered',        label: 'Answered' },
+        { cls: 'palette-review',          label: 'Marked for review' },
+        { cls: 'palette-answered-review', label: 'Answered & marked' }
+      ].forEach(({ cls, label }) => {
+        const item = document.createElement('div');
+        item.className = 'cbt-legend-item';
+        const dot = document.createElement('div');
+        dot.className = `cbt-legend-dot ${cls}`;
+        const txt = document.createElement('span');
+        txt.textContent = label;
+        item.appendChild(dot);
+        item.appendChild(txt);
+        legend.appendChild(item);
+      });
+      paletteArea.appendChild(legend);
+
+      body.appendChild(qArea);
+      body.appendChild(paletteArea);
+      container.appendChild(body);
+      tab.appendChild(container);
+
+      cbtRenderPalette();
+      cbtRenderQuestion(cbt.current);
+
+      // Start timer
+      cbtClearTimer();
+      cbt.timerInterval = setInterval(() => {
+        if (!cbt) return;
+        cbt.timeLeft = Math.max(0, cbt.timeLeft - 1);
+        const el = document.getElementById('cbt-timer-display');
+        if (el) {
+          el.textContent = cbtFormatTime(cbt.timeLeft);
+          if (cbt.timeLeft <= 300) el.classList.add('warning');
+        }
+        if (cbt.timeLeft <= 0) {
+          cbtClearTimer();
+          cbtShowResult();
+        }
+      }, 1000);
+    }
+
+    function cbtRenderPalette() {
+      const grid = document.getElementById('cbt-palette-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      paper.questions.forEach((_, i) => {
+        const btn = document.createElement('button');
+        btn.className   = 'palette-btn ' + cbtStatusClass(cbt.status[i]);
+        btn.textContent = i + 1;
+        if (i === cbt.current) btn.classList.add('palette-current');
+        btn.addEventListener('click', () => cbtGoTo(i));
+        grid.appendChild(btn);
+      });
+    }
+
+    function cbtRenderQuestion(idx) {
+      const area = document.getElementById('cbt-question-area');
+      if (!area) return;
+      area.innerHTML = '';
+
+      const q = paper.questions[idx];
+      if (!q) return;
+
+      if (cbt.status[idx] === 'not-visited') cbt.status[idx] = 'visited';
+
+      const ROMAN = ['i','ii','iii','iv','v','vi','vii','viii','ix','x'];
+      const type  = q.type || 'mcq_single';
+
+      // Meta row
+      const meta = document.createElement('div');
+      meta.className = 'cbt-q-meta';
+      const numSpan = document.createElement('span');
+      numSpan.className   = 'cbt-q-number';
+      numSpan.textContent = `Question ${idx + 1} of ${paper.questions.length}`;
+      const badge = document.createElement('span');
+      badge.className   = 'select-q-badge';
+      badge.textContent = type.replace(/_/g, ' ');
+      meta.appendChild(numSpan);
+      meta.appendChild(badge);
+      area.appendChild(meta);
+
+      // Question body by type
+      if (type === 'assertion_reason') {
+        const aLbl = document.createElement('div');
+        aLbl.className   = 'cbt-q-label';
+        aLbl.textContent = 'Assertion (A):';
+        area.appendChild(aLbl);
+        const aText = document.createElement('div');
+        aText.className   = 'cbt-q-stem';
+        aText.textContent = q.assertion || '';
+        area.appendChild(aText);
+        const rLbl = document.createElement('div');
+        rLbl.className   = 'cbt-q-label';
+        rLbl.textContent = 'Reason (R):';
+        area.appendChild(rLbl);
+        const rText = document.createElement('div');
+        rText.className   = 'cbt-q-stem';
+        rText.textContent = q.reason || '';
+        area.appendChild(rText);
+      } else if (type === 'match_following') {
+        const table  = document.createElement('table');
+        table.className = 'cbt-match-table';
+        const thead  = document.createElement('thead');
+        const hRow   = document.createElement('tr');
+        ['List I', 'List II'].forEach(h => {
+          const th = document.createElement('th');
+          th.textContent = h;
+          hRow.appendChild(th);
+        });
+        thead.appendChild(hRow);
+        table.appendChild(thead);
+        const tbody  = document.createElement('tbody');
+        const listI  = q.list_i  || [];
+        const listII = q.list_ii || [];
+        const rc     = Math.max(listI.length, listII.length);
+        for (let i = 0; i < rc; i++) {
+          const tr  = document.createElement('tr');
+          const tdI = document.createElement('td');
+          tdI.textContent  = listI[i]  ? `${i + 1}. ${listI[i]}`     : '';
+          const tdII = document.createElement('td');
+          tdII.textContent = listII[i] ? `${ROMAN[i]}. ${listII[i]}` : '';
+          tr.appendChild(tdI);
+          tr.appendChild(tdII);
+          tbody.appendChild(tr);
+        }
+        table.appendChild(tbody);
+        area.appendChild(table);
+        const stemEl = document.createElement('div');
+        stemEl.className   = 'cbt-q-stem';
+        stemEl.textContent = q.stem || '';
+        area.appendChild(stemEl);
+      } else {
+        const stemEl = document.createElement('div');
+        stemEl.className   = 'cbt-q-stem';
+        stemEl.textContent = q.stem || '';
+        area.appendChild(stemEl);
+      }
+
+      // Options
+      const isMulti = type === 'mcq_multi';
+      let opts = q.options || [];
+      if (type === 'assertion_reason') {
+        opts = [
+          { key: 'A', text: 'Both A and R are true and R is the correct explanation of A' },
+          { key: 'B', text: 'Both A and R are true but R is not the correct explanation of A' },
+          { key: 'C', text: 'A is true but R is false' },
+          { key: 'D', text: 'A is false but R is true' }
+        ];
+      }
+
+      const optionsDiv = document.createElement('div');
+      optionsDiv.className = 'cbt-options';
+      const currentAnswer = cbt.answers[idx];
+
+      opts.forEach(opt => {
+        const label = document.createElement('label');
+        label.className = 'cbt-option';
+
+        const input = document.createElement('input');
+        input.type  = isMulti ? 'checkbox' : 'radio';
+        input.name  = `cbt-q-${idx}`;
+        input.value = opt.key;
+
+        if (isMulti) {
+          if (Array.isArray(currentAnswer) && currentAnswer.includes(opt.key)) {
+            input.checked = true;
+            label.classList.add('selected');
+          }
+        } else {
+          if (currentAnswer === opt.key) {
+            input.checked = true;
+            label.classList.add('selected');
+          }
+        }
+
+        input.addEventListener('change', () => {
+          if (isMulti) {
+            optionsDiv.querySelectorAll('.cbt-option').forEach(l => l.classList.remove('selected'));
+            optionsDiv.querySelectorAll('input[type=checkbox]:checked').forEach(cb => {
+              cb.closest('.cbt-option').classList.add('selected');
+            });
+          } else {
+            optionsDiv.querySelectorAll('.cbt-option').forEach(l => l.classList.remove('selected'));
+            label.classList.add('selected');
+          }
+        });
+
+        const textSpan = document.createElement('span');
+        textSpan.textContent = `${opt.key}. ${opt.text}`;
+        label.appendChild(input);
+        label.appendChild(textSpan);
+        optionsDiv.appendChild(label);
+      });
+
+      area.appendChild(optionsDiv);
+
+      // Controls
+      const controls = document.createElement('div');
+      controls.className = 'cbt-controls';
+
+      const btnBack = document.createElement('button');
+      btnBack.className   = 'cbt-nav-btn';
+      btnBack.textContent = '← Back';
+      btnBack.disabled    = idx === 0;
+      btnBack.addEventListener('click', () => cbtGoTo(idx - 1));
+
+      const btnSave = document.createElement('button');
+      btnSave.className   = 'btn-primary';
+      btnSave.textContent = 'Save & Next';
+      btnSave.addEventListener('click', () => {
+        const ans = cbtReadAnswer(idx, isMulti, optionsDiv);
+        if (ans !== null) {
+          cbt.answers[idx] = ans;
+          if (cbt.status[idx] !== 'answered-review') cbt.status[idx] = 'answered';
+        }
+        if (idx + 1 < paper.questions.length) cbtGoTo(idx + 1);
+      });
+
+      const btnMark = document.createElement('button');
+      btnMark.className   = 'btn-secondary';
+      btnMark.textContent = 'Mark for Review';
+      btnMark.addEventListener('click', () => {
+        const ans = cbtReadAnswer(idx, isMulti, optionsDiv);
+        if (ans !== null) {
+          cbt.answers[idx] = ans;
+          cbt.status[idx]  = 'answered-review';
+        } else {
+          cbt.status[idx] = 'review';
+        }
+        if (idx + 1 < paper.questions.length) cbtGoTo(idx + 1);
+      });
+
+      const btnClear = document.createElement('button');
+      btnClear.className   = 'cbt-nav-btn';
+      btnClear.textContent = 'Clear Response';
+      btnClear.addEventListener('click', () => {
+        delete cbt.answers[idx];
+        cbt.status[idx] = 'visited';
+        cbtRenderQuestion(idx);
+        cbtRenderPalette();
+      });
+
+      const btnNext = document.createElement('button');
+      btnNext.className   = 'cbt-nav-btn';
+      btnNext.textContent = 'Next →';
+      btnNext.disabled    = idx === paper.questions.length - 1;
+      btnNext.addEventListener('click', () => cbtGoTo(idx + 1));
+
+      controls.appendChild(btnBack);
+      controls.appendChild(btnSave);
+      controls.appendChild(btnMark);
+      controls.appendChild(btnClear);
+      controls.appendChild(btnNext);
+      area.appendChild(controls);
+
+      cbtRenderPalette();
+      renderMath(area);
+    }
+
+    function cbtReadAnswer(idx, isMulti, optionsDiv) {
+      if (isMulti) {
+        const checked = [...optionsDiv.querySelectorAll('input[type=checkbox]:checked')].map(cb => cb.value);
+        return checked.length > 0 ? checked : null;
+      }
+      const checked = optionsDiv.querySelector('input[type=radio]:checked');
+      return checked ? checked.value : null;
+    }
+
+    function cbtGoTo(idx) {
+      if (idx < 0 || idx >= paper.questions.length) return;
+      cbt.current = idx;
+      cbtRenderQuestion(idx);
+      cbtRenderPalette();
+    }
+
+    function cbtShowConfirm() {
+      cbtClearTimer();
+      const tab = document.getElementById('tab-cbt');
+      tab.innerHTML = '';
+
+      const answered    = Object.values(cbt.status).filter(s => s === 'answered' || s === 'answered-review').length;
+      const notAnswered = paper.questions.length - answered;
+      const review      = Object.values(cbt.status).filter(s => s === 'review'   || s === 'answered-review').length;
+
+      const box = document.createElement('div');
+      box.className = 'cbt-result';
+
+      const title = document.createElement('div');
+      title.className   = 'cbt-result-header';
+      title.textContent = 'Submit Test?';
+      box.appendChild(title);
+
+      const summary = document.createElement('div');
+      summary.className = 'cbt-result-summary';
+      [
+        { val: answered,    label: 'Answered' },
+        { val: notAnswered, label: 'Not answered' },
+        { val: review,      label: 'Marked for review' }
+      ].forEach(({ val, label }) => {
+        const card  = document.createElement('div');
+        card.className  = 'cbt-result-card';
+        const v = document.createElement('div');
+        v.className   = 'cbt-result-card-val';
+        v.textContent = val;
+        const l = document.createElement('div');
+        l.className   = 'cbt-result-card-label';
+        l.textContent = label;
+        card.appendChild(v);
+        card.appendChild(l);
+        summary.appendChild(card);
+      });
+      box.appendChild(summary);
+
+      const btns = document.createElement('div');
+      btns.style.cssText = 'display:flex;gap:0.75rem;';
+
+      const btnCancel = document.createElement('button');
+      btnCancel.className   = 'btn-secondary';
+      btnCancel.textContent = 'Cancel';
+      btnCancel.addEventListener('click', () => {
+        cbtRenderAttempt();
+        // Restore timer from remaining time (already in cbt.timeLeft)
+        cbtGoTo(cbt.current);
+      });
+
+      const btnConfirm = document.createElement('button');
+      btnConfirm.className   = 'btn-primary';
+      btnConfirm.textContent = 'Submit';
+      btnConfirm.addEventListener('click', cbtShowResult);
+
+      btns.appendChild(btnCancel);
+      btns.appendChild(btnConfirm);
+      box.appendChild(btns);
+      tab.appendChild(box);
+    }
+
+    function cbtShowResult() {
+      cbtClearTimer();
+      const tab = document.getElementById('tab-cbt');
+      tab.innerHTML = '';
+
+      const m          = paper.meta;
+      const marksPerQ  = m.marksPerQ         || 1;
+      const negMarking = m.negativeMarking   || false;
+      const negMarks   = m.negativeMarksPerQ || 0;
+
+      let correct = 0, incorrect = 0, unattempted = 0, totalScore = 0;
+
+      const breakdown = paper.questions.map((q, i) => {
+        const userAns = cbt.answers[i];
+        const hasAns  = userAns !== null && userAns !== undefined &&
+                        (Array.isArray(userAns) ? userAns.length > 0 : userAns !== '');
+        if (!hasAns) {
+          unattempted++;
+          return { q, i, userAns: null, marks: 0, result: 'unattempted' };
+        }
+        const correctAns = (q.correct || '').trim();
+        let isCorrect = false;
+        if (Array.isArray(userAns)) {
+          isCorrect = [...userAns].sort().join('') === correctAns.split('').sort().join('');
+        } else {
+          isCorrect = userAns === correctAns;
+        }
+        if (isCorrect) {
+          correct++;
+          totalScore += marksPerQ;
+          return { q, i, userAns, marks: marksPerQ, result: 'correct' };
+        } else {
+          incorrect++;
+          const lost = negMarking ? negMarks : 0;
+          totalScore -= lost;
+          return { q, i, userAns, marks: lost > 0 ? -lost : 0, result: 'incorrect' };
+        }
+      });
+
+      const container = document.createElement('div');
+      container.className = 'cbt-result';
+
+      const title = document.createElement('div');
+      title.className   = 'cbt-result-header';
+      title.textContent = 'Result';
+      container.appendChild(title);
+
+      const summary = document.createElement('div');
+      summary.className = 'cbt-result-summary';
+      [
+        { val: totalScore.toFixed(2), label: 'Score' },
+        { val: correct,               label: 'Correct' },
+        { val: incorrect,             label: 'Incorrect' },
+        { val: unattempted,           label: 'Unattempted' }
+      ].forEach(({ val, label }) => {
+        const card = document.createElement('div');
+        card.className  = 'cbt-result-card';
+        const v = document.createElement('div');
+        v.className   = 'cbt-result-card-val';
+        v.textContent = val;
+        const l = document.createElement('div');
+        l.className   = 'cbt-result-card-label';
+        l.textContent = label;
+        card.appendChild(v);
+        card.appendChild(l);
+        summary.appendChild(card);
+      });
+      container.appendChild(summary);
+
+      const bk = document.createElement('div');
+      bk.className = 'cbt-breakdown';
+
+      const hRow = document.createElement('div');
+      hRow.className = 'cbt-breakdown-row header';
+      ['#', 'Question', 'Your Answer', 'Correct', 'Marks'].forEach(h => {
+        const d = document.createElement('div');
+        d.textContent = h;
+        hRow.appendChild(d);
+      });
+      bk.appendChild(hRow);
+
+      breakdown.forEach(({ q, i, userAns, marks, result }) => {
+        const row = document.createElement('div');
+        row.className = 'cbt-breakdown-row';
+
+        const numD = document.createElement('div');
+        numD.textContent = i + 1;
+
+        const stemText = (q.stem || q.assertion || '').substring(0, 55);
+        const stemD = document.createElement('div');
+        stemD.textContent = stemText + (stemText.length >= 55 ? '…' : '');
+        stemD.style.cssText = 'font-size:0.8rem;color:var(--muted);overflow:hidden;';
+
+        const yourD = document.createElement('div');
+        yourD.textContent = Array.isArray(userAns) ? userAns.join(', ') : (userAns || '—');
+        if (result === 'correct')   yourD.className = 'cbt-result-correct';
+        if (result === 'incorrect') yourD.className = 'cbt-result-incorrect';
+
+        const corrD = document.createElement('div');
+        corrD.textContent = q.correct || '—';
+
+        const marksD = document.createElement('div');
+        marksD.textContent = result === 'unattempted' ? '0' : (marks > 0 ? '+' + marks : marks);
+        if (marks > 0) marksD.className = 'cbt-result-correct';
+        if (marks < 0) marksD.className = 'cbt-result-incorrect';
+
+        [numD, stemD, yourD, corrD, marksD].forEach(d => row.appendChild(d));
+        bk.appendChild(row);
+      });
+      container.appendChild(bk);
+
+      const btnBackHist = document.createElement('button');
+      btnBackHist.className   = 'btn-secondary';
+      btnBackHist.textContent = 'Back to History';
+      btnBackHist.addEventListener('click', () => { switchTab('history'); historyRender(); });
+      container.appendChild(btnBackHist);
+
+      tab.appendChild(container);
+    }
+
     // ── Folder picker ───────────────────────────────────────────────────────
 
     function filterShowError(msg) {
@@ -2050,6 +2899,8 @@
         btn.classList.add('active');
         document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
         if (btn.dataset.tab === 'history') historyRender();
+        if (btn.dataset.tab === 'cbt')     cbtRender();
+        if (btn.dataset.tab !== 'cbt')     cbtClearTimer();
       });
     });
 
