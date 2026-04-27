@@ -175,9 +175,19 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   paper title, date, page break), hints and solutions (per
   question, skips null fields, page break); print CSS hides
   app chrome; screen view has Print and Back to Select buttons
+- Paper logging complete: paperSave() appends full paper entry
+  (id, title, date, duration, totalMarks, questionCount,
+  questions, createdAt) to ch_papers in localStorage; called
+  inside paperGenerate() before selectRender(); title input
+  listener in selectRender() updates matching localStorage entry
+  on every keystroke so edited titles persist correctly
+- History tab complete: renders ch_papers newest-first; each
+  entry shows title, date, marks, question count, createdAt;
+  Load restores paper to Select tab; Delete removes entry and
+  re-renders; empty state shows "No saved papers yet."; list
+  re-renders on every tab click
 
 **Not yet built:**
-- Paper logging (localStorage)
 - CBT attempt screen (NTA interface)
 - Answer logging and scoring
 - Remote data layer (Cloudflare Worker)
@@ -213,6 +223,10 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
 2026-04-27 — Print mode supports manual answer logging:
   user prints, attempts on paper, returns to app to
   enter answers; same scoring endpoint as CBT mode.
+2026-04-28 — Title saved to localStorage on every keystroke
+  via the input event listener in selectRender(), not at paper
+  assembly time, so the stored title always reflects the final
+  edited value.
 
 ---
 
