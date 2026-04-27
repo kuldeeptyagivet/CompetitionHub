@@ -726,6 +726,48 @@
       text-align: center;
     }
 
+    /* Hints & Solutions */
+    .preview-hints-section { margin-top: 2.5rem; }
+
+    .preview-hints-entry {
+      margin-bottom: 1.25rem;
+      page-break-inside: avoid;
+    }
+
+    .preview-hints-qnum {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 0.25rem;
+    }
+
+    .preview-hints-label-hint {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.1rem;
+    }
+
+    .preview-hints-label-solution {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.1rem;
+      margin-top: 0.4rem;
+    }
+
+    .preview-hints-text {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 10.5pt;
+      color: var(--ink);
+    }
+
     /* ── Print media ── */
     @media print {
       body > *:not(main)         { display: none !important; }
@@ -1730,6 +1772,60 @@
       });
       ak.appendChild(akGrid);
       card.appendChild(ak);
+
+      // ── Hints & Solutions ──
+      const hintEntries = paper.questions.filter(q => q.hint || q.solution);
+      if (hintEntries.length > 0) {
+        const hs = document.createElement('div');
+        hs.className = 'preview-hints-section preview-answer-key';
+
+        const hsTitle = document.createElement('div');
+        hsTitle.className   = 'preview-answer-key-title';
+        hsTitle.textContent = 'Hints & Solutions';
+        hs.appendChild(hsTitle);
+
+        const hsSub = document.createElement('div');
+        hsSub.className   = 'preview-answer-key-sub';
+        hsSub.textContent = `${m.title || 'Untitled Test'} — ${m.date}`;
+        hs.appendChild(hsSub);
+
+        paper.questions.forEach((q, idx) => {
+          if (!q.hint && !q.solution) return;
+          const entry = document.createElement('div');
+          entry.className = 'preview-hints-entry';
+
+          const qnum = document.createElement('div');
+          qnum.className   = 'preview-hints-qnum';
+          qnum.textContent = `Q${idx + 1}  ${q.question_id || ''}`;
+          entry.appendChild(qnum);
+
+          if (q.hint) {
+            const label = document.createElement('div');
+            label.className   = 'preview-hints-label-hint';
+            label.textContent = 'Hint';
+            entry.appendChild(label);
+            const text = document.createElement('div');
+            text.className   = 'preview-hints-text';
+            text.textContent = q.hint;
+            entry.appendChild(text);
+          }
+
+          if (q.solution) {
+            const label = document.createElement('div');
+            label.className   = 'preview-hints-label-solution';
+            label.textContent = 'Solution';
+            entry.appendChild(label);
+            const text = document.createElement('div');
+            text.className   = 'preview-hints-text';
+            text.textContent = q.solution;
+            entry.appendChild(text);
+          }
+
+          hs.appendChild(entry);
+        });
+
+        card.appendChild(hs);
+      }
 
       tab.appendChild(card);
       renderMath(card);
