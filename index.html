@@ -1696,9 +1696,9 @@
           for (let i = 0; i < rowCount; i++) {
             const tr = document.createElement('tr');
             const tdI  = document.createElement('td');
-            tdI.textContent  = listI[i]  || '';
+            tdI.textContent  = listI[i]  ? `${i + 1}. ${listI[i]}`   : '';
             const tdII = document.createElement('td');
-            tdII.textContent = listII[i] || '';
+            tdII.textContent = listII[i] ? `${ROMAN[i]}. ${listII[i]}` : '';
             tr.appendChild(tdI);
             tr.appendChild(tdII);
             tbody.appendChild(tr);
