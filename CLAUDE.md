@@ -167,16 +167,17 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   exact duration, total marks, question count; ordered question
   list with type badge, stem, difficulty (colour-coded) and
   bloom tags; Regenerate and Proceed to Print buttons
+- KaTeX rendering complete: CDN loaded in head, renderMath(el)
+  utility with four delimiter pairs and throwOnError: false;
+  wired to selectRender() and previewRender() stub
 
 **Not yet built:**
-- KaTeX rendering
 - Print layout
 - Paper logging (localStorage)
 - CBT attempt screen (NTA interface)
 - Answer logging and scoring
 - Remote data layer (Cloudflare Worker)
 - User access control
-- D1 sync
 - D1 sync
 
 ---
