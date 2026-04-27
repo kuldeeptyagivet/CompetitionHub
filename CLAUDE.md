@@ -169,10 +169,14 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   bloom tags; Regenerate and Proceed to Print buttons
 - KaTeX rendering complete: CDN loaded in head, renderMath(el)
   utility with four delimiter pairs and throwOnError: false;
-  wired to selectRender() and previewRender() stub
+  wired to selectRender() and previewRender()
+- Print layout complete: three-page print output — exam paper
+  (header, instructions, questions by type), answer key (grid,
+  paper title, date, page break), hints and solutions (per
+  question, skips null fields, page break); print CSS hides
+  app chrome; screen view has Print and Back to Select buttons
 
 **Not yet built:**
-- Print layout
 - Paper logging (localStorage)
 - CBT attempt screen (NTA interface)
 - Answer logging and scoring
