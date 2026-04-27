@@ -154,15 +154,22 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   no JSON fetch fires until user selects at least one chapter;
   count bar shows "Select books and chapters to begin" until
   a chapter is selected
+- Test parameters panel: questionCount, marksPerQ,
+  negativeMarking, negativeMarksPerQ stored in paperParams;
+  total marks computed; est. duration computed as mean
+  avg_time_sec across filtered pool × questionCount, prefixed
+  with ~; panel hidden when filtered count is 0
 
 **Not yet built:**
-- Test parameters (question count, marks, negative marking,
-  duration from avg_time_sec)
 - Test generation (random selection, paper assembly)
 - KaTeX rendering
 - Print layout
+- Paper logging (localStorage)
+- CBT attempt screen (NTA interface)
+- Answer logging and scoring
 - Remote data layer (Cloudflare Worker)
 - User access control
+- D1 sync
 
 ---
 
@@ -182,6 +189,17 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
 2026-04-26 — Books and chapters default to unselected on folder
   load; JSON fetch deferred until user makes explicit selection
   to keep the app performant with large question banks.
+2026-04-27 — Duration shown in parameters panel is an
+  estimate (mean avg_time_sec × question count); exact
+  duration computed at paper assembly in Part 05.
+2026-04-27 — Paper logging uses localStorage in Part 08;
+  D1 sync deferred to Part 13 after Worker is built.
+2026-04-27 — CBT attempt screen follows NTA interface
+  pattern: question palette, colour coding, countdown
+  timer, Save & Next flow; built in Part 09.
+2026-04-27 — Print mode supports manual answer logging:
+  user prints, attempts on paper, returns to app to
+  enter answers; same scoring endpoint as CBT mode.
 
 ---
 
