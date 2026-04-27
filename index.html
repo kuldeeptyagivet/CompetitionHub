@@ -232,6 +232,101 @@
       margin: 1.25rem 0;
     }
 
+    /* ── Params panel ── */
+    #params-panel {
+      display: none;
+      margin-top: 1.5rem;
+    }
+
+    .params-section-label {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 0.75rem;
+    }
+
+    .params-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 2rem;
+      align-items: flex-end;
+      margin-bottom: 0.75rem;
+    }
+
+    .params-row:last-child { margin-bottom: 0; }
+
+    .param-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .param-label {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .param-input {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.9rem;
+      color: var(--ink);
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 0.35rem 0.6rem;
+      width: 5.5rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .param-input:focus { border-color: var(--accent); }
+
+    .param-max {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    .param-toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.35rem 0;
+    }
+
+    .param-toggle-label {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem;
+      color: var(--ink);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .param-toggle-label input[type="checkbox"] {
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .param-computed {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.9rem;
+      color: var(--ink);
+      background: var(--cream);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 0.35rem 0.6rem;
+      min-width: 5.5rem;
+      display: inline-block;
+    }
+
     /* ── Auth overlay ── */
     #auth-overlay {
       position: fixed;
@@ -343,6 +438,46 @@
 
       </div><!-- #filter-panel -->
 
+      <!-- ── Test Parameters ── -->
+      <div id="params-panel">
+        <hr class="filter-divider">
+        <div class="params-section-label">Test Parameters</div>
+
+        <div class="params-row">
+          <div class="param-group">
+            <label class="param-label" for="param-q-count">Questions</label>
+            <input type="number" id="param-q-count" class="param-input" min="1" value="1">
+            <span id="param-q-max" class="param-max">of 0</span>
+          </div>
+          <div class="param-group">
+            <label class="param-label" for="param-marks-per-q">Marks / question</label>
+            <input type="number" id="param-marks-per-q" class="param-input" min="0.25" step="0.25" value="1">
+          </div>
+          <div class="param-group">
+            <span class="param-label">Negative marking</span>
+            <div class="param-toggle-row">
+              <label class="param-toggle-label">
+                <input type="checkbox" id="param-neg-toggle">
+                <span>On</span>
+              </label>
+              <input type="number" id="param-neg-marks" class="param-input"
+                     min="0.25" step="0.25" value="0.25" style="display:none">
+            </div>
+          </div>
+        </div>
+
+        <div class="params-row">
+          <div class="param-group">
+            <span class="param-label">Total marks</span>
+            <span id="param-total-marks" class="param-computed">—</span>
+          </div>
+          <div class="param-group">
+            <span class="param-label">Duration</span>
+            <span id="param-duration" class="param-computed">—</span>
+          </div>
+        </div>
+      </div><!-- #params-panel -->
+
     </div>
     <div id="tab-select"   class="tab-panel"><p>Select tab</p></div>
     <div id="tab-assemble" class="tab-panel"><p>Assemble tab</p></div>
@@ -372,6 +507,13 @@
       difficulties: new Set(),
       bloomLevels: new Set(),
       sourceTypes: new Set()
+    };
+
+    let paperParams = {
+      questionCount:     1,
+      marksPerQ:         1,
+      negativeMarking:   false,
+      negativeMarksPerQ: 0.25
     };
 
     async function getData(path) {
@@ -417,6 +559,7 @@
         numEl.classList.remove('filter-count-loading');
         labelEl.textContent = 'Select books and chapters to begin';
         filterUpdateFacets();
+        paramUpdateMax();
         return;
       }
 
@@ -436,6 +579,7 @@
       numEl.classList.remove('filter-count-loading');
       labelEl.textContent = 'questions matching filters';
       filterUpdateFacets();
+      paramUpdateMax();
     }
 
     function computeFacet(group, value) {
@@ -696,6 +840,112 @@
       filterUpdateCount();
     }
 
+    // ── Paper parameters ────────────────────────────────────────────────────
+
+    function paramGetFilteredPool() {
+      const pool = [];
+      for (const key of Object.keys(loadedQuestions)) {
+        if (!filterState.chapters.has(key)) continue;
+        for (const q of loadedQuestions[key]) {
+          if (
+            filterState.types.has(q.type) &&
+            filterState.difficulties.has(q.difficulty) &&
+            filterState.bloomLevels.has(q.bloom_level) &&
+            filterState.sourceTypes.has(q.source_type)
+          ) pool.push(q);
+        }
+      }
+      return pool;
+    }
+
+    function paramComputeDuration(pool) {
+      let totalSec = 0;
+      const n = Math.min(paperParams.questionCount, pool.length);
+      for (let i = 0; i < n; i++) {
+        totalSec += (pool[i].avg_time_sec != null ? pool[i].avg_time_sec : 90);
+      }
+      const totalMin = Math.round(totalSec / 60);
+      const hr  = Math.floor(totalMin / 60);
+      const min = totalMin % 60;
+      if (hr === 0) return min + ' min';
+      if (min === 0) return hr + ' hr';
+      return hr + ' hr ' + min + ' min';
+    }
+
+    function paramUpdateDerived() {
+      const pool        = paramGetFilteredPool();
+      const totalMarks  = parseFloat((paperParams.questionCount * paperParams.marksPerQ).toFixed(2));
+      const duration    = pool.length > 0 ? paramComputeDuration(pool) : '—';
+      document.getElementById('param-total-marks').textContent = totalMarks;
+      document.getElementById('param-duration').textContent    = duration;
+      document.getElementById('param-q-max').textContent       = 'of ' + pool.length;
+    }
+
+    function paramUpdateMax() {
+      const pool = paramGetFilteredPool();
+      const max  = pool.length;
+      const panel = document.getElementById('params-panel');
+
+      if (max === 0) {
+        panel.style.display = 'none';
+        return;
+      }
+
+      panel.style.display = 'block';
+
+      if (paperParams.questionCount > max) paperParams.questionCount = max;
+      if (paperParams.questionCount < 1)   paperParams.questionCount = 1;
+
+      const input = document.getElementById('param-q-count');
+      input.max   = max;
+      input.value = paperParams.questionCount;
+
+      paramUpdateDerived();
+    }
+
+    function paramInit() {
+      const qCountEl  = document.getElementById('param-q-count');
+      const marksEl   = document.getElementById('param-marks-per-q');
+      const negToggle = document.getElementById('param-neg-toggle');
+      const negMarks  = document.getElementById('param-neg-marks');
+
+      qCountEl.addEventListener('input', () => {
+        const pool = paramGetFilteredPool();
+        let v = parseInt(qCountEl.value, 10);
+        if (isNaN(v) || v < 1)        v = 1;
+        if (v > pool.length)           v = pool.length;
+        paperParams.questionCount = v;
+        paramUpdateDerived();
+      });
+      qCountEl.addEventListener('blur', () => {
+        qCountEl.value = paperParams.questionCount;
+      });
+
+      marksEl.addEventListener('input', () => {
+        let v = parseFloat(marksEl.value);
+        if (isNaN(v) || v < 0.25) v = 0.25;
+        paperParams.marksPerQ = v;
+        paramUpdateDerived();
+      });
+      marksEl.addEventListener('blur', () => {
+        marksEl.value = paperParams.marksPerQ;
+      });
+
+      negToggle.addEventListener('change', () => {
+        paperParams.negativeMarking  = negToggle.checked;
+        negMarks.style.display       = negToggle.checked ? 'inline-block' : 'none';
+      });
+
+      negMarks.addEventListener('input', () => {
+        let v = parseFloat(negMarks.value);
+        if (isNaN(v) || v < 0.25) v = 0.25;
+        paperParams.negativeMarksPerQ = v;
+      });
+      negMarks.addEventListener('blur', () => {
+        negMarks.value = paperParams.negativeMarksPerQ;
+      });
+    }
+
     // ── Folder picker ───────────────────────────────────────────────────────
 
     function filterShowError(msg) {
@@ -762,6 +1012,8 @@
         document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
       });
     });
+
+    paramInit();
   </script>
 
 </body>
