@@ -560,6 +560,190 @@
     #auth-overlay button:hover {
       opacity: 1;
     }
+
+    /* ── Preview / Print tab — screen ── */
+    .preview-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .preview-paper {
+      background: var(--paper);
+      box-shadow: 0 2px 16px rgba(0,0,0,0.10);
+      border-radius: 8px;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2.5rem 3rem;
+    }
+
+    .preview-paper-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.5rem;
+      color: var(--ink);
+      margin-bottom: 0.5rem;
+    }
+
+    .preview-meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem 2rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+
+    .preview-meta-item strong { color: var(--ink); }
+
+    .preview-hr {
+      border: none;
+      border-top: 1.5px solid var(--border);
+      margin: 1rem 0;
+    }
+
+    .preview-instructions {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem;
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+    }
+
+    .preview-instructions ul { margin: 0; padding-left: 1.2rem; }
+    .preview-instructions li { margin: 0.2rem 0; }
+
+    .preview-question-list { list-style: none; padding: 0; margin: 0; }
+
+    .preview-question-item {
+      margin-bottom: 1.75rem;
+      page-break-inside: avoid;
+    }
+
+    .preview-q-number {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1rem;
+      font-weight: bold;
+      margin-right: 0.35rem;
+    }
+
+    .preview-q-stem {
+      display: inline;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11pt;
+      color: var(--ink);
+    }
+
+    .preview-q-block {
+      margin-bottom: 0.5rem;
+    }
+
+    .preview-options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.25rem 1.5rem;
+      margin: 0.5rem 0 0 1.2rem;
+    }
+
+    .preview-option {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 10.5pt;
+      color: var(--ink);
+    }
+
+    .preview-label {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin: 0.6rem 0 0.15rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .preview-statement-list {
+      list-style: none;
+      padding: 0;
+      margin: 0.4rem 0 0.5rem 1.2rem;
+    }
+
+    .preview-statement-item {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 10.5pt;
+      margin-bottom: 0.15rem;
+    }
+
+    .preview-match-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.4rem 0 0.5rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 10.5pt;
+    }
+
+    .preview-match-table th {
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+      padding: 0.25rem 0.75rem;
+    }
+
+    .preview-match-table td {
+      padding: 0.2rem 0.75rem;
+      vertical-align: top;
+    }
+
+    /* Answer key */
+    .preview-answer-key { margin-top: 2.5rem; }
+
+    .preview-answer-key-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.3rem;
+      color: var(--ink);
+      margin-bottom: 0.2rem;
+    }
+
+    .preview-answer-key-sub {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .preview-answer-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.4rem;
+    }
+
+    .preview-answer-cell {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.82rem;
+      padding: 0.3rem 0.5rem;
+      background: var(--cream);
+      border-radius: 4px;
+      text-align: center;
+    }
+
+    /* ── Print media ── */
+    @media print {
+      body > *:not(main)         { display: none !important; }
+      main .tab-panel            { display: none !important; }
+      main #tab-preview          { display: block !important; padding: 0; }
+      .preview-actions           { display: none !important; }
+      .preview-paper {
+        box-shadow: none;
+        border-radius: 0;
+        max-width: 100%;
+        padding: 0;
+        margin: 0;
+      }
+      body { background: white; color: black; }
+      .preview-answer-key { page-break-before: always; }
+      .preview-question-item { page-break-inside: avoid; }
+      @page { margin: 2cm; }
+    }
   </style>
 </head>
 <body>
@@ -1323,7 +1507,251 @@
 
     function previewRender() {
       const tab = document.getElementById('tab-preview');
-      renderMath(tab);
+      tab.innerHTML = '';
+
+      // ── Screen-only action bar ──
+      const actions = document.createElement('div');
+      actions.className = 'preview-actions';
+
+      const btnBack = document.createElement('button');
+      btnBack.className   = 'btn-secondary';
+      btnBack.textContent = 'Back to Select';
+      btnBack.addEventListener('click', () => switchTab('select'));
+
+      const btnPrint = document.createElement('button');
+      btnPrint.className   = 'btn-primary';
+      btnPrint.textContent = 'Print';
+      btnPrint.addEventListener('click', () => window.print());
+
+      actions.appendChild(btnBack);
+      actions.appendChild(btnPrint);
+      tab.appendChild(actions);
+
+      // ── Paper card ──
+      const card = document.createElement('div');
+      card.className = 'preview-paper';
+
+      const m = paper.meta;
+
+      // Header
+      const titleEl = document.createElement('div');
+      titleEl.className   = 'preview-paper-title';
+      titleEl.textContent = m.title || 'Untitled Test';
+      card.appendChild(titleEl);
+
+      const metaRow = document.createElement('div');
+      metaRow.className = 'preview-meta-row';
+      [
+        { label: 'Date',     value: m.date },
+        { label: 'Duration', value: m.duration },
+        { label: 'Marks',    value: m.totalMarks },
+        { label: 'Questions', value: paper.questions.length }
+      ].forEach(({ label, value }) => {
+        const item = document.createElement('span');
+        item.className = 'preview-meta-item';
+        item.innerHTML = `<strong>${value}</strong> ${label}`;
+        metaRow.appendChild(item);
+      });
+      card.appendChild(metaRow);
+
+      const hr = document.createElement('hr');
+      hr.className = 'preview-hr';
+      card.appendChild(hr);
+
+      // Instructions
+      const instrDiv = document.createElement('div');
+      instrDiv.className = 'preview-instructions';
+      const instrUl = document.createElement('ul');
+      const instrItems = [
+        'All questions carry equal marks.',
+        'Read each question carefully before answering.'
+      ];
+      if (m.negativeMarking) {
+        instrItems.push(`Each wrong answer carries −${m.negativeMarksPerQ} marks.`);
+      }
+      instrItems.forEach(text => {
+        const li = document.createElement('li');
+        li.textContent = text;
+        instrUl.appendChild(li);
+      });
+      instrDiv.appendChild(instrUl);
+      card.appendChild(instrDiv);
+
+      // Question list
+      const ol = document.createElement('ol');
+      ol.className = 'preview-question-list';
+
+      const ROMAN = ['i','ii','iii','iv','v','vi','vii','viii','ix','x'];
+
+      paper.questions.forEach((q, idx) => {
+        const li = document.createElement('li');
+        li.className = 'preview-question-item';
+
+        const type = q.type || 'mcq_single';
+
+        function makeLabel(text) {
+          const d = document.createElement('div');
+          d.className   = 'preview-label';
+          d.textContent = text;
+          return d;
+        }
+
+        function makeStemBlock(text) {
+          const d = document.createElement('div');
+          d.className = 'preview-q-block';
+          const num = document.createElement('span');
+          num.className   = 'preview-q-number';
+          num.textContent = `${idx + 1}.`;
+          const stem = document.createElement('span');
+          stem.className   = 'preview-q-stem';
+          stem.textContent = text || '';
+          d.appendChild(num);
+          d.appendChild(stem);
+          return d;
+        }
+
+        function makeOptionsGrid(opts) {
+          const grid = document.createElement('div');
+          grid.className = 'preview-options-grid';
+          opts.forEach(({ key, text }) => {
+            const div = document.createElement('div');
+            div.className   = 'preview-option';
+            div.textContent = `${key}. ${text}`;
+            grid.appendChild(div);
+          });
+          return grid;
+        }
+
+        if (type === 'assertion_reason') {
+          const numSpan = document.createElement('span');
+          numSpan.className   = 'preview-q-number';
+          numSpan.textContent = `${idx + 1}.`;
+          li.appendChild(numSpan);
+          li.appendChild(makeLabel('Assertion (A):'));
+          const aText = document.createElement('div');
+          aText.className   = 'preview-q-block';
+          const aSpan = document.createElement('span');
+          aSpan.className   = 'preview-q-stem';
+          aSpan.textContent = q.assertion || '';
+          aText.appendChild(aSpan);
+          li.appendChild(aText);
+          li.appendChild(makeLabel('Reason (R):'));
+          const rText = document.createElement('div');
+          rText.className   = 'preview-q-block';
+          const rSpan = document.createElement('span');
+          rSpan.className   = 'preview-q-stem';
+          rSpan.textContent = q.reason || '';
+          rText.appendChild(rSpan);
+          li.appendChild(rText);
+          li.appendChild(makeOptionsGrid([
+            { key: 'A', text: 'Both A and R are true and R is the correct explanation of A' },
+            { key: 'B', text: 'Both A and R are true but R is not the correct explanation of A' },
+            { key: 'C', text: 'A is true but R is false' },
+            { key: 'D', text: 'A is false but R is true' }
+          ]));
+
+        } else if (type === 'statement_based') {
+          const numSpan = document.createElement('span');
+          numSpan.className   = 'preview-q-number';
+          numSpan.textContent = `${idx + 1}.`;
+          li.appendChild(numSpan);
+          const stmtUl = document.createElement('ul');
+          stmtUl.className = 'preview-statement-list';
+          (q.statements || []).forEach((s, i) => {
+            const stmtLi = document.createElement('li');
+            stmtLi.className   = 'preview-statement-item';
+            stmtLi.textContent = `${ROMAN[i] || (i + 1)}. ${s}`;
+            stmtUl.appendChild(stmtLi);
+          });
+          li.appendChild(stmtUl);
+          const stemDiv = document.createElement('div');
+          stemDiv.className   = 'preview-q-block';
+          const stemSpan = document.createElement('span');
+          stemSpan.className   = 'preview-q-stem';
+          stemSpan.textContent = q.stem || '';
+          stemDiv.appendChild(stemSpan);
+          li.appendChild(stemDiv);
+          li.appendChild(makeOptionsGrid(q.options || []));
+
+        } else if (type === 'match_following') {
+          const numSpan = document.createElement('span');
+          numSpan.className   = 'preview-q-number';
+          numSpan.textContent = `${idx + 1}.`;
+          li.appendChild(numSpan);
+          const table = document.createElement('table');
+          table.className = 'preview-match-table';
+          const thead = document.createElement('thead');
+          const hRow  = document.createElement('tr');
+          ['List I', 'List II'].forEach(h => {
+            const th = document.createElement('th');
+            th.textContent = h;
+            hRow.appendChild(th);
+          });
+          thead.appendChild(hRow);
+          table.appendChild(thead);
+          const tbody   = document.createElement('tbody');
+          const listI   = q.list_i  || [];
+          const listII  = q.list_ii || [];
+          const rowCount = Math.max(listI.length, listII.length);
+          for (let i = 0; i < rowCount; i++) {
+            const tr = document.createElement('tr');
+            const tdI  = document.createElement('td');
+            tdI.textContent  = listI[i]  || '';
+            const tdII = document.createElement('td');
+            tdII.textContent = listII[i] || '';
+            tr.appendChild(tdI);
+            tr.appendChild(tdII);
+            tbody.appendChild(tr);
+          }
+          table.appendChild(tbody);
+          li.appendChild(table);
+          const stemDiv = document.createElement('div');
+          stemDiv.className   = 'preview-q-block';
+          const stemSpan = document.createElement('span');
+          stemSpan.className   = 'preview-q-stem';
+          stemSpan.textContent = q.stem || '';
+          stemDiv.appendChild(stemSpan);
+          li.appendChild(stemDiv);
+          li.appendChild(makeOptionsGrid(q.options || []));
+
+        } else {
+          // mcq_single / mcq_multi
+          li.appendChild(makeStemBlock(q.stem));
+          li.appendChild(makeOptionsGrid(q.options || []));
+        }
+
+        ol.appendChild(li);
+      });
+
+      card.appendChild(ol);
+
+      // ── Answer key ──
+      const ak = document.createElement('div');
+      ak.className = 'preview-answer-key';
+
+      const akTitle = document.createElement('div');
+      akTitle.className   = 'preview-answer-key-title';
+      akTitle.textContent = 'Answer Key';
+      ak.appendChild(akTitle);
+
+      const akSub = document.createElement('div');
+      akSub.className   = 'preview-answer-key-sub';
+      akSub.textContent = `${m.title || 'Untitled Test'} — ${m.date}`;
+      ak.appendChild(akSub);
+
+      const akGrid = document.createElement('div');
+      akGrid.className = 'preview-answer-grid';
+      paper.questions.forEach((q, idx) => {
+        const cell = document.createElement('div');
+        cell.className   = 'preview-answer-cell';
+        cell.textContent = `${idx + 1}. ${q.correct || '—'}`;
+        akGrid.appendChild(cell);
+      });
+      ak.appendChild(akGrid);
+      card.appendChild(ak);
+
+      tab.appendChild(card);
+      renderMath(card);
     }
 
     // ── Folder picker ───────────────────────────────────────────────────────
