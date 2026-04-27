@@ -1651,26 +1651,7 @@
           ]));
 
         } else if (type === 'statement_based') {
-          const numSpan = document.createElement('span');
-          numSpan.className   = 'preview-q-number';
-          numSpan.textContent = `${idx + 1}.`;
-          li.appendChild(numSpan);
-          const stmtUl = document.createElement('ul');
-          stmtUl.className = 'preview-statement-list';
-          (q.statements || []).forEach((s, i) => {
-            const stmtLi = document.createElement('li');
-            stmtLi.className   = 'preview-statement-item';
-            stmtLi.textContent = `${ROMAN[i] || (i + 1)}. ${s}`;
-            stmtUl.appendChild(stmtLi);
-          });
-          li.appendChild(stmtUl);
-          const stemDiv = document.createElement('div');
-          stemDiv.className   = 'preview-q-block';
-          const stemSpan = document.createElement('span');
-          stemSpan.className   = 'preview-q-stem';
-          stemSpan.textContent = q.stem || '';
-          stemDiv.appendChild(stemSpan);
-          li.appendChild(stemDiv);
+          li.appendChild(makeStemBlock(q.stem));
           li.appendChild(makeOptionsGrid(q.options || []));
 
         } else if (type === 'match_following') {
