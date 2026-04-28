@@ -1429,7 +1429,9 @@
     const CONFIG = {
       mode: 'remote',
       workerUrl: 'https://api.examsindia.org',
-      accessKey: 'ch-qbank-2026'
+      accessKey: 'ch-qbank-2026',
+      cfClientId: '0da91d60f6e5c78fef20cd0cd025ccbc.access',
+      cfClientSecret: 'eddae1e25e0d7b0d9bebc3c50843fe1289a54ed849ed7e651dd6942874b2c8af'
     };
 
     let folderHandle = null;
@@ -1482,7 +1484,11 @@
         try {
           const cleanPath = path.replace(/^GithubUpload\//, '');
           const res = await fetch(`${CONFIG.workerUrl}/${cleanPath}`, {
-            headers: { 'x-access-key': CONFIG.accessKey }
+            headers: {
+              'x-access-key': CONFIG.accessKey,
+              'CF-Access-Client-Id': CONFIG.cfClientId,
+              'CF-Access-Client-Secret': CONFIG.cfClientSecret
+            }
           });
           if (!res.ok) return null;
           return await res.json();
