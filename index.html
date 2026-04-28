@@ -1286,6 +1286,49 @@
     .bk-opt-correct { border-color: var(--success); color: var(--success); font-weight: 600; background: #f0fdf4; }
     .bk-opt-wrong   { border-color: var(--warn);    color: var(--warn);    background: #fff7ed; }
 
+    /* ── OMR panel ── */
+    .omr-wrap { max-width: 900px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+    .omr-header {
+      display: flex; align-items: flex-start; gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .omr-header-info { flex: 1; }
+    .omr-title { font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--ink); }
+    .omr-meta  { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
+    .omr-grid  {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 0.75rem;
+    }
+    .omr-card {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.65rem 0.75rem;
+      display: flex; flex-direction: column; gap: 0.5rem;
+    }
+    .omr-qnum {
+      font-family: 'DM Serif Display', serif;
+      font-size: 0.85rem; font-weight: 700; color: var(--ink);
+    }
+    .omr-inputs { display: flex; flex-wrap: wrap; gap: 0.35rem 0.6rem; }
+    .omr-opt {
+      display: flex; align-items: center; gap: 0.3rem;
+      font-size: 0.85rem; font-family: 'DM Sans', sans-serif;
+      cursor: pointer; user-select: none;
+    }
+    .omr-opt input { cursor: pointer; accent-color: var(--accent); }
+    .omr-clear {
+      align-self: flex-start;
+      font-size: 0.72rem; padding: 0.15rem 0.45rem;
+      background: none; border: 1px solid var(--border);
+      border-radius: 4px; cursor: pointer; color: var(--muted);
+    }
+    .omr-clear:hover { border-color: var(--accent); color: var(--accent); }
+    .omr-submit-wrap { margin-top: 1.75rem; }
+
     /* ── Print media ── */
     @media print {
       body > *:not(main)         { display: none !important; }
@@ -2481,7 +2524,38 @@
             historyRender();
           });
 
+          const btnEnterAnswers = document.createElement('button');
+          btnEnterAnswers.className   = 'btn-secondary';
+          btnEnterAnswers.textContent = 'Enter Answers';
+          btnEnterAnswers.addEventListener('click', () => {
+            paper = {
+              id:        entry.id,
+              generated: entry.createdAt,
+              meta: {
+                title:             entry.title,
+                date:              entry.date,
+                duration:          entry.duration,
+                totalMarks:        entry.totalMarks,
+                marksPerQ:         entry.marksPerQ         || 1,
+                negativeMarking:   entry.negativeMarking   || false,
+                negativeMarksPerQ: entry.negativeMarksPerQ || 0.25
+              },
+              questions: entry.questions
+            };
+            cbt = {
+              paperId:       paper.id,
+              current:       0,
+              answers:       {},
+              status:        {},
+              timerInterval: null,
+              timeLeft:      0
+            };
+            switchTab('cbt');
+            omrRender();
+          });
+
           btns.appendChild(btnLoad);
+          btns.appendChild(btnEnterAnswers);
           btns.appendChild(btnDelete);
           item.appendChild(btns);
           list.appendChild(item);
@@ -3862,6 +3936,204 @@
 
       tab.appendChild(container);
       renderMath(container);
+    }
+
+    // ── OMR answer entry ────────────────────────────────────────────────────
+
+    function omrRender() {
+      const tab = document.getElementById('tab-cbt');
+      tab.innerHTML = '';
+
+      const wrap = document.createElement('div');
+      wrap.className = 'omr-wrap';
+
+      // Header
+      const header = document.createElement('div');
+      header.className = 'omr-header';
+
+      const btnBack = document.createElement('button');
+      btnBack.className   = 'btn-secondary';
+      btnBack.textContent = 'Back';
+      btnBack.addEventListener('click', () => { switchTab('history'); historyRender(); });
+
+      const info = document.createElement('div');
+      info.className = 'omr-header-info';
+      const titleEl = document.createElement('div');
+      titleEl.className   = 'omr-title';
+      titleEl.textContent = paper.meta.title || 'Untitled Test';
+      const metaEl = document.createElement('div');
+      metaEl.className   = 'omr-meta';
+      metaEl.textContent = `${paper.meta.date} · ${paper.meta.totalMarks} marks · ${paper.questions.length} questions`;
+      info.appendChild(titleEl);
+      info.appendChild(metaEl);
+
+      header.appendChild(btnBack);
+      header.appendChild(info);
+      wrap.appendChild(header);
+
+      // Question grid
+      const grid = document.createElement('div');
+      grid.className = 'omr-grid';
+
+      paper.questions.forEach((q, i) => {
+        const card = document.createElement('div');
+        card.className = 'omr-card';
+        card.id = `omr-card-${i}`;
+
+        const qNum = document.createElement('div');
+        qNum.className   = 'omr-qnum';
+        qNum.textContent = `Q${i + 1}`;
+        card.appendChild(qNum);
+
+        const inputs = document.createElement('div');
+        inputs.className = 'omr-inputs';
+
+        const type     = q.type || 'mcq_single';
+        const isMulti  = type === 'mcq_multi';
+        const inputType = isMulti ? 'checkbox' : 'radio';
+        const groupName = `omr-q-${i}`;
+
+        let optKeys;
+        if (type === 'statement_based') {
+          optKeys = (q.options || []).map(o => o.key);
+        } else {
+          optKeys = ['A', 'B', 'C', 'D'];
+        }
+
+        optKeys.forEach(key => {
+          const lbl = document.createElement('label');
+          lbl.className = 'omr-opt';
+          const inp = document.createElement('input');
+          inp.type  = inputType;
+          inp.name  = groupName;
+          inp.value = key;
+          inp.addEventListener('change', () => omrUpdateAnswer(i, type));
+          lbl.appendChild(inp);
+          lbl.appendChild(document.createTextNode(key));
+          inputs.appendChild(lbl);
+        });
+        card.appendChild(inputs);
+
+        const clearBtn = document.createElement('button');
+        clearBtn.className   = 'omr-clear';
+        clearBtn.textContent = 'Clear';
+        clearBtn.addEventListener('click', () => {
+          card.querySelectorAll(`input[name="${groupName}"]`).forEach(el => { el.checked = false; });
+          delete cbt.answers[i];
+          omrSyncSubmitBtn();
+        });
+        card.appendChild(clearBtn);
+
+        grid.appendChild(card);
+      });
+
+      wrap.appendChild(grid);
+
+      // Submit button
+      const submitWrap = document.createElement('div');
+      submitWrap.className = 'omr-submit-wrap';
+      const submitBtn = document.createElement('button');
+      submitBtn.className   = 'btn-primary';
+      submitBtn.textContent = 'Submit';
+      submitBtn.disabled    = true;
+      submitBtn.id          = 'omr-submit-btn';
+      submitBtn.addEventListener('click', omrShowConfirm);
+      submitWrap.appendChild(submitBtn);
+      wrap.appendChild(submitWrap);
+
+      tab.appendChild(wrap);
+
+      // Restore any previously entered answers
+      omrRestoreAnswers();
+    }
+
+    function omrUpdateAnswer(i, type) {
+      const card    = document.getElementById(`omr-card-${i}`);
+      const checked = [...card.querySelectorAll(`input[name="omr-q-${i}"]:checked`)].map(el => el.value);
+      if (type === 'mcq_multi') {
+        if (checked.length > 0) { cbt.answers[i] = checked; } else { delete cbt.answers[i]; }
+      } else {
+        if (checked.length > 0) { cbt.answers[i] = checked[0]; } else { delete cbt.answers[i]; }
+      }
+      omrSyncSubmitBtn();
+    }
+
+    function omrSyncSubmitBtn() {
+      const btn = document.getElementById('omr-submit-btn');
+      if (!btn) return;
+      const hasAny = Object.values(cbt.answers).some(a =>
+        a !== null && a !== undefined && (Array.isArray(a) ? a.length > 0 : a !== '')
+      );
+      btn.disabled = !hasAny;
+    }
+
+    function omrRestoreAnswers() {
+      paper.questions.forEach((q, i) => {
+        const ans = cbt.answers[i];
+        if (!ans) return;
+        const keys = Array.isArray(ans) ? ans : [ans];
+        keys.forEach(key => {
+          const inp = document.querySelector(`input[name="omr-q-${i}"][value="${key}"]`);
+          if (inp) inp.checked = true;
+        });
+      });
+      omrSyncSubmitBtn();
+    }
+
+    function omrShowConfirm() {
+      const answered   = Object.values(cbt.answers).filter(a =>
+        a !== null && a !== undefined && (Array.isArray(a) ? a.length > 0 : a !== '')
+      ).length;
+      const unanswered = paper.questions.length - answered;
+
+      const tab = document.getElementById('tab-cbt');
+      tab.innerHTML = '';
+
+      const box = document.createElement('div');
+      box.className = 'cbt-result';
+
+      const titleEl = document.createElement('div');
+      titleEl.className   = 'cbt-result-header';
+      titleEl.textContent = 'Submit OMR?';
+      box.appendChild(titleEl);
+
+      const summary = document.createElement('div');
+      summary.className = 'cbt-result-summary';
+      [
+        { val: answered,   label: 'Answered' },
+        { val: unanswered, label: 'Unanswered' }
+      ].forEach(({ val, label }) => {
+        const card = document.createElement('div');
+        card.className = 'cbt-result-card';
+        const v = document.createElement('div');
+        v.className   = 'cbt-result-card-val';
+        v.textContent = val;
+        const l = document.createElement('div');
+        l.className   = 'cbt-result-card-label';
+        l.textContent = label;
+        card.appendChild(v);
+        card.appendChild(l);
+        summary.appendChild(card);
+      });
+      box.appendChild(summary);
+
+      const btns = document.createElement('div');
+      btns.style.cssText = 'display:flex;gap:0.75rem;';
+
+      const btnCancel = document.createElement('button');
+      btnCancel.className   = 'btn-secondary';
+      btnCancel.textContent = 'Cancel';
+      btnCancel.addEventListener('click', omrRender);
+
+      const btnConfirm = document.createElement('button');
+      btnConfirm.className   = 'btn-primary';
+      btnConfirm.textContent = 'Submit';
+      btnConfirm.addEventListener('click', cbtShowResult);
+
+      btns.appendChild(btnCancel);
+      btns.appendChild(btnConfirm);
+      box.appendChild(btns);
+      tab.appendChild(box);
     }
 
     // ── Folder picker ───────────────────────────────────────────────────────
