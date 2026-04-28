@@ -1375,6 +1375,7 @@
     <div id="tab-filter" class="tab-panel active">
 
       <button id="btn-pick-folder">Select Question Bank Folder</button>
+      <button id="btn-connect" style="display:none">Connect to Question Bank</button>
       <div id="index-display"></div>
 
       <div id="filter-panel">
@@ -1472,12 +1473,13 @@
 
   <script>
     const CONFIG = {
-      mode: 'local',
-      workerUrl: 'https://qbank.yourname.workers.dev',
-      accessKey: ''
+      mode: 'remote',
+      workerUrl: 'https://competitionhub-qbank.kuldeeptyagi-vet.workers.dev',
+      accessKey: 'ch-qbank-2026'
     };
 
     let folderHandle = null;
+    let remoteReady = false;
     let bookData = [];
     let loadedQuestions = {};
 
@@ -1522,8 +1524,16 @@
           return null;
         }
       } else {
-        console.log('Worker not yet implemented');
-        return null;
+        if (!remoteReady) return null;
+        try {
+          const res = await fetch(`${CONFIG.workerUrl}/${path}`, {
+            headers: { 'x-access-key': CONFIG.accessKey }
+          });
+          if (!res.ok) return null;
+          return await res.json();
+        } catch {
+          return null;
+        }
       }
     }
 
@@ -4146,13 +4156,7 @@
       display.appendChild(el);
     }
 
-    async function filterPickFolder() {
-      try {
-        folderHandle = await window.showDirectoryPicker();
-      } catch {
-        return;
-      }
-
+    async function filterLoadBooks() {
       const display = document.getElementById('index-display');
       display.innerHTML = '';
       document.getElementById('filter-panel').style.display = 'none';
@@ -4160,13 +4164,6 @@
       const registry = await getData('GithubUpload/_books_registry.json');
       if (!registry) {
         filterShowError('_books_registry.json not found in GithubUpload subfolder');
-        return;
-      }
-
-      try {
-        await folderHandle.getDirectoryHandle('GithubUpload');
-      } catch {
-        filterShowError('GithubUpload subfolder not found');
         return;
       }
 
@@ -4187,8 +4184,39 @@
       filterRenderPanel();
     }
 
+    async function filterPickFolder() {
+      try {
+        folderHandle = await window.showDirectoryPicker();
+      } catch {
+        return;
+      }
+
+      try {
+        await folderHandle.getDirectoryHandle('GithubUpload');
+      } catch {
+        filterShowError('GithubUpload subfolder not found');
+        return;
+      }
+
+      await filterLoadBooks();
+    }
+
+    async function filterConnect() {
+      remoteReady = true;
+      await filterLoadBooks();
+    }
+
     document.getElementById('btn-pick-folder')
       .addEventListener('click', filterPickFolder);
+    document.getElementById('btn-connect')
+      .addEventListener('click', filterConnect);
+
+    // ── Mode initialisation ──────────────────────────────────────────────────
+    if (CONFIG.mode === 'remote') {
+      document.getElementById('btn-pick-folder').style.display = 'none';
+      document.getElementById('btn-connect').style.display = '';
+      filterConnect();
+    }
 
     // ── Tab switching ───────────────────────────────────────────────────────
     const tabBtns   = document.querySelectorAll('.tab-btn');
