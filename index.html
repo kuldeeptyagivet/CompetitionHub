@@ -4157,9 +4157,9 @@
       display.innerHTML = '';
       document.getElementById('filter-panel').style.display = 'none';
 
-      const registry = await getData('_books_registry.json');
+      const registry = await getData('GithubUpload/_books_registry.json');
       if (!registry) {
-        filterShowError('_books_registry.json not found in selected folder');
+        filterShowError('_books_registry.json not found in GithubUpload subfolder');
         return;
       }
 
