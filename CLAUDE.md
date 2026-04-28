@@ -212,6 +212,7 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
 - Start CBT button added to Select tab
 - OMR answer entry complete: Enter Answers button on each saved paper in History tab loads paper into an OMR panel inside the CBT tab; grid of numbered question cards with radio buttons (mcq_single, assertion_reason, match_following), checkboxes (mcq_multi), and per-question Clear buttons; Submit confirmation flow with answered/unanswered counts; result and attempt saving identical to CBT mode; Back button returns to History without submitting
 - Remote data layer complete: Cloudflare Worker (competitionhub-qbank.kuldeeptyagi-vet.workers.dev) serves question bank JSON from R2 bucket (competitionhub-qbank); Worker validates x-access-key header; getData() switches between FSA and Worker fetch based on CONFIG.mode; remote mode auto-connects on page load without folder picker; GithubUpload/ prefix stripped from paths in remote branch
+- Worker accessible at api.examsindia.org (custom domain); CF Access service token headers sent with every remote fetch; app auto-detects local vs remote mode based on location.hostname and location.protocol
 
 **Not yet built:**
 - Answer logging and scoring
@@ -266,6 +267,8 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
 2026-04-28 — OMR panel renders inside #tab-cbt using the same display-flag pattern as CBT attempt and result screens; responses are passed directly to cbtShowResult() so print-mode attempts appear in Progress and Question Analysis identically to CBT attempts.
 2026-04-28 — _books_registry.json moved inside GithubUpload folder; FSA data layer updated to read it from within GithubUpload so local folder structure matches R2 layout exactly; user picks QuestionBank as root, app navigates into GithubUpload for all file reads.
 2026-04-28 — R2 bucket layout matches local GithubUpload folder exactly; _books_registry.json at bucket root alongside book subfolders; Worker strips no paths — app getData() strips the GithubUpload/ prefix before building the fetch URL so local and remote path construction stay independent.
+2026-04-28 — Cloudflare Access removed from Worker after CORS preflight blocking; x-access-key header validation in Worker is sufficient access control for current scale; Access can be re-added when custom domain routing is stable.
+2026-04-28 — Auto-detect mode: isLocal derived from location.hostname and location.protocol before CONFIG is defined; mode set dynamically so deployed app always uses remote and local file:// always uses local.
 
 ---
 
