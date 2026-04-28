@@ -1526,7 +1526,8 @@
       } else {
         if (!remoteReady) return null;
         try {
-          const res = await fetch(`${CONFIG.workerUrl}/${path}`, {
+          const cleanPath = path.replace(/^GithubUpload\//, '');
+          const res = await fetch(`${CONFIG.workerUrl}/${cleanPath}`, {
             headers: { 'x-access-key': CONFIG.accessKey }
           });
           if (!res.ok) return null;
