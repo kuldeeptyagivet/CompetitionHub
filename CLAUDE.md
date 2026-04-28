@@ -264,6 +264,7 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   assembles paper in failure-rate order so weakest questions
   appear first.
 2026-04-28 — OMR panel renders inside #tab-cbt using the same display-flag pattern as CBT attempt and result screens; responses are passed directly to cbtShowResult() so print-mode attempts appear in Progress and Question Analysis identically to CBT attempts.
+2026-04-28 — _books_registry.json moved inside GithubUpload folder; FSA data layer updated to read it from within GithubUpload so local folder structure matches R2 layout exactly; user picks QuestionBank as root, app navigates into GithubUpload for all file reads.
 
 ---
 
