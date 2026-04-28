@@ -722,6 +722,87 @@
       border-radius: 6px;
     }
 
+    /* Question Analysis */
+    .progress-card-btns { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+
+    .qa-panel {
+      margin-top: 1rem;
+      border-top: 1px solid var(--border);
+      padding-top: 1rem;
+    }
+
+    .qa-threshold-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.75rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem;
+      color: var(--ink);
+    }
+
+    .qa-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
+
+    .qa-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.6rem 0.75rem;
+      background: var(--cream);
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .qa-cb {
+      margin-top: 3px;
+      flex-shrink: 0;
+      accent-color: var(--accent);
+      width: 15px;
+      height: 15px;
+      cursor: pointer;
+    }
+
+    .qa-content { flex: 1; min-width: 0; }
+
+    .qa-stem {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      color: var(--ink);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      cursor: pointer;
+      margin-bottom: 0.3rem;
+      line-height: 1.5;
+    }
+
+    .qa-stem:hover { color: var(--accent); }
+    .qa-stem.expanded { display: block; overflow: visible; }
+
+    .qa-stats {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 0.2rem;
+    }
+
+    .qa-detail { margin-top: 0.4rem; }
+
+    .qa-detail-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      color: var(--muted);
+      padding: 0.25rem 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .qa-retest-wrap { display: flex; justify-content: flex-end; margin-top: 0.75rem; }
+
     /* ── Preview / Print tab — screen ── */
     .preview-actions {
       display: flex;
@@ -2638,6 +2719,9 @@
           summary.textContent = `${totalQ} questions attempted · ${accuracy}% accuracy · Last: ${lastStr}`;
           card.appendChild(summary);
 
+          const btnRow = document.createElement('div');
+          btnRow.className = 'progress-card-btns';
+
           const toggleBtn = document.createElement('button');
           toggleBtn.className   = 'progress-collapsible-btn';
           toggleBtn.textContent = `Show ${relevant.length} attempt${relevant.length !== 1 ? 's' : ''}`;
@@ -2645,15 +2729,237 @@
             const hidden = attemptList.style.display === 'none';
             attemptList.style.display = hidden ? 'flex' : 'none';
             toggleBtn.textContent = hidden
-              ? `Hide attempts`
+              ? 'Hide attempts'
               : `Show ${relevant.length} attempt${relevant.length !== 1 ? 's' : ''}`;
           });
-          card.appendChild(toggleBtn);
+          btnRow.appendChild(toggleBtn);
+
+          const qaBtn = document.createElement('button');
+          qaBtn.className   = 'progress-collapsible-btn';
+          qaBtn.textContent = 'Question Analysis';
+          let qaPanel = null;
+          let qaBuilt = false;
+          qaBtn.addEventListener('click', () => {
+            if (!qaBuilt) {
+              qaPanel = progressBuildQAnalysis(book, chapter, valid, card);
+              qaBuilt = true;
+            }
+            const hidden = qaPanel.style.display === 'none';
+            qaPanel.style.display = hidden ? 'block' : 'none';
+            qaBtn.textContent = hidden ? 'Hide Analysis' : 'Question Analysis';
+          });
+          btnRow.appendChild(qaBtn);
+
+          card.appendChild(btnRow);
           card.appendChild(attemptList);
         }
 
         reportArea.appendChild(card);
       });
+    }
+
+    function findQuestionById(qId) {
+      const papers = JSON.parse(localStorage.getItem('ch_papers') || '[]');
+      for (const p of papers) {
+        if (!p.questions) continue;
+        const q = p.questions.find(q => q.question_id === qId);
+        if (q) return q;
+      }
+      return null;
+    }
+
+    function progressBuildQAnalysis(book, chapter, valid, card) {
+      const panel = document.createElement('div');
+      panel.className    = 'qa-panel';
+      panel.style.display = 'none';
+
+      // Collect all responses for this book+chapter across all valid attempts
+      const allResps = [];
+      valid.forEach(attempt => {
+        attempt.responses.forEach(r => {
+          if (r.source_book === book &&
+              String(r.source_chapter) === String(chapter) &&
+              r.question_id) {
+            allResps.push({
+              ...r,
+              attemptedAt:  attempt.attemptedAt,
+              attemptTitle: attempt.title || 'Untitled Test',
+              attemptDate:  attempt.date
+            });
+          }
+        });
+      });
+
+      if (allResps.length === 0) {
+        const msg = document.createElement('p');
+        msg.textContent = 'No question data available for this chapter.';
+        msg.style.cssText = 'font-family:"DM Sans",sans-serif;font-size:0.875rem;color:var(--muted);';
+        panel.appendChild(msg);
+        card.appendChild(panel);
+        return panel;
+      }
+
+      // Group by question_id, compute failure rates
+      const byQId = new Map();
+      allResps.forEach(r => {
+        if (!byQId.has(r.question_id)) byQId.set(r.question_id, []);
+        byQId.get(r.question_id).push(r);
+      });
+
+      const qStats = [...byQId.entries()].map(([qId, resps]) => {
+        const total       = resps.length;
+        const unsuccessful = resps.filter(r => !(r.marks_awarded > 0)).length;
+        const failureRate  = total > 0 ? Math.round((unsuccessful / total) * 100) : 0;
+        const q            = findQuestionById(qId);
+        return { qId, resps, total, unsuccessful, failureRate, q };
+      }).sort((a, b) => b.failureRate - a.failureRate);
+
+      // Threshold row
+      const threshRow = document.createElement('div');
+      threshRow.className = 'qa-threshold-row';
+      const threshLbl = document.createElement('span');
+      threshLbl.textContent = 'Select questions with failure rate above';
+      const threshInput = document.createElement('input');
+      threshInput.type      = 'number';
+      threshInput.min       = '0';
+      threshInput.max       = '100';
+      threshInput.value     = '50';
+      threshInput.className = 'param-input';
+      threshInput.style.width = '4rem';
+      const pctSpan = document.createElement('span');
+      pctSpan.textContent = '%';
+      const btnThresh = document.createElement('button');
+      btnThresh.className   = 'btn-secondary';
+      btnThresh.textContent = 'Apply';
+      btnThresh.style.cssText = 'font-size:0.8rem;padding:0.35rem 0.75rem;';
+      threshRow.appendChild(threshLbl);
+      threshRow.appendChild(threshInput);
+      threshRow.appendChild(pctSpan);
+      threshRow.appendChild(btnThresh);
+      panel.appendChild(threshRow);
+
+      // Question list
+      const qList = document.createElement('div');
+      qList.className = 'qa-list';
+      const checkboxes = [];
+
+      qStats.forEach(({ qId, resps, total, unsuccessful, failureRate, q }) => {
+        const row = document.createElement('div');
+        row.className = 'qa-row';
+
+        const cb = document.createElement('input');
+        cb.type      = 'checkbox';
+        cb.className = 'qa-cb';
+        checkboxes.push(cb);
+        cb.addEventListener('change', updateBtn);
+
+        const content = document.createElement('div');
+        content.className = 'qa-content';
+
+        const stemText = q ? (q.stem || q.assertion || qId) : qId;
+        const stemEl = document.createElement('div');
+        stemEl.className   = 'qa-stem';
+        stemEl.textContent = stemText;
+
+        const stats = document.createElement('div');
+        stats.className   = 'qa-stats';
+        stats.textContent = `${total} attempt${total !== 1 ? 's' : ''} · ${unsuccessful} unsuccessful · ${failureRate}% failure rate`;
+
+        const detail = document.createElement('div');
+        detail.className    = 'qa-detail';
+        detail.style.display = 'none';
+
+        [...resps].sort((a, b) => b.attemptedAt.localeCompare(a.attemptedAt)).forEach(r => {
+          const dRow = document.createElement('div');
+          dRow.className = 'qa-detail-row';
+          const ansStr = Array.isArray(r.your_answer)
+            ? r.your_answer.join(', ')
+            : (r.your_answer || '—');
+          const mCls = r.marks_awarded > 0
+            ? 'cbt-result-correct'
+            : r.marks_awarded < 0 ? 'cbt-result-incorrect' : '';
+          const mStr = r.marks_awarded > 0 ? `+${r.marks_awarded}` : String(r.marks_awarded);
+          dRow.innerHTML =
+            `<span>${new Date(r.attemptedAt).toLocaleDateString('en-IN')} — ${r.attemptTitle}</span>` +
+            `<span>Your: <strong>${ansStr}</strong></span>` +
+            `<span>Correct: <strong>${r.correct_answer || '—'}</strong></span>` +
+            `<span class="${mCls}">${mStr}</span>`;
+          detail.appendChild(dRow);
+        });
+
+        stemEl.addEventListener('click', () => {
+          const expanding = stemEl.classList.toggle('expanded');
+          detail.style.display = expanding ? 'block' : 'none';
+          if (expanding) renderMath(stemEl);
+        });
+
+        content.appendChild(stemEl);
+        content.appendChild(stats);
+        content.appendChild(detail);
+        row.appendChild(cb);
+        row.appendChild(content);
+        qList.appendChild(row);
+      });
+
+      panel.appendChild(qList);
+
+      // Generate Retest button
+      const retestWrap = document.createElement('div');
+      retestWrap.className = 'qa-retest-wrap';
+      const btnRetest = document.createElement('button');
+      btnRetest.className   = 'btn-primary';
+      btnRetest.textContent = 'Generate Retest';
+      btnRetest.disabled    = true;
+      retestWrap.appendChild(btnRetest);
+      panel.appendChild(retestWrap);
+
+      function updateBtn() {
+        btnRetest.disabled = !checkboxes.some(cb => cb.checked);
+      }
+
+      btnThresh.addEventListener('click', () => {
+        const threshold = Number(threshInput.value);
+        checkboxes.forEach((cb, i) => { cb.checked = qStats[i].failureRate > threshold; });
+        updateBtn();
+      });
+
+      btnRetest.addEventListener('click', () => {
+        const selectedStats = qStats.filter((_, i) => checkboxes[i] && checkboxes[i].checked);
+        const selectedQs    = selectedStats.map(s => s.q).filter(Boolean);
+        if (selectedQs.length === 0) return;
+
+        let totalSec = 0;
+        selectedQs.forEach(q => { totalSec += (q.avg_time_sec != null ? q.avg_time_sec : 90); });
+        const totalMin    = Math.round(totalSec / 60);
+        const hr          = Math.floor(totalMin / 60);
+        const min         = totalMin % 60;
+        const durationStr = hr === 0 ? min + ' min'
+                          : min === 0 ? hr + ' hr'
+                          : hr + ' hr ' + min + ' min';
+        const N = selectedQs.length;
+
+        paper = {
+          id:        crypto.randomUUID(),
+          generated: new Date().toISOString(),
+          meta: {
+            title:             `Retest — Chapter ${chapter} (${N} question${N !== 1 ? 's' : ''})`,
+            date:              new Date().toLocaleDateString('en-IN'),
+            duration:          durationStr,
+            totalMarks:        parseFloat((N * paperParams.marksPerQ).toFixed(2)),
+            marksPerQ:         paperParams.marksPerQ,
+            negativeMarking:   paperParams.negativeMarking,
+            negativeMarksPerQ: paperParams.negativeMarksPerQ
+          },
+          questions: selectedQs
+        };
+
+        paperSave();
+        selectRender();
+        switchTab('select');
+      });
+
+      card.appendChild(panel);
+      return panel;
     }
 
     // ── CBT ─────────────────────────────────────────────────────────────────
