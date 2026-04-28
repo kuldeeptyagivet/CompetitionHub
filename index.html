@@ -1426,8 +1426,9 @@
   </main>
 
   <script>
+    const isLocal = location.hostname === 'localhost' || location.protocol === 'file:';
     const CONFIG = {
-      mode: 'remote',
+      mode: isLocal ? 'local' : 'remote',
       workerUrl: 'https://api.examsindia.org',
       accessKey: 'ch-qbank-2026',
       cfClientId: '0da91d60f6e5c78fef20cd0cd025ccbc.access',
