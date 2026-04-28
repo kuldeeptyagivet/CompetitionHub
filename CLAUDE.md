@@ -211,10 +211,10 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   order, saves via paperSave(), switches to Select tab
 - Start CBT button added to Select tab
 - OMR answer entry complete: Enter Answers button on each saved paper in History tab loads paper into an OMR panel inside the CBT tab; grid of numbered question cards with radio buttons (mcq_single, assertion_reason, match_following), checkboxes (mcq_multi), and per-question Clear buttons; Submit confirmation flow with answered/unanswered counts; result and attempt saving identical to CBT mode; Back button returns to History without submitting
+- Remote data layer complete: Cloudflare Worker (competitionhub-qbank.kuldeeptyagi-vet.workers.dev) serves question bank JSON from R2 bucket (competitionhub-qbank); Worker validates x-access-key header; getData() switches between FSA and Worker fetch based on CONFIG.mode; remote mode auto-connects on page load without folder picker; GithubUpload/ prefix stripped from paths in remote branch
 
 **Not yet built:**
 - Answer logging and scoring
-- Remote data layer (Cloudflare Worker)
 - User access control
 - D1 sync
 
@@ -265,6 +265,7 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   appear first.
 2026-04-28 — OMR panel renders inside #tab-cbt using the same display-flag pattern as CBT attempt and result screens; responses are passed directly to cbtShowResult() so print-mode attempts appear in Progress and Question Analysis identically to CBT attempts.
 2026-04-28 — _books_registry.json moved inside GithubUpload folder; FSA data layer updated to read it from within GithubUpload so local folder structure matches R2 layout exactly; user picks QuestionBank as root, app navigates into GithubUpload for all file reads.
+2026-04-28 — R2 bucket layout matches local GithubUpload folder exactly; _books_registry.json at bucket root alongside book subfolders; Worker strips no paths — app getData() strips the GithubUpload/ prefix before building the fetch URL so local and remote path construction stay independent.
 
 ---
 
