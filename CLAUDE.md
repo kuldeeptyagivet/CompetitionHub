@@ -210,6 +210,7 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   Retest assembles paper from selected questions in failure-rate
   order, saves via paperSave(), switches to Select tab
 - Start CBT button added to Select tab
+- OMR answer entry complete: Enter Answers button on each saved paper in History tab loads paper into an OMR panel inside the CBT tab; grid of numbered question cards with radio buttons (mcq_single, assertion_reason, match_following), checkboxes (mcq_multi), and per-question Clear buttons; Submit confirmation flow with answered/unanswered counts; result and attempt saving identical to CBT mode; Back button returns to History without submitting
 
 **Not yet built:**
 - Answer logging and scoring
@@ -262,6 +263,7 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   attempts / total attempts per question_id; Generate Retest
   assembles paper in failure-rate order so weakest questions
   appear first.
+2026-04-28 — OMR panel renders inside #tab-cbt using the same display-flag pattern as CBT attempt and result screens; responses are passed directly to cbtShowResult() so print-mode attempts appear in Progress and Question Analysis identically to CBT attempts.
 
 ---
 
