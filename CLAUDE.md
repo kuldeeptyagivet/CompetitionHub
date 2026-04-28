@@ -186,9 +186,32 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   Load restores paper to Select tab; Delete removes entry and
   re-renders; empty state shows "No saved papers yet."; list
   re-renders on every tab click
+- CBT attempt screen complete: NTA-style interface with question
+  palette (five status colours), countdown timer parsed from
+  paper.meta.duration, Save & Next / Mark for Review / Clear
+  Response / Back / Next controls, submit confirmation flow,
+  result screen with score summary and full question-by-question
+  breakdown with correct/wrong answer highlighting and KaTeX
+  rendering
+- CBT attempt history complete: attempts saved to ch_attempts
+  in localStorage on submit; each response entry stores
+  source_book and source_chapter; History tab has Saved Papers
+  / Progress toggle
+- Progress panel complete: cascading book → chapter multi-select
+  filter with Apply button; per-chapter report cards showing
+  total attempted, accuracy %, last attempted date; collapsible
+  attempt rows with chapter-slice correct/incorrect/unattempted
+  counts and View Result button
+- Question Analysis complete: per-chapter panel aggregates all
+  responses by question_id, computes failure rate
+  (unsuccessful/total), sorts weakest first; truncated stems
+  expandable with KaTeX rendered on expand; threshold input
+  auto-selects questions above user-defined failure %; Generate
+  Retest assembles paper from selected questions in failure-rate
+  order, saves via paperSave(), switches to Select tab
+- Start CBT button added to Select tab
 
 **Not yet built:**
-- CBT attempt screen (NTA interface)
 - Answer logging and scoring
 - Remote data layer (Cloudflare Worker)
 - User access control
@@ -227,6 +250,18 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   via the input event listener in selectRender(), not at paper
   assembly time, so the stored title always reflects the final
   edited value.
+2026-04-28 — CBT attempt screen follows NTA interface pattern:
+  question palette, colour coding, countdown timer, Save & Next
+  flow; built in Part 09.
+2026-04-28 — Progress panel groups attempt history by book and
+  chapter rather than by date; each response entry stores
+  source_book and source_chapter at save time to enable
+  chapter-slice performance without reconstructing question
+  metadata later.
+2026-04-28 — Question Analysis failure rate = unsuccessful
+  attempts / total attempts per question_id; Generate Retest
+  assembles paper in failure-rate order so weakest questions
+  appear first.
 
 ---
 
