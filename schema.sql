@@ -51,3 +51,36 @@ VALUES
 INSERT OR IGNORE INTO users (email, role, plan_id, is_active, created_at)
 VALUES
   ('drtyagivet@gmail.com', 'superadmin', 'pro', 1, datetime('now'));
+-- MIGRATION: add plan_expires_at to users
+ALTER TABLE users ADD COLUMN plan_expires_at TEXT;
+
+-- TABLE: announcements
+CREATE TABLE IF NOT EXISTS announcements (
+  id          TEXT PRIMARY KEY,
+  message     TEXT NOT NULL,
+  target_plan TEXT NOT NULL DEFAULT 'all',
+  created_by  TEXT NOT NULL,
+  created_at  TEXT NOT NULL,
+  expires_at  TEXT
+);
+
+-- TABLE: user_notes
+CREATE TABLE IF NOT EXISTS user_notes (
+  id         TEXT PRIMARY KEY,
+  user_email TEXT NOT NULL,
+  note       TEXT NOT NULL,
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+-- TABLE: messages
+CREATE TABLE IF NOT EXISTS messages (
+  id          TEXT PRIMARY KEY,
+  from_email  TEXT NOT NULL,
+  to_email    TEXT NOT NULL,
+  subject     TEXT NOT NULL,
+  body        TEXT NOT NULL,
+  is_read     INTEGER NOT NULL DEFAULT 0,
+  created_at  TEXT NOT NULL,
+  thread_id   TEXT
+);
