@@ -11,7 +11,7 @@ function corsHeaders() {
   return {
     'Access-Control-Allow-Origin':  'https://competitionhub.pages.dev',
     'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, x-access-key, x-user-email',
+    'Access-Control-Allow-Headers': 'Content-Type, x-access-key, x-user-email, cf-access-client-id, cf-access-client-secret',
     'Access-Control-Max-Age':       '86400',
   };
 }
