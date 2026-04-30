@@ -1289,6 +1289,256 @@
     .omr-clear:hover { border-color: var(--accent); color: var(--accent); }
     .omr-submit-wrap { margin-top: 1.75rem; }
 
+    /* ── Announcement banner ── */
+    #announcement-banner {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      background: var(--gold);
+      color: var(--paper);
+      font-size: 0.875rem;
+      font-weight: 500;
+      padding: 0.6rem 1.5rem;
+    }
+    #announcement-banner button {
+      background: none;
+      border: none;
+      color: var(--paper);
+      font-size: 1rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      opacity: 0.8;
+    }
+    #announcement-banner button:hover { opacity: 1; }
+
+    /* ── Admin tab badge ── */
+    .tab-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--warn);
+      color: var(--paper);
+      font-size: 0.65rem;
+      font-weight: 700;
+      min-width: 1.1rem;
+      height: 1.1rem;
+      border-radius: 999px;
+      padding: 0 0.25rem;
+      margin-left: 0.35rem;
+      vertical-align: middle;
+      line-height: 1;
+    }
+
+    /* ── Role badge ── */
+    .role-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      color: var(--paper);
+    }
+    .role-badge--superadmin { background: var(--accent); }
+    .role-badge--admin      { background: var(--accent2); }
+    .role-badge--user       { background: var(--muted); }
+
+    /* ── Admin panel layout ── */
+    .admin-panel-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+    .admin-panel-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.3rem;
+      color: var(--ink);
+    }
+    .admin-panel-email {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    /* ── Admin sub-nav ── */
+    .admin-subnav {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+    }
+    .admin-subnav-btn {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--muted);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 0.65rem 1.1rem;
+      cursor: pointer;
+      margin-bottom: -1px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .admin-subnav-btn:hover  { color: var(--ink); }
+    .admin-subnav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ── Admin cards & tables ── */
+    .admin-card {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    .admin-card-title {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+    .admin-table th {
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .admin-table td {
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    .admin-table tr:last-child td { border-bottom: none; }
+    .admin-table tr:hover td { background: var(--cream); }
+
+    /* ── Admin forms ── */
+    .admin-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      align-items: flex-end;
+      margin-bottom: 1rem;
+    }
+    .admin-form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .admin-form-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .admin-input {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 0.4rem 0.6rem;
+      background: var(--paper);
+      color: var(--ink);
+      min-width: 140px;
+    }
+    .admin-input:focus { outline: 2px solid var(--accent); border-color: transparent; }
+    .admin-select {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 0.4rem 0.6rem;
+      background: var(--paper);
+      color: var(--ink);
+    }
+    .admin-textarea {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.82rem;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 0.4rem 0.6rem;
+      background: var(--paper);
+      color: var(--ink);
+      resize: vertical;
+      width: 100%;
+    }
+    .admin-btn {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 5px;
+      padding: 0.4rem 0.85rem;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      white-space: nowrap;
+    }
+    .admin-btn:hover { opacity: 0.82; }
+    .admin-btn--primary  { background: var(--accent);  color: var(--paper); }
+    .admin-btn--danger   { background: var(--warn);    color: var(--paper); }
+    .admin-btn--ghost    { background: var(--border);  color: var(--ink);   }
+    .admin-btn--success  { background: var(--success); color: var(--paper); }
+
+    /* ── Messages ── */
+    .admin-messages-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+    .admin-msg-item {
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .admin-msg-item:hover { background: var(--cream); }
+    .admin-msg-item.unread { border-left: 3px solid var(--accent); background: #f0f0ff; }
+    .admin-msg-from  { font-size: 0.75rem; color: var(--muted); }
+    .admin-msg-subj  { font-weight: 600; font-size: 0.875rem; margin: 0.15rem 0; }
+    .admin-msg-body  { font-size: 0.82rem; color: var(--muted); }
+    .admin-msg-time  { font-size: 0.72rem; color: var(--muted); margin-top: 0.25rem; }
+
+    /* ── Announcement list ── */
+    .admin-ann-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .admin-ann-item:last-child { border-bottom: none; }
+    .admin-ann-msg  { flex: 1; font-size: 0.875rem; }
+    .admin-ann-meta { font-size: 0.72rem; color: var(--muted); margin-top: 0.2rem; }
+
+    /* ── Notes ── */
+    .admin-notes-list {
+      padding: 0.5rem 0;
+    }
+    .admin-note-item {
+      font-size: 0.82rem;
+      padding: 0.35rem 0;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .admin-note-by { font-size: 0.7rem; color: var(--accent); }
+
     /* ── Print media ── */
     @media print {
       body > *:not(main)         { display: none !important; }
@@ -1322,8 +1572,13 @@
       <button class="tab-btn"        role="tab" data-tab="preview">Preview / Print</button>
       <button class="tab-btn"        role="tab" data-tab="history">History</button>
       <button class="tab-btn"        role="tab" data-tab="cbt">CBT</button>
+      <button class="tab-btn" role="tab" data-tab="admin" id="tab-btn-admin" style="display:none">
+        Admin<span class="tab-badge" id="admin-tab-badge" style="display:none"></span>
+      </button>
     </nav>
   </header>
+
+  <div id="announcement-banner"></div>
 
   <main>
     <div id="tab-filter" class="tab-panel active">
@@ -1424,6 +1679,7 @@
     <div id="tab-preview"  class="tab-panel"><p>Preview / Print tab</p></div>
     <div id="tab-history"  class="tab-panel"></div>
     <div id="tab-cbt"      class="tab-panel"></div>
+    <div id="tab-admin"    class="tab-panel"></div>
   </main>
 
   <script>
@@ -4184,6 +4440,702 @@
       display.appendChild(el);
     }
 
+    // ════════════════════════════════════════════════════════════════════════
+    // ADMIN PANEL
+    // ════════════════════════════════════════════════════════════════════════
+
+    // ── Shared fetch helper ──────────────────────────────────────────────────
+    async function adminFetch(path, options = {}) {
+      const method = options.method || 'GET';
+      const hasBody = options.body !== undefined;
+      try {
+        const res = await fetch(`${CONFIG.workerUrl}/${path}`, {
+          method,
+          headers: {
+            'x-access-key': CONFIG.accessKey,
+            'x-user-email': authState.email,
+            'Content-Type': 'application/json',
+          },
+          body: hasBody ? JSON.stringify(options.body) : undefined,
+        });
+        if (!res.ok) return null;
+        return await res.json();
+      } catch {
+        return null;
+      }
+    }
+
+    // ── Announcement banner ──────────────────────────────────────────────────
+    async function announcementBannerInit() {
+      const dismissed = JSON.parse(localStorage.getItem('ch_dismissed_ann') || '[]');
+      const data = await adminFetch('announcements');
+      if (!Array.isArray(data) || !data.length) return;
+      const active = data.filter(a => !dismissed.includes(a.id));
+      if (!active.length) return;
+      const a = active[0];
+      const banner = document.getElementById('announcement-banner');
+      const span = document.createElement('span');
+      span.textContent = a.message;
+      const btn = document.createElement('button');
+      btn.textContent = '✕';
+      btn.setAttribute('aria-label', 'Dismiss');
+      btn.addEventListener('click', () => {
+        dismissed.push(a.id);
+        localStorage.setItem('ch_dismissed_ann', JSON.stringify(dismissed));
+        banner.style.display = 'none';
+      });
+      banner.innerHTML = '';
+      banner.appendChild(span);
+      banner.appendChild(btn);
+      banner.style.display = 'flex';
+    }
+
+    // ── Unread-message badge ─────────────────────────────────────────────────
+    let _adminBadgeTimer = null;
+
+    async function adminBadgeRefresh() {
+      const role = authState.role;
+      if (role !== 'superadmin' && role !== 'admin') return;
+      const data = await adminFetch('admin/messages');
+      const badge = document.getElementById('admin-tab-badge');
+      if (!badge) return;
+      if (!Array.isArray(data)) { badge.style.display = 'none'; return; }
+      const unread = data.filter(m => m.is_read === 0).length;
+      if (unread > 0) {
+        badge.textContent = unread;
+        badge.style.display = 'inline-flex';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    function adminBadgeInit() {
+      adminBadgeRefresh();
+      if (_adminBadgeTimer) clearInterval(_adminBadgeTimer);
+      _adminBadgeTimer = setInterval(adminBadgeRefresh, 60000);
+    }
+
+    // ── Show admin tab after auth ────────────────────────────────────────────
+    function adminTabInit() {
+      const role = authState.role;
+      if (role !== 'superadmin' && role !== 'admin') return;
+      const btn = document.getElementById('tab-btn-admin');
+      if (btn) btn.style.display = '';
+      announcementBannerInit();
+      adminBadgeInit();
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // Admin sub-panel renderers
+    // ════════════════════════════════════════════════════════════════════════
+
+    // ── Top-level admin tab render ───────────────────────────────────────────
+    function adminRender() {
+      const tab  = document.getElementById('tab-admin');
+      const role = authState.role;
+      const subPanels = role === 'superadmin'
+        ? ['users', 'plans', 'announcements', 'messages']
+        : ['messages'];
+
+      tab.innerHTML = `
+        <div class="admin-panel-header">
+          <span class="admin-panel-title">Admin Panel</span>
+          <span class="role-badge role-badge--${role}">${role}</span>
+          <span class="admin-panel-email">${authState.email || ''}</span>
+        </div>
+        <nav class="admin-subnav" id="admin-subnav">
+          ${subPanels.map((p, i) =>
+            `<button class="admin-subnav-btn${i === 0 ? ' active' : ''}" data-panel="${p}">${p.charAt(0).toUpperCase() + p.slice(1)}</button>`
+          ).join('')}
+        </nav>
+        <div id="admin-content"></div>
+      `;
+
+      tab.querySelectorAll('.admin-subnav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          tab.querySelectorAll('.admin-subnav-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          adminRenderPanel(btn.dataset.panel);
+        });
+      });
+
+      adminRenderPanel(subPanels[0]);
+    }
+
+    function adminRenderPanel(panel) {
+      const content = document.getElementById('admin-content');
+      if (!content) return;
+      content.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;padding:1rem 0">Loading…</div>';
+      switch (panel) {
+        case 'users':         adminRenderUsers();         break;
+        case 'plans':         adminRenderPlans();         break;
+        case 'announcements': adminRenderAnnouncements(); break;
+        case 'messages':      adminRenderMessages();      break;
+      }
+    }
+
+    // ── Users sub-panel ──────────────────────────────────────────────────────
+    async function adminRenderUsers() {
+      const content = document.getElementById('admin-content');
+      const [users, plans] = await Promise.all([
+        adminFetch('admin/users'),
+        adminFetch('admin/plans'),
+      ]);
+
+      if (!content) return;
+      if (!Array.isArray(users) || !Array.isArray(plans)) {
+        content.innerHTML = '<p style="color:var(--warn)">Failed to load users.</p>';
+        return;
+      }
+
+      const planOpts = plans.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+      const roleOpts = ['user','admin','superadmin'].map(r => `<option value="${r}">${r}</option>`).join('');
+
+      content.innerHTML = `
+        <div class="admin-card">
+          <div class="admin-card-title">Add User</div>
+          <div class="admin-form" id="admin-user-add-form">
+            <div class="admin-form-field">
+              <span class="admin-form-label">Email</span>
+              <input class="admin-input" id="auu-email" placeholder="user@example.com" style="min-width:220px">
+            </div>
+            <div class="admin-form-field">
+              <span class="admin-form-label">Role</span>
+              <select class="admin-select" id="auu-role">${roleOpts}</select>
+            </div>
+            <div class="admin-form-field">
+              <span class="admin-form-label">Plan</span>
+              <select class="admin-select" id="auu-plan">${planOpts}</select>
+            </div>
+            <button class="admin-btn admin-btn--primary" id="auu-submit">Add User</button>
+          </div>
+          <div id="auu-msg" style="font-size:0.8rem;color:var(--success);display:none">User added.</div>
+        </div>
+
+        <div class="admin-card">
+          <div class="admin-card-title">All Users</div>
+          <table class="admin-table" id="admin-users-table">
+            <thead><tr>
+              <th>Email</th><th>Role</th><th>Plan</th>
+              <th>Expires</th><th>Active</th><th>Notes</th><th>Actions</th>
+            </tr></thead>
+            <tbody>
+              ${users.map(u => adminUserRow(u, planOpts, roleOpts)).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      // Add user
+      document.getElementById('auu-submit').addEventListener('click', async () => {
+        const email   = document.getElementById('auu-email').value.trim();
+        const role    = document.getElementById('auu-role').value;
+        const plan_id = document.getElementById('auu-plan').value;
+        if (!email) return;
+        const res = await adminFetch('admin/users/create', { method: 'POST', body: { email, role, plan_id } });
+        const msgEl = document.getElementById('auu-msg');
+        if (res) {
+          msgEl.style.display = 'block';
+          msgEl.textContent   = `User ${res.email} created.`;
+          setTimeout(() => adminRenderUsers(), 800);
+        } else {
+          msgEl.style.display = 'block';
+          msgEl.style.color   = 'var(--warn)';
+          msgEl.textContent   = 'Failed to create user.';
+        }
+      });
+
+      // Wire row controls
+      adminWireUserRows(users, plans);
+    }
+
+    function adminUserRow(u, planOpts, roleOpts) {
+      const activeLabel = u.is_active ? '✓' : '✗';
+      const expires = u.plan_expires_at || '—';
+      return `
+        <tr id="admin-user-row-${btoa(u.email).replace(/=/g,'')}">
+          <td style="font-family:'DM Mono',monospace;font-size:0.82rem">${u.email}</td>
+          <td><span class="role-badge role-badge--${u.role}">${u.role}</span></td>
+          <td>${u.plan_name || u.plan_id}</td>
+          <td style="font-size:0.8rem">${expires}</td>
+          <td style="text-align:center">${activeLabel}</td>
+          <td style="font-size:0.8rem" id="admin-user-notes-count-${btoa(u.email).replace(/=/g,'')}">—</td>
+          <td>
+            <button class="admin-btn admin-btn--ghost" style="font-size:0.75rem;padding:0.25rem 0.55rem"
+              data-action="edit-user" data-email="${u.email}">Edit</button>
+            <button class="admin-btn admin-btn--ghost" style="font-size:0.75rem;padding:0.25rem 0.55rem;margin-left:0.25rem"
+              data-action="add-note" data-email="${u.email}">+ Note</button>
+          </td>
+        </tr>
+        <tr id="admin-user-inline-${btoa(u.email).replace(/=/g,'')}" style="display:none">
+          <td colspan="7" style="padding:0.75rem;background:var(--cream)">
+            <div id="admin-user-inline-content-${btoa(u.email).replace(/=/g,'')}"></div>
+          </td>
+        </tr>
+      `;
+    }
+
+    function adminWireUserRows(users, plans) {
+      const planOpts = plans.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+      const roleOpts = ['user','admin','superadmin'].map(r => `<option value="${r}">${r}</option>`).join('');
+
+      document.querySelectorAll('[data-action="edit-user"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const email  = btn.dataset.email;
+          const key    = btoa(email).replace(/=/g,'');
+          const user   = users.find(u => u.email === email) || {};
+          const inlineRow = document.getElementById(`admin-user-inline-${key}`);
+          const contentEl = document.getElementById(`admin-user-inline-content-${key}`);
+          if (inlineRow.style.display !== 'none') { inlineRow.style.display = 'none'; return; }
+          inlineRow.style.display = '';
+          contentEl.innerHTML = `
+            <div class="admin-form" style="flex-wrap:wrap">
+              <div class="admin-form-field">
+                <span class="admin-form-label">Role</span>
+                <select class="admin-select" id="eu-role-${key}">${roleOpts.replace(`value="${user.role}"`, `value="${user.role}" selected`)}</select>
+              </div>
+              <div class="admin-form-field">
+                <span class="admin-form-label">Plan</span>
+                <select class="admin-select" id="eu-plan-${key}">${planOpts.replace(`value="${user.plan_id}"`, `value="${user.plan_id}" selected`)}</select>
+              </div>
+              <div class="admin-form-field">
+                <span class="admin-form-label">Active</span>
+                <select class="admin-select" id="eu-active-${key}">
+                  <option value="1"${user.is_active ? ' selected' : ''}>Yes</option>
+                  <option value="0"${!user.is_active ? ' selected' : ''}>No</option>
+                </select>
+              </div>
+              <div class="admin-form-field">
+                <span class="admin-form-label">Plan Expires</span>
+                <input type="date" class="admin-input" id="eu-expires-${key}" value="${user.plan_expires_at || ''}">
+              </div>
+              <button class="admin-btn admin-btn--primary" id="eu-save-${key}">Save</button>
+              <button class="admin-btn admin-btn--ghost" id="eu-cancel-${key}">Cancel</button>
+            </div>
+            <div id="eu-msg-${key}" style="font-size:0.78rem;display:none;margin-top:0.4rem"></div>
+          `;
+          document.getElementById(`eu-cancel-${key}`).addEventListener('click', () => {
+            inlineRow.style.display = 'none';
+          });
+          document.getElementById(`eu-save-${key}`).addEventListener('click', async () => {
+            const body = {
+              email,
+              role:             document.getElementById(`eu-role-${key}`).value,
+              plan_id:          document.getElementById(`eu-plan-${key}`).value,
+              is_active:        parseInt(document.getElementById(`eu-active-${key}`).value),
+              plan_expires_at:  document.getElementById(`eu-expires-${key}`).value || null,
+            };
+            const res = await adminFetch('admin/users/update', { method: 'POST', body });
+            const msg = document.getElementById(`eu-msg-${key}`);
+            if (res) {
+              msg.style.color   = 'var(--success)';
+              msg.style.display = 'block';
+              msg.textContent   = 'Saved.';
+              setTimeout(() => adminRenderUsers(), 700);
+            } else {
+              msg.style.color   = 'var(--warn)';
+              msg.style.display = 'block';
+              msg.textContent   = 'Save failed.';
+            }
+          });
+        });
+      });
+
+      document.querySelectorAll('[data-action="add-note"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const email  = btn.dataset.email;
+          const key    = btoa(email).replace(/=/g,'');
+          const inlineRow = document.getElementById(`admin-user-inline-${key}`);
+          const contentEl = document.getElementById(`admin-user-inline-content-${key}`);
+
+          // Load existing notes + show add form
+          adminFetch(`admin/user-notes/${encodeURIComponent(email)}`).then(notes => {
+            inlineRow.style.display = '';
+            const notesList = Array.isArray(notes)
+              ? notes.map(n => `<div class="admin-note-item"><span class="admin-note-by">${n.created_by}</span> — ${n.note}</div>`).join('')
+              : '';
+            contentEl.innerHTML = `
+              ${notesList ? `<div class="admin-notes-list">${notesList}</div>` : ''}
+              <div class="admin-form" style="margin-top:0.5rem">
+                <div class="admin-form-field" style="flex:1">
+                  <span class="admin-form-label">New Note</span>
+                  <textarea class="admin-textarea" id="note-ta-${key}" rows="2" placeholder="Enter note…"></textarea>
+                </div>
+                <button class="admin-btn admin-btn--primary" id="note-save-${key}">Save Note</button>
+                <button class="admin-btn admin-btn--ghost"   id="note-cancel-${key}">Cancel</button>
+              </div>
+              <div id="note-msg-${key}" style="font-size:0.78rem;display:none;margin-top:0.3rem"></div>
+            `;
+            document.getElementById(`note-cancel-${key}`).addEventListener('click', () => {
+              inlineRow.style.display = 'none';
+            });
+            document.getElementById(`note-save-${key}`).addEventListener('click', async () => {
+              const note = document.getElementById(`note-ta-${key}`).value.trim();
+              if (!note) return;
+              const res = await adminFetch('admin/user-notes/create', {
+                method: 'POST', body: { user_email: email, note }
+              });
+              const msg = document.getElementById(`note-msg-${key}`);
+              if (res) {
+                msg.style.color   = 'var(--success)';
+                msg.style.display = 'block';
+                msg.textContent   = 'Note saved.';
+                setTimeout(() => adminRenderUsers(), 700);
+              } else {
+                msg.style.color   = 'var(--warn)';
+                msg.style.display = 'block';
+                msg.textContent   = 'Save failed.';
+              }
+            });
+          });
+        });
+      });
+    }
+
+    // ── Plans sub-panel ──────────────────────────────────────────────────────
+    async function adminRenderPlans() {
+      const content = document.getElementById('admin-content');
+      const plans   = await adminFetch('admin/plans');
+      if (!content) return;
+      if (!Array.isArray(plans)) {
+        content.innerHTML = '<p style="color:var(--warn)">Failed to load plans.</p>';
+        return;
+      }
+
+      content.innerHTML = `
+        <div class="admin-card">
+          <div class="admin-card-title">Add Plan</div>
+          <div class="admin-form">
+            <div class="admin-form-field">
+              <span class="admin-form-label">ID</span>
+              <input class="admin-input" id="ap-id" placeholder="plan_id" style="min-width:100px">
+            </div>
+            <div class="admin-form-field">
+              <span class="admin-form-label">Name</span>
+              <input class="admin-input" id="ap-name" placeholder="Plan Name">
+            </div>
+            <div class="admin-form-field">
+              <span class="admin-form-label">Max Q</span>
+              <input type="number" class="admin-input" id="ap-maxq" value="25" style="min-width:70px">
+            </div>
+            <div class="admin-form-field">
+              <span class="admin-form-label">Max Books</span>
+              <input type="number" class="admin-input" id="ap-maxb" value="1" style="min-width:70px">
+            </div>
+            <div class="admin-form-field">
+              <span class="admin-form-label">Allow Extracted</span>
+              <select class="admin-select" id="ap-ext">
+                <option value="0">No</option><option value="1">Yes</option>
+              </select>
+            </div>
+            <div class="admin-form-field">
+              <span class="admin-form-label">Filter Types</span>
+              <input class="admin-input" id="ap-ft" value="all" style="min-width:80px">
+            </div>
+            <button class="admin-btn admin-btn--primary" id="ap-submit">Add Plan</button>
+          </div>
+          <div id="ap-msg" style="font-size:0.8rem;display:none"></div>
+        </div>
+
+        <div class="admin-card">
+          <div class="admin-card-title">All Plans</div>
+          <table class="admin-table">
+            <thead><tr>
+              <th>ID</th><th>Name</th><th>Max Q</th><th>Max Books</th>
+              <th>Extracted</th><th>Filter Types</th><th>Actions</th>
+            </tr></thead>
+            <tbody>${plans.map(p => adminPlanRow(p)).join('')}</tbody>
+          </table>
+        </div>
+      `;
+
+      document.getElementById('ap-submit').addEventListener('click', async () => {
+        const body = {
+          id:              document.getElementById('ap-id').value.trim(),
+          name:            document.getElementById('ap-name').value.trim(),
+          max_questions:   parseInt(document.getElementById('ap-maxq').value),
+          max_books:       parseInt(document.getElementById('ap-maxb').value),
+          allow_extracted: parseInt(document.getElementById('ap-ext').value),
+          filter_types:    document.getElementById('ap-ft').value.trim() || 'all',
+        };
+        const res = await adminFetch('admin/plans/create', { method: 'POST', body });
+        const msg = document.getElementById('ap-msg');
+        msg.style.display = 'block';
+        if (res) { msg.style.color = 'var(--success)'; msg.textContent = `Plan "${res.name}" created.`; setTimeout(() => adminRenderPlans(), 700); }
+        else     { msg.style.color = 'var(--warn)';    msg.textContent = 'Failed to create plan.'; }
+      });
+
+      adminWirePlanRows(plans);
+    }
+
+    function adminPlanRow(p) {
+      const key = p.id;
+      return `
+        <tr>
+          <td style="font-family:'DM Mono',monospace;font-size:0.82rem">${p.id}</td>
+          <td>${p.name}</td>
+          <td>${p.max_questions}</td>
+          <td>${p.max_books}</td>
+          <td>${p.allow_extracted ? 'Yes' : 'No'}</td>
+          <td style="font-size:0.8rem">${p.filter_types}</td>
+          <td><button class="admin-btn admin-btn--ghost" style="font-size:0.75rem;padding:0.25rem 0.55rem"
+            data-action="edit-plan" data-key="${key}">Edit</button></td>
+        </tr>
+        <tr id="plan-inline-${key}" style="display:none">
+          <td colspan="7" style="padding:0.75rem;background:var(--cream)">
+            <div class="admin-form">
+              <div class="admin-form-field">
+                <span class="admin-form-label">Name</span>
+                <input class="admin-input" id="ep-name-${key}" value="${p.name}">
+              </div>
+              <div class="admin-form-field">
+                <span class="admin-form-label">Max Q</span>
+                <input type="number" class="admin-input" id="ep-maxq-${key}" value="${p.max_questions}" style="min-width:70px">
+              </div>
+              <div class="admin-form-field">
+                <span class="admin-form-label">Max Books</span>
+                <input type="number" class="admin-input" id="ep-maxb-${key}" value="${p.max_books}" style="min-width:70px">
+              </div>
+              <div class="admin-form-field">
+                <span class="admin-form-label">Extracted</span>
+                <select class="admin-select" id="ep-ext-${key}">
+                  <option value="0"${!p.allow_extracted ? ' selected' : ''}>No</option>
+                  <option value="1"${p.allow_extracted  ? ' selected' : ''}>Yes</option>
+                </select>
+              </div>
+              <div class="admin-form-field">
+                <span class="admin-form-label">Filter Types</span>
+                <input class="admin-input" id="ep-ft-${key}" value="${p.filter_types}" style="min-width:80px">
+              </div>
+              <button class="admin-btn admin-btn--primary" id="ep-save-${key}">Save</button>
+              <button class="admin-btn admin-btn--ghost"   id="ep-cancel-${key}">Cancel</button>
+            </div>
+            <div id="ep-msg-${key}" style="font-size:0.78rem;display:none;margin-top:0.4rem"></div>
+          </td>
+        </tr>
+      `;
+    }
+
+    function adminWirePlanRows(plans) {
+      document.querySelectorAll('[data-action="edit-plan"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const key      = btn.dataset.key;
+          const inlineRow = document.getElementById(`plan-inline-${key}`);
+          if (inlineRow.style.display !== 'none') { inlineRow.style.display = 'none'; return; }
+          inlineRow.style.display = '';
+          document.getElementById(`ep-cancel-${key}`).addEventListener('click', () => {
+            inlineRow.style.display = 'none';
+          });
+          document.getElementById(`ep-save-${key}`).addEventListener('click', async () => {
+            const body = {
+              id:              key,
+              name:            document.getElementById(`ep-name-${key}`).value.trim(),
+              max_questions:   parseInt(document.getElementById(`ep-maxq-${key}`).value),
+              max_books:       parseInt(document.getElementById(`ep-maxb-${key}`).value),
+              allow_extracted: parseInt(document.getElementById(`ep-ext-${key}`).value),
+              filter_types:    document.getElementById(`ep-ft-${key}`).value.trim(),
+            };
+            const res = await adminFetch('admin/plans/update', { method: 'POST', body });
+            const msg = document.getElementById(`ep-msg-${key}`);
+            msg.style.display = 'block';
+            if (res) { msg.style.color = 'var(--success)'; msg.textContent = 'Saved.'; setTimeout(() => adminRenderPlans(), 700); }
+            else     { msg.style.color = 'var(--warn)';    msg.textContent = 'Save failed.'; }
+          });
+        });
+      });
+    }
+
+    // ── Announcements sub-panel ──────────────────────────────────────────────
+    async function adminRenderAnnouncements() {
+      const content = document.getElementById('admin-content');
+      const [anns, plans] = await Promise.all([
+        adminFetch('admin/announcements'),
+        adminFetch('admin/plans'),
+      ]);
+      if (!content) return;
+      if (!Array.isArray(anns)) {
+        content.innerHTML = '<p style="color:var(--warn)">Failed to load announcements.</p>';
+        return;
+      }
+
+      const planOpts = [{ id: 'all', name: 'All Plans' }, ...(Array.isArray(plans) ? plans : [])]
+        .map(p => `<option value="${p.id}">${p.name || p.id}</option>`).join('');
+
+      const annListHtml = anns.length
+        ? anns.map(a => `
+          <div class="admin-ann-item">
+            <div class="admin-ann-msg">
+              ${a.message}
+              <div class="admin-ann-meta">Plan: ${a.target_plan} · Expires: ${a.expires_at || 'never'} · By: ${a.created_by}</div>
+            </div>
+            <button class="admin-btn admin-btn--danger" style="font-size:0.75rem;padding:0.25rem 0.55rem"
+              data-action="del-ann" data-id="${a.id}">Delete</button>
+          </div>
+        `).join('')
+        : '<div style="color:var(--muted);font-size:0.85rem">No announcements.</div>';
+
+      content.innerHTML = `
+        <div class="admin-card">
+          <div class="admin-card-title">Create Announcement</div>
+          <div class="admin-form" style="flex-direction:column;align-items:flex-start">
+            <div class="admin-form-field" style="width:100%">
+              <span class="admin-form-label">Message</span>
+              <textarea class="admin-textarea" id="ann-msg" rows="3" placeholder="Announcement text…"></textarea>
+            </div>
+            <div class="admin-form" style="margin-top:0.5rem">
+              <div class="admin-form-field">
+                <span class="admin-form-label">Target Plan</span>
+                <select class="admin-select" id="ann-plan">${planOpts}</select>
+              </div>
+              <div class="admin-form-field">
+                <span class="admin-form-label">Expires (optional)</span>
+                <input type="date" class="admin-input" id="ann-expires">
+              </div>
+              <button class="admin-btn admin-btn--primary" id="ann-submit">Post</button>
+            </div>
+          </div>
+          <div id="ann-create-msg" style="font-size:0.8rem;display:none;margin-top:0.5rem"></div>
+        </div>
+
+        <div class="admin-card">
+          <div class="admin-card-title">Active Announcements</div>
+          <div id="ann-list">${annListHtml}</div>
+        </div>
+      `;
+
+      document.getElementById('ann-submit').addEventListener('click', async () => {
+        const body = {
+          message:     document.getElementById('ann-msg').value.trim(),
+          target_plan: document.getElementById('ann-plan').value,
+          expires_at:  document.getElementById('ann-expires').value || null,
+        };
+        if (!body.message) return;
+        const res = await adminFetch('admin/announcements/create', { method: 'POST', body });
+        const msg = document.getElementById('ann-create-msg');
+        msg.style.display = 'block';
+        if (res) { msg.style.color = 'var(--success)'; msg.textContent = 'Announcement posted.'; setTimeout(() => adminRenderAnnouncements(), 700); }
+        else     { msg.style.color = 'var(--warn)';    msg.textContent = 'Failed to post.'; }
+      });
+
+      document.querySelectorAll('[data-action="del-ann"]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          const res = await adminFetch(`admin/announcements/${encodeURIComponent(id)}`, { method: 'DELETE' });
+          if (res) setTimeout(() => adminRenderAnnouncements(), 400);
+        });
+      });
+    }
+
+    // ── Messages sub-panel ───────────────────────────────────────────────────
+    async function adminRenderMessages() {
+      const content = document.getElementById('admin-content');
+      const msgs    = await adminFetch('admin/messages');
+      if (!content) return;
+
+      const msgList = Array.isArray(msgs) ? msgs : [];
+      const isSuperadmin = authState.role === 'superadmin';
+      const defaultTo = isSuperadmin ? '' : 'drtyagivet@gmail.com';
+
+      const inboxHtml = msgList.length
+        ? msgList.map(m => `
+          <div class="admin-msg-item${m.is_read === 0 ? ' unread' : ''}" data-action="read-msg" data-id="${m.id}" data-thread="${m.thread_id || m.id}" data-from="${m.from_email}">
+            <div class="admin-msg-from">From: ${m.from_email}</div>
+            <div class="admin-msg-subj">${m.subject}</div>
+            <div class="admin-msg-body">${m.body}</div>
+            <div class="admin-msg-time">${m.created_at}</div>
+            <div style="margin-top:0.35rem">
+              <button class="admin-btn admin-btn--ghost" style="font-size:0.72rem;padding:0.2rem 0.5rem"
+                data-action="reply-msg" data-thread="${m.thread_id || m.id}" data-to="${m.from_email}" data-subj="Re: ${m.subject}">Reply</button>
+            </div>
+          </div>
+        `).join('')
+        : '<div style="color:var(--muted);font-size:0.85rem">No messages.</div>';
+
+      content.innerHTML = `
+        <div class="admin-messages-grid">
+          <div>
+            <div class="admin-card-title">Inbox</div>
+            <div id="admin-inbox">${inboxHtml}</div>
+          </div>
+          <div>
+            <div class="admin-card-title">Compose</div>
+            <div class="admin-card">
+              <div class="admin-form" style="flex-direction:column;gap:0.5rem">
+                <div class="admin-form-field" style="width:100%">
+                  <span class="admin-form-label">To</span>
+                  <input class="admin-input" id="compose-to" value="${defaultTo}" style="width:100%">
+                </div>
+                <div class="admin-form-field" style="width:100%">
+                  <span class="admin-form-label">Subject</span>
+                  <input class="admin-input" id="compose-subj" style="width:100%">
+                </div>
+                <div class="admin-form-field" style="width:100%">
+                  <span class="admin-form-label">Body</span>
+                  <textarea class="admin-textarea" id="compose-body" rows="5"></textarea>
+                </div>
+                <input type="hidden" id="compose-thread" value="">
+                <button class="admin-btn admin-btn--primary" id="compose-send">Send</button>
+                <div id="compose-msg" style="font-size:0.78rem;display:none"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Mark as read on click
+      document.querySelectorAll('[data-action="read-msg"]').forEach(el => {
+        el.addEventListener('click', async () => {
+          if (el.classList.contains('unread')) {
+            await adminFetch('admin/messages/read', { method: 'POST', body: { id: el.dataset.id } });
+            el.classList.remove('unread');
+            adminBadgeRefresh();
+          }
+        });
+      });
+
+      // Pre-fill compose on reply
+      document.querySelectorAll('[data-action="reply-msg"]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          document.getElementById('compose-to').value     = btn.dataset.to;
+          document.getElementById('compose-subj').value   = btn.dataset.subj;
+          document.getElementById('compose-thread').value = btn.dataset.thread;
+          document.getElementById('compose-body').focus();
+        });
+      });
+
+      // Send / reply
+      document.getElementById('compose-send').addEventListener('click', async () => {
+        const to      = document.getElementById('compose-to').value.trim();
+        const subject = document.getElementById('compose-subj').value.trim();
+        const body    = document.getElementById('compose-body').value.trim();
+        const thread  = document.getElementById('compose-thread').value.trim();
+        if (!to || !subject || !body) return;
+
+        const endpoint = thread ? 'admin/messages/reply' : 'admin/messages/send';
+        const payload  = thread
+          ? { thread_id: thread, to_email: to, subject, body }
+          : { to_email: to, subject, body };
+
+        const res = await adminFetch(endpoint, { method: 'POST', body: payload });
+        const msg = document.getElementById('compose-msg');
+        msg.style.display = 'block';
+        if (res) {
+          msg.style.color = 'var(--success)'; msg.textContent = 'Sent.';
+          document.getElementById('compose-body').value   = '';
+          document.getElementById('compose-thread').value = '';
+          document.getElementById('compose-subj').value   = '';
+          setTimeout(() => adminRenderMessages(), 800);
+        } else {
+          msg.style.color = 'var(--warn)'; msg.textContent = 'Failed to send.';
+        }
+      });
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // END ADMIN PANEL
+    // ════════════════════════════════════════════════════════════════════════
+
     async function filterLoadBooks() {
       const display = document.getElementById('index-display');
       display.innerHTML = '';
@@ -4227,11 +5179,13 @@
       }
 
       await authInit();
+      adminTabInit();
       await filterLoadBooks();
     }
 
     async function filterConnect() {
       await authInit();
+      adminTabInit();
       remoteReady = true;
       await filterLoadBooks();
     }
@@ -4260,6 +5214,7 @@
         document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
         if (btn.dataset.tab === 'history') historyRender();
         if (btn.dataset.tab === 'cbt')     cbtRender();
+        if (btn.dataset.tab === 'admin')   adminRender();
         if (btn.dataset.tab !== 'cbt')     cbtClearTimer();
       });
     });
