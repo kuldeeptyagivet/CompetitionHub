@@ -213,11 +213,39 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
 - OMR answer entry complete: Enter Answers button on each saved paper in History tab loads paper into an OMR panel inside the CBT tab; grid of numbered question cards with radio buttons (mcq_single, assertion_reason, match_following), checkboxes (mcq_multi), and per-question Clear buttons; Submit confirmation flow with answered/unanswered counts; result and attempt saving identical to CBT mode; Back button returns to History without submitting
 - Remote data layer complete: Cloudflare Worker (competitionhub-qbank.kuldeeptyagi-vet.workers.dev) serves question bank JSON from R2 bucket (competitionhub-qbank); Worker validates x-access-key header; getData() switches between FSA and Worker fetch based on CONFIG.mode; remote mode auto-connects on page load without folder picker; GithubUpload/ prefix stripped from paths in remote branch
 - Worker accessible at api.examsindia.org (custom domain); CF Access service token headers sent with every remote fetch; app auto-detects local vs remote mode based on location.hostname and location.protocol
+- Cloudflare Access gate on competitionhub.pages.dev: email OTP
+  authentication required; Everyone policy allows any verified email
+- D1 database competitionhub-db bound to Worker as DB; tables:
+  plans, users, question_overrides, announcements, user_notes,
+  messages; superadmin drtyagivet@gmail.com seeded on pro plan
+- Auth state: authState object holds email, role, plan after
+  authInit(); local mode hardcodes superadmin email; remote mode
+  reads identity from /cdn-cgi/access/get-identity then fetches
+  /user-plan from Worker
+- Worker enforcement: resolveUserPlan() reads x-user-email header,
+  queries D1 for user + plan, auto-provisions new users on free
+  plan, checks is_active flag; enforces max_books on book list,
+  filters extracted questions if allow_extracted=0
+- Plan note shown below question count input: "Your plan allows
+  up to N questions per test"; input capped to plan max
+- Admin tab: visible to superadmin and admin roles only; four
+  sub-panels: Users (superadmin), Plans (superadmin),
+  Announcements (superadmin), Messages (both roles)
+- Superadmin can create/edit users, assign plans, set expiry,
+  activate/deactivate, add internal notes per user
+- Superadmin can create/edit plans with all parameters
+- Announcement banner: dismissible, persists dismissal in
+  localStorage, fetches active announcements after auth
+- Messages: inbox with unread highlighting, reply by thread,
+  compose to any email; unread badge on Admin tab refreshes
+  every 60 seconds
 
 **Not yet built:**
-- Answer logging and scoring
-- User access control
-- D1 sync
+- Payment integration (Razorpay/Stripe webhook)
+- Question flagging by users
+- Usage stats dashboard
+- Email notifications on plan change
+- D1 sync for papers and results
 
 ---
 
@@ -269,6 +297,20 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
 2026-04-28 — R2 bucket layout matches local GithubUpload folder exactly; _books_registry.json at bucket root alongside book subfolders; Worker strips no paths — app getData() strips the GithubUpload/ prefix before building the fetch URL so local and remote path construction stay independent.
 2026-04-28 — Cloudflare Access removed from Worker after CORS preflight blocking; x-access-key header validation in Worker is sufficient access control for current scale; Access can be re-added when custom domain routing is stable.
 2026-04-28 — Auto-detect mode: isLocal derived from location.hostname and location.protocol before CONFIG is defined; mode set dynamically so deployed app always uses remote and local file:// always uses local.
+2026-04-30 — Cloudflare Access used for authentication gate;
+  email OTP chosen for open registration; Everyone policy at
+  Access level; plan-based authorization handled in Worker.
+2026-04-30 — Three roles: superadmin, admin, user; stored in
+  D1 users table; resolved on every Worker request via
+  resolveUserPlan(); new visitors auto-provisioned as free users.
+2026-04-30 — plan_expires_at column added to users table for
+  future subscription expiry enforcement.
+2026-04-30 — corsHeaders() must explicitly list cf-access-client-id
+  and cf-access-client-secret in Access-Control-Allow-Headers;
+  omitting these blocks all R2 file requests from the browser.
+2026-04-30 — OPTIONS preflight handler placed before all auth
+  and route logic in Worker so admin route preflights are
+  answered without requiring valid auth headers.
 
 ---
 
