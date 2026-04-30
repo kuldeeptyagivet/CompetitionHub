@@ -1384,6 +1384,7 @@
             <label class="param-label" for="param-q-count">Questions</label>
             <input type="number" id="param-q-count" class="param-input" min="1" value="1">
             <span id="param-q-max" class="param-max">of 0</span>
+            <span id="param-plan-note" class="param-max" style="display:none;color:var(--muted);font-size:0.78rem;margin-top:0.2rem;"></span>
           </div>
           <div class="param-group">
             <label class="param-label" for="param-marks-per-q">Marks / question</label>
@@ -1435,6 +1436,39 @@
       cfClientSecret: 'eddae1e25e0d7b0d9bebc3c50843fe1289a54ed849ed7e651dd6942874b2c8af'
     };
 
+    // ── Auth / plan state ────────────────────────────────────────────────────
+    const authState = { email: null, role: null, plan: null };
+
+    async function authInit() {
+      if (isLocal) {
+        authState.email = 'drtyagivet@gmail.com';
+        return;
+      }
+      // Remote: read Cloudflare Access identity
+      try {
+        const res = await fetch('https://competitionhub.pages.dev/cdn-cgi/access/get-identity', {
+          credentials: 'include'
+        });
+        if (!res.ok) throw new Error('identity');
+        const identity = await res.json();
+        authState.email = identity.email;
+      } catch {
+        location.href = 'https://competitionhub.cloudflareaccess.com/cdn-cgi/access/login/competitionhub.pages.dev';
+        return;
+      }
+      // Fetch plan from Worker
+      const planData = await getData('__user_plan__');
+      if (planData) {
+        authState.role = planData.role;
+        authState.plan = {
+          max_questions:   planData.max_questions,
+          max_books:       planData.max_books,
+          allow_extracted: planData.allow_extracted,
+          filter_types:    planData.filter_types
+        };
+      }
+    }
+
     let folderHandle = null;
     let remoteReady = false;
     let bookData = [];
@@ -1465,6 +1499,22 @@
     let cbt   = null;
 
     async function getData(path) {
+      // Special route: fetch user plan (bypasses remoteReady gate)
+      if (path === '__user_plan__') {
+        try {
+          const res = await fetch(`${CONFIG.workerUrl}/user-plan`, {
+            headers: {
+              'x-access-key':  CONFIG.accessKey,
+              'x-user-email':  authState.email
+            }
+          });
+          if (!res.ok) return null;
+          return await res.json();
+        } catch {
+          return null;
+        }
+      }
+
       if (CONFIG.mode === 'local') {
         if (!folderHandle) return null;
         try {
@@ -1486,8 +1536,9 @@
           const cleanPath = path.replace(/^GithubUpload\//, '');
           const res = await fetch(`${CONFIG.workerUrl}/${cleanPath}`, {
             headers: {
-              'x-access-key': CONFIG.accessKey,
-              'CF-Access-Client-Id': CONFIG.cfClientId,
+              'x-access-key':  CONFIG.accessKey,
+              'x-user-email':  authState.email,
+              'CF-Access-Client-Id':     CONFIG.cfClientId,
               'CF-Access-Client-Secret': CONFIG.cfClientSecret
             }
           });
@@ -1846,15 +1897,19 @@
 
     function paramUpdateMax() {
       const pool = paramGetFilteredPool();
-      const max  = pool.length;
+      const poolMax = pool.length;
       const panel = document.getElementById('params-panel');
 
-      if (max === 0) {
+      if (poolMax === 0) {
         panel.style.display = 'none';
         return;
       }
 
       panel.style.display = 'block';
+
+      // Apply plan cap if available
+      const planMax = authState.plan ? authState.plan.max_questions : Infinity;
+      const max = Math.min(poolMax, planMax);
 
       if (paperParams.questionCount > max) paperParams.questionCount = max;
       if (paperParams.questionCount < 1)   paperParams.questionCount = 1;
@@ -1862,6 +1917,15 @@
       const input = document.getElementById('param-q-count');
       input.max   = max;
       input.value = paperParams.questionCount;
+
+      // Show plan note
+      const noteEl = document.getElementById('param-plan-note');
+      if (authState.plan) {
+        noteEl.textContent = 'Your plan allows up to ' + authState.plan.max_questions + ' questions per test.';
+        noteEl.style.display = 'block';
+      } else {
+        noteEl.style.display = 'none';
+      }
 
       document.getElementById('btn-generate').disabled = (max === 0);
 
@@ -1875,10 +1939,12 @@
       const negMarks  = document.getElementById('param-neg-marks');
 
       qCountEl.addEventListener('input', () => {
-        const pool = paramGetFilteredPool();
+        const pool    = paramGetFilteredPool();
+        const planMax = authState.plan ? authState.plan.max_questions : Infinity;
+        const cap     = Math.min(pool.length, planMax);
         let v = parseInt(qCountEl.value, 10);
-        if (isNaN(v) || v < 1)        v = 1;
-        if (v > pool.length)           v = pool.length;
+        if (isNaN(v) || v < 1) v = 1;
+        if (v > cap)            v = cap;
         paperParams.questionCount = v;
         paramUpdateDerived();
       });
@@ -4160,10 +4226,12 @@
         return;
       }
 
+      await authInit();
       await filterLoadBooks();
     }
 
     async function filterConnect() {
+      await authInit();
       remoteReady = true;
       await filterLoadBooks();
     }
