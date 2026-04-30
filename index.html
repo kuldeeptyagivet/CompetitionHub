@@ -4577,12 +4577,11 @@
     // ── Users sub-panel ──────────────────────────────────────────────────────
     async function adminRenderUsers() {
       const content = document.getElementById('admin-content');
+      if (!content) return;
       const [users, plans] = await Promise.all([
         adminFetch('admin/users'),
         adminFetch('admin/plans'),
       ]);
-
-      if (!content) return;
       if (!Array.isArray(users) || !Array.isArray(plans)) {
         content.innerHTML = '<p style="color:var(--warn)">Failed to load users.</p>';
         return;

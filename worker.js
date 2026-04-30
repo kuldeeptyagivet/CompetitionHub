@@ -7,19 +7,19 @@ const ALLOWED_ORIGINS = [
 
 // ── CORS / response helpers ───────────────────────────────────────────────────
 
-function corsHeaders(origin) {
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+function corsHeaders() {
   return {
-    'Access-Control-Allow-Origin':  allowedOrigin,
-    'Access-Control-Allow-Headers': 'x-access-key, x-user-email, CF-Access-Client-Id, CF-Access-Client-Secret',
+    'Access-Control-Allow-Origin':  'https://competitionhub.pages.dev',
     'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, x-access-key, x-user-email',
+    'Access-Control-Max-Age':       '86400',
   };
 }
 
 function jsonResponse(data, status, origin) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) },
+    headers: { 'Content-Type': 'application/json', ...corsHeaders() },
   });
 }
 
@@ -84,9 +84,9 @@ export default {
   async fetch(request, env) {
     const origin = request.headers.get('Origin') || '';
 
-    // CORS preflight
+    // CORS preflight — must fire before any route or auth logic
     if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders(origin) });
+      return new Response(null, { status: 204, headers: corsHeaders() });
     }
 
     // Validate access key
@@ -376,7 +376,7 @@ export default {
         return jsonResponse(registry, 200, origin);
       } catch {
         return new Response(body, {
-          headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) },
+          headers: { 'Content-Type': 'application/json', ...corsHeaders() },
         });
       }
     }
@@ -395,14 +395,14 @@ export default {
         return jsonResponse(questions, 200, origin);
       } catch {
         return new Response(body, {
-          headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) },
+          headers: { 'Content-Type': 'application/json', ...corsHeaders() },
         });
       }
     }
 
     // All other files (_index.json etc.) — serve unmodified
     return new Response(body, {
-      headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders() },
     });
   },
 };
