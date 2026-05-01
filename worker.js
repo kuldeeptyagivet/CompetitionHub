@@ -485,3 +485,4 @@ export default {
     });
   },
 };
+// auto-deploy pipeline verified 2026-05-01
