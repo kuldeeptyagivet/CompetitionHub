@@ -381,6 +381,43 @@ export default {
         return jsonResponse(created, 201, request);
       }
 
+      // ── GET /admin/sync-manifest ─────────────────────────────────────────────
+      if (path === 'admin/sync-manifest' && method === 'GET') {
+        const guard = requireSuperadmin(userPlan, request);
+        if (guard) return guard;
+        const obj = await env.QBANK.get('_manifest.json');
+        if (!obj) return jsonResponse({}, 200, request);
+        try {
+          return jsonResponse(JSON.parse(await obj.text()), 200, request);
+        } catch {
+          return jsonResponse({}, 200, request);
+        }
+      }
+
+      // ── POST /admin/sync-file ────────────────────────────────────────────────
+      if (path === 'admin/sync-file' && method === 'POST') {
+        const guard = requireSuperadmin(userPlan, request);
+        if (guard) return guard;
+        const { filePath, content } = await request.json();
+        if (!filePath || content === undefined)
+          return errResponse('missing_fields', 400, request);
+        await env.QBANK.put(filePath, content, {
+          httpMetadata: { contentType: 'application/json' }
+        });
+        return jsonResponse({ written: filePath }, 200, request);
+      }
+
+      // ── POST /admin/sync-manifest ────────────────────────────────────────────
+      if (path === 'admin/sync-manifest' && method === 'POST') {
+        const guard = requireSuperadmin(userPlan, request);
+        if (guard) return guard;
+        const manifest = await request.json();
+        await env.QBANK.put('_manifest.json', JSON.stringify(manifest), {
+          httpMetadata: { contentType: 'application/json' }
+        });
+        return jsonResponse({ saved: true }, 200, request);
+      }
+
       // Unknown admin route
       return errResponse('not_found', 404, request);
     }

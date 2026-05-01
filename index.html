@@ -4571,7 +4571,7 @@
       const tab  = document.getElementById('tab-admin');
       const role = authState.role;
       const subPanels = role === 'superadmin'
-        ? ['users', 'plans', 'announcements', 'messages']
+        ? ['users', 'plans', 'announcements', 'messages', 'sync']
         : ['messages'];
 
       tab.innerHTML = `
@@ -4608,6 +4608,7 @@
         case 'plans':         adminRenderPlans();         break;
         case 'announcements': adminRenderAnnouncements(); break;
         case 'messages':      adminRenderMessages();      break;
+        case 'sync':          adminRenderSync();          break;
       }
     }
 
@@ -5165,6 +5166,217 @@
         } else {
           msg.style.color = 'var(--warn)'; msg.textContent = 'Failed to send.';
         }
+      });
+    }
+
+    // ── Sync to R2 sub-panel ─────────────────────────────────────────────────
+    async function adminRenderSync() {
+      if (authState.role !== 'superadmin') return;
+      const content = document.getElementById('admin-content');
+      if (!content) return;
+      content.innerHTML = '';
+
+      let syncFolder  = null;
+      let pendingFiles = [];   // [{filePath, content, hash}]
+      let manifest    = {};
+
+      // ── SHA-256 hex helper ──
+      async function sha256hex(text) {
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+        return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+
+      // ── Recursively collect all .json files ──
+      async function collectJsonFiles(dirHandle, prefix) {
+        const files = [];
+        for await (const [name, handle] of dirHandle) {
+          const relPath = prefix ? `${prefix}/${name}` : name;
+          if (handle.kind === 'file' && name.endsWith('.json')) {
+            files.push({ relPath, handle });
+          } else if (handle.kind === 'directory') {
+            files.push(...await collectJsonFiles(handle, relPath));
+          }
+        }
+        return files;
+      }
+
+      // ── Build UI ──
+      const card = document.createElement('div');
+      card.className = 'admin-card';
+
+      const title = document.createElement('div');
+      title.className = 'admin-card-title';
+      title.textContent = 'Sync to R2';
+      card.appendChild(title);
+
+      // Folder row
+      const folderRow = document.createElement('div');
+      folderRow.style.cssText = 'display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem';
+      const pickBtn = document.createElement('button');
+      pickBtn.className = 'admin-btn admin-btn--primary';
+      pickBtn.textContent = 'Select Folder';
+      const folderStatus = document.createElement('span');
+      folderStatus.style.cssText = 'font-size:0.85rem;color:var(--muted)';
+      folderStatus.textContent = 'No folder selected';
+      folderRow.appendChild(pickBtn);
+      folderRow.appendChild(folderStatus);
+      card.appendChild(folderRow);
+
+      // Scan button
+      const scanBtn = document.createElement('button');
+      scanBtn.className = 'admin-btn admin-btn--primary';
+      scanBtn.textContent = 'Scan & Compare';
+      scanBtn.style.display = 'none';
+      card.appendChild(scanBtn);
+
+      // Summary
+      const summary = document.createElement('div');
+      summary.style.cssText = 'font-size:0.85rem;color:var(--ink);margin-top:0.5rem;display:none';
+      card.appendChild(summary);
+
+      // Upload button
+      const uploadBtn = document.createElement('button');
+      uploadBtn.className = 'admin-btn admin-btn--primary';
+      uploadBtn.textContent = 'Upload Changes';
+      uploadBtn.style.cssText = 'display:none;margin-top:0.5rem';
+      card.appendChild(uploadBtn);
+
+      // Progress
+      const progressWrap = document.createElement('div');
+      progressWrap.style.cssText = 'display:none;margin-top:0.5rem';
+      const progressText = document.createElement('div');
+      progressText.style.cssText = 'font-size:0.85rem;color:var(--muted);margin-bottom:4px';
+      const progressTrack = document.createElement('div');
+      progressTrack.style.cssText = 'height:6px;background:var(--border);border-radius:3px;overflow:hidden';
+      const progressFill = document.createElement('div');
+      progressFill.style.cssText = 'height:100%;background:var(--accent);width:0%;transition:width 0.15s';
+      progressTrack.appendChild(progressFill);
+      progressWrap.appendChild(progressText);
+      progressWrap.appendChild(progressTrack);
+      card.appendChild(progressWrap);
+
+      // Completion message
+      const completionMsg = document.createElement('div');
+      completionMsg.style.cssText = 'font-size:0.85rem;color:var(--success);margin-top:0.5rem;display:none';
+      card.appendChild(completionMsg);
+
+      // Error list
+      const errorList = document.createElement('div');
+      errorList.style.cssText = 'margin-top:0.5rem';
+      card.appendChild(errorList);
+
+      content.appendChild(card);
+
+      // ── Folder picker ──
+      pickBtn.addEventListener('click', async () => {
+        try {
+          syncFolder = await window.showDirectoryPicker();
+          folderStatus.textContent = syncFolder.name;
+          scanBtn.style.display = '';
+          summary.style.display = 'none';
+          uploadBtn.style.display = 'none';
+          progressWrap.style.display = 'none';
+          completionMsg.style.display = 'none';
+          errorList.innerHTML = '';
+          pendingFiles = [];
+        } catch { /* user cancelled */ }
+      });
+
+      // ── Scan & Compare ──
+      scanBtn.addEventListener('click', async () => {
+        if (!syncFolder) return;
+        scanBtn.disabled = true;
+        scanBtn.textContent = 'Scanning…';
+        summary.style.display = 'none';
+        uploadBtn.style.display = 'none';
+        completionMsg.style.display = 'none';
+        errorList.innerHTML = '';
+        pendingFiles = [];
+
+        manifest = await adminFetch('admin/sync-manifest') || {};
+
+        const allFiles = await collectJsonFiles(syncFolder, '');
+        let unchanged = 0;
+
+        for (const { relPath, handle } of allFiles) {
+          const file = await handle.getFile();
+          const text = await file.text();
+          const hash = await sha256hex(text);
+          if (manifest[relPath] === hash) {
+            unchanged++;
+          } else {
+            pendingFiles.push({ filePath: relPath, content: text, hash });
+          }
+        }
+
+        const newCount = pendingFiles.filter(f => !(f.filePath in manifest)).length;
+        const modCount = pendingFiles.length - newCount;
+        summary.textContent = `${unchanged} files unchanged, ${newCount} new, ${modCount} modified`;
+        summary.style.display = '';
+
+        if (pendingFiles.length > 0) uploadBtn.style.display = '';
+
+        scanBtn.disabled = false;
+        scanBtn.textContent = 'Scan & Compare';
+      });
+
+      // ── Upload Changes ──
+      uploadBtn.addEventListener('click', async () => {
+        if (!pendingFiles.length) return;
+        uploadBtn.style.display = 'none';
+        scanBtn.disabled = true;
+        pickBtn.disabled = true;
+        progressWrap.style.display = '';
+        completionMsg.style.display = 'none';
+        errorList.innerHTML = '';
+
+        const total = pendingFiles.length;
+        let uploaded = 0;
+        const errors = [];
+        const updatedManifest = { ...manifest };
+
+        const BATCH = 5;
+        for (let i = 0; i < total; i += BATCH) {
+          const batch = pendingFiles.slice(i, i + BATCH);
+          await Promise.all(batch.map(async ({ filePath, content, hash }) => {
+            try {
+              const res = await adminFetch('admin/sync-file', {
+                method: 'POST',
+                body: { filePath, content }
+              });
+              if (res && res.written) {
+                updatedManifest[filePath] = hash;
+              } else {
+                errors.push(filePath);
+              }
+            } catch {
+              errors.push(filePath);
+            }
+            uploaded++;
+            progressText.textContent = `Uploaded ${uploaded} of ${total} files`;
+            progressFill.style.width = `${Math.round(uploaded / total * 100)}%`;
+          }));
+        }
+
+        await adminFetch('admin/sync-manifest', {
+          method: 'POST',
+          body: updatedManifest
+        });
+
+        if (errors.length) {
+          errors.forEach(f => {
+            const d = document.createElement('div');
+            d.style.cssText = 'font-size:0.8rem;color:var(--warn)';
+            d.textContent = `Failed: ${f}`;
+            errorList.appendChild(d);
+          });
+        }
+
+        const successCount = total - errors.length;
+        completionMsg.textContent = `Sync complete. ${successCount} file${successCount !== 1 ? 's' : ''} uploaded.`;
+        completionMsg.style.display = '';
+        scanBtn.disabled = false;
+        pickBtn.disabled = false;
       });
     }
 
