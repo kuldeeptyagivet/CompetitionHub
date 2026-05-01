@@ -84,6 +84,29 @@ function requireSuperadmin(userPlan, request) {
   return null;
 }
 
+// ── D1 table initialisation (runs once per Worker instance) ──────────────────
+
+let tablesInitialized = false;
+
+async function initTables(db) {
+  if (tablesInitialized) return;
+  await db.batch([
+    db.prepare(`CREATE TABLE IF NOT EXISTS ch_papers (
+      id         TEXT PRIMARY KEY,
+      user_email TEXT NOT NULL,
+      paper_json TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS ch_attempts (
+      id           TEXT PRIMARY KEY,
+      user_email   TEXT NOT NULL,
+      attempt_json TEXT NOT NULL,
+      submitted_at TEXT NOT NULL
+    )`)
+  ]);
+  tablesInitialized = true;
+}
+
 // ── Main handler ──────────────────────────────────────────────────────────────
 
 export default {
@@ -106,6 +129,8 @@ export default {
     const userPlan = await resolveUserPlan(email, env.DB);
     if (!userPlan)              return errResponse('plan_resolve_failed', 500, request);
     if (userPlan.is_active === 0) return errResponse('account_disabled', 403, request);
+
+    await initTables(env.DB);
 
     const url    = new URL(request.url);
     const path   = decodeURIComponent(url.pathname.slice(1)); // strip leading /
@@ -358,6 +383,56 @@ export default {
 
       // Unknown admin route
       return errResponse('not_found', 404, request);
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Route: POST /save-paper
+    // ────────────────────────────────────────────────────────────────────────
+    if (path === 'save-paper' && method === 'POST') {
+      const body = await request.json();
+      await env.DB
+        .prepare(`INSERT OR REPLACE INTO ch_papers (id, user_email, paper_json, created_at)
+                  VALUES (?, ?, ?, ?)`)
+        .bind(body.id, email, JSON.stringify(body), new Date().toISOString())
+        .run();
+      return jsonResponse({ saved: true }, 200, request);
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Route: POST /save-attempt
+    // ────────────────────────────────────────────────────────────────────────
+    if (path === 'save-attempt' && method === 'POST') {
+      const body = await request.json();
+      await env.DB
+        .prepare(`INSERT OR REPLACE INTO ch_attempts (id, user_email, attempt_json, submitted_at)
+                  VALUES (?, ?, ?, ?)`)
+        .bind(body.attemptId, email, JSON.stringify(body), new Date().toISOString())
+        .run();
+      return jsonResponse({ saved: true }, 200, request);
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Route: GET /get-papers
+    // ────────────────────────────────────────────────────────────────────────
+    if (path === 'get-papers' && method === 'GET') {
+      const rows = await env.DB
+        .prepare(`SELECT id, paper_json, created_at FROM ch_papers
+                  WHERE user_email=? ORDER BY created_at DESC`)
+        .bind(email)
+        .all();
+      return jsonResponse(rows.results || [], 200, request);
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Route: GET /get-attempts
+    // ────────────────────────────────────────────────────────────────────────
+    if (path === 'get-attempts' && method === 'GET') {
+      const rows = await env.DB
+        .prepare(`SELECT id, attempt_json, submitted_at FROM ch_attempts
+                  WHERE user_email=? ORDER BY submitted_at DESC`)
+        .bind(email)
+        .all();
+      return jsonResponse(rows.results || [], 200, request);
     }
 
     // ────────────────────────────────────────────────────────────────────────

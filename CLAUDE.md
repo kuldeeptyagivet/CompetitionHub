@@ -239,13 +239,21 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
 - Messages: inbox with unread highlighting, reply by thread,
   compose to any email; unread badge on Admin tab refreshes
   every 60 seconds
+- D1 sync complete: workerPost(path, body) fire-and-forget helper
+  gates all sync on CONFIG.mode === 'remote'; paperSave() POSTs to
+  /save-paper after localStorage write; cbtShowResult() POSTs to
+  /save-attempt after localStorage write; syncFromCloud() fetches
+  /get-papers and /get-attempts in parallel on remote-mode load,
+  merges into localStorage via mergeRecords() with D1 winning on
+  ID collision; Worker gains initTables() with module-level guard,
+  INSERT OR REPLACE handlers for both tables, and GET handlers
+  returning all rows for authenticated user; local mode untouched
 
 **Not yet built:**
 - Payment integration (Razorpay/Stripe webhook)
 - Question flagging by users
 - Usage stats dashboard
 - Email notifications on plan change
-- D1 sync for papers and results
 
 ---
 
@@ -318,6 +326,10 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
 2026-04-30 — authInit() uses window.location.hostname for both
   get-identity fetch and Access login redirect so the app works
   correctly on any domain without hardcoded references.
+2026-05-01 — D1 sync uses fire-and-forget POSTs so UI is never
+  blocked by network; merge on load with cloud-wins-on-collision
+  ensures cross-device consistency without a full replace that
+  would discard local-only records.
 
 ---
 

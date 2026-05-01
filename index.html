@@ -1806,6 +1806,24 @@
       }
     }
 
+    // ── Authenticated remote POST helper ────────────────────────────────────
+    async function workerPost(path, body) {
+      if (CONFIG.mode !== 'remote') return;
+      try {
+        await fetch(`${CONFIG.workerUrl}/${path}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type':            'application/json',
+            'x-access-key':            CONFIG.accessKey,
+            'x-user-email':            authState.email,
+            'CF-Access-Client-Id':     CONFIG.cfClientId,
+            'CF-Access-Client-Secret': CONFIG.cfClientSecret
+          },
+          body: JSON.stringify(body)
+        });
+      } catch { /* fire-and-forget */ }
+    }
+
     // ── Filter state helpers ────────────────────────────────────────────────
 
     function filterInitState() {
@@ -2307,21 +2325,23 @@
     }
 
     function paperSave() {
-      const existing = JSON.parse(localStorage.getItem('ch_papers') || '[]');
-      existing.push({
-        id:            paper.id,
-        title:         paper.meta.title,
-        date:          paper.meta.date,
-        duration:      paper.meta.duration,
-        totalMarks:    paper.meta.totalMarks,
+      const entry = {
+        id:                paper.id,
+        title:             paper.meta.title,
+        date:              paper.meta.date,
+        duration:          paper.meta.duration,
+        totalMarks:        paper.meta.totalMarks,
         marksPerQ:         paper.meta.marksPerQ,
         negativeMarking:   paper.meta.negativeMarking,
         negativeMarksPerQ: paper.meta.negativeMarksPerQ,
-        questionCount: paper.questions.length,
-        questions:     paper.questions,
-        createdAt:     new Date().toISOString()
-      });
+        questionCount:     paper.questions.length,
+        questions:         paper.questions,
+        createdAt:         new Date().toISOString()
+      };
+      const existing = JSON.parse(localStorage.getItem('ch_papers') || '[]');
+      existing.push(entry);
       localStorage.setItem('ch_papers', JSON.stringify(existing));
+      workerPost('save-paper', entry);
     }
 
     function selectRender() {
@@ -3852,6 +3872,7 @@
       const existingAttempts = JSON.parse(localStorage.getItem('ch_attempts') || '[]');
       existingAttempts.push(attemptEntry);
       localStorage.setItem('ch_attempts', JSON.stringify(existingAttempts));
+      workerPost('save-attempt', attemptEntry);
 
       const container = document.createElement('div');
       container.className = 'cbt-result';
@@ -5182,10 +5203,48 @@
       await filterLoadBooks();
     }
 
+    // ── Cloud sync: merge D1 papers + attempts into localStorage ────────────
+    function mergeRecords(local, cloud, idField) {
+      const map = new Map(local.map(r => [r[idField], r]));
+      for (const r of cloud) map.set(r[idField], r); // cloud wins on collision
+      return Array.from(map.values());
+    }
+
+    async function syncFromCloud() {
+      if (CONFIG.mode !== 'remote') return;
+      try {
+        const headers = {
+          'x-access-key':            CONFIG.accessKey,
+          'x-user-email':            authState.email,
+          'CF-Access-Client-Id':     CONFIG.cfClientId,
+          'CF-Access-Client-Secret': CONFIG.cfClientSecret
+        };
+        const [papersRes, attemptsRes] = await Promise.all([
+          fetch(`${CONFIG.workerUrl}/get-papers`,   { headers }),
+          fetch(`${CONFIG.workerUrl}/get-attempts`, { headers })
+        ]);
+        if (papersRes.ok) {
+          const rows    = await papersRes.json();
+          const cloud   = rows.map(r => JSON.parse(r.paper_json));
+          const local   = JSON.parse(localStorage.getItem('ch_papers') || '[]');
+          const merged  = mergeRecords(local, cloud, 'id');
+          localStorage.setItem('ch_papers', JSON.stringify(merged));
+        }
+        if (attemptsRes.ok) {
+          const rows    = await attemptsRes.json();
+          const cloud   = rows.map(r => JSON.parse(r.attempt_json));
+          const local   = JSON.parse(localStorage.getItem('ch_attempts') || '[]');
+          const merged  = mergeRecords(local, cloud, 'attemptId');
+          localStorage.setItem('ch_attempts', JSON.stringify(merged));
+        }
+      } catch { /* silent — offline or auth failure */ }
+    }
+
     async function filterConnect() {
       await authInit();
       adminTabInit();
       remoteReady = true;
+      await syncFromCloud();
       await filterLoadBooks();
     }
 
