@@ -5228,9 +5228,8 @@
       emailSpan.textContent = authState.email;
       bar.appendChild(emailSpan);
       if (CONFIG.mode === 'remote') {
-        const teamDomain = window.location.hostname.replace(/^app\./, '');
         const link = document.createElement('a');
-        link.href = `https://${teamDomain}/cdn-cgi/access/logout`;
+        link.href = 'https://competitionhub.cloudflareaccess.com/cdn-cgi/access/logout';
         link.textContent = 'Sign Out';
         bar.appendChild(link);
       }
