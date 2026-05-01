@@ -248,6 +248,13 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   ID collision; Worker gains initTables() with module-level guard,
   INSERT OR REPLACE handlers for both tables, and GET handlers
   returning all rows for authenticated user; local mode untouched
+- User info bar complete: #user-bar injected into app header
+  after authInit() resolves; shows authState.email and a Sign
+  Out link in remote mode only; Sign Out href derived from
+  window.location.hostname at runtime so it works on both
+  app.examsindia.org and competitionhub.pages.dev; local mode
+  shows email only, no Sign Out link; styled with existing CSS
+  variables
 
 **Not yet built:**
 - Payment integration (Razorpay/Stripe webhook)
@@ -330,6 +337,9 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   blocked by network; merge on load with cloud-wins-on-collision
   ensures cross-device consistency without a full replace that
   would discard local-only records.
+2026-05-01 — Sign Out href team domain derived via
+  hostname.replace(/^app\./, '') at runtime; no hardcoded
+  domain so the same code works on both production domains.
 
 ---
 

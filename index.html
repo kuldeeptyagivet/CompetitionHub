@@ -103,6 +103,21 @@
       color: var(--muted);
     }
 
+    /* ── User info bar ── */
+    #user-bar {
+      font-size: 0.78rem;
+      color: var(--muted);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    #user-bar a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    #user-bar a:hover { text-decoration: underline; }
+
     /* ── Filter tab toolbar ── */
     #btn-pick-folder {
       font-family: 'DM Sans', sans-serif;
@@ -1576,6 +1591,7 @@
         Admin<span class="tab-badge" id="admin-tab-badge" style="display:none"></span>
       </button>
     </nav>
+    <div id="user-bar"></div>
   </header>
 
   <div id="announcement-banner"></div>
@@ -5199,8 +5215,25 @@
       }
 
       await authInit();
+      userBarRender();
       adminTabInit();
       await filterLoadBooks();
+    }
+
+    // ── User info bar ───────────────────────────────────────────────────────
+    function userBarRender() {
+      const bar = document.getElementById('user-bar');
+      bar.innerHTML = '';
+      const emailSpan = document.createElement('span');
+      emailSpan.textContent = authState.email;
+      bar.appendChild(emailSpan);
+      if (CONFIG.mode === 'remote') {
+        const teamDomain = window.location.hostname.replace(/^app\./, '');
+        const link = document.createElement('a');
+        link.href = `https://${teamDomain}/cdn-cgi/access/logout`;
+        link.textContent = 'Sign Out';
+        bar.appendChild(link);
+      }
     }
 
     // ── Cloud sync: merge D1 papers + attempts into localStorage ────────────
@@ -5242,6 +5275,7 @@
 
     async function filterConnect() {
       await authInit();
+      userBarRender();
       adminTabInit();
       remoteReady = true;
       await syncFromCloud();
