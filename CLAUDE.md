@@ -18,7 +18,7 @@ renders math with KaTeX, and produces print-ready output.
 - **Data source (remote)**: Cloudflare Worker fetch with access key
 - **Hosting**: Cloudflare Pages (auto-deploys on git push)
 - **Repository**: https://github.com/kuldeeptyagivet/CompetitionHub
-- **Live URL**: https://competitionhub.pages.dev
+- **Live URL**: https://app.examsindia.org (also https://competitionhub.pages.dev)
 
 ---
 
@@ -311,6 +311,13 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
 2026-04-30 — OPTIONS preflight handler placed before all auth
   and route logic in Worker so admin route preflights are
   answered without requiring valid auth headers.
+2026-04-30 — corsHeaders() updated to accept request parameter
+  and return correct Access-Control-Allow-Origin dynamically
+  from an allowlist; both competitionhub.pages.dev and
+  app.examsindia.org are allowed origins.
+2026-04-30 — authInit() uses window.location.hostname for both
+  get-identity fetch and Access login redirect so the app works
+  correctly on any domain without hardcoded references.
 
 ---
 
