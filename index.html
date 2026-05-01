@@ -1702,14 +1702,14 @@
       }
       // Remote: read Cloudflare Access identity
       try {
-        const res = await fetch('https://competitionhub.pages.dev/cdn-cgi/access/get-identity', {
+        const res = await fetch(`https://${window.location.hostname}/cdn-cgi/access/get-identity`, {
           credentials: 'include'
         });
         if (!res.ok) throw new Error('identity');
         const identity = await res.json();
         authState.email = identity.email;
       } catch {
-        location.href = 'https://competitionhub.cloudflareaccess.com/cdn-cgi/access/login/competitionhub.pages.dev';
+        window.location.href = `https://competitionhub.cloudflareaccess.com/cdn-cgi/access/login/${window.location.hostname}`;
         return;
       }
       // Fetch plan from Worker
