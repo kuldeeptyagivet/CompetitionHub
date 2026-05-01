@@ -7,24 +7,30 @@ const ALLOWED_ORIGINS = [
 
 // ── CORS / response helpers ───────────────────────────────────────────────────
 
-function corsHeaders() {
+function corsHeaders(request) {
+  const origin = request?.headers?.get('Origin') || '';
+  const allowed = [
+    'https://competitionhub.pages.dev',
+    'https://app.examsindia.org'
+  ];
+  const allowedOrigin = allowed.includes(origin) ? origin : allowed[0];
   return {
-    'Access-Control-Allow-Origin':  'https://competitionhub.pages.dev',
+    'Access-Control-Allow-Origin':  allowedOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, x-access-key, x-user-email, cf-access-client-id, cf-access-client-secret',
     'Access-Control-Max-Age':       '86400',
   };
 }
 
-function jsonResponse(data, status, origin) {
+function jsonResponse(data, status, request) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+    headers: { 'Content-Type': 'application/json', ...corsHeaders(request) },
   });
 }
 
-function errResponse(msg, status, origin) {
-  return jsonResponse({ error: msg }, status, origin);
+function errResponse(msg, status, request) {
+  return jsonResponse({ error: msg }, status, request);
 }
 
 // ── Resolve user + plan, auto-provision new users ─────────────────────────────
@@ -64,16 +70,16 @@ async function resolveUserPlan(email, db) {
 
 // ── Admin role guard ──────────────────────────────────────────────────────────
 
-function requireAdmin(userPlan, origin) {
+function requireAdmin(userPlan, request) {
   if (userPlan.role !== 'superadmin' && userPlan.role !== 'admin') {
-    return errResponse('forbidden', 403, origin);
+    return errResponse('forbidden', 403, request);
   }
   return null;
 }
 
-function requireSuperadmin(userPlan, origin) {
+function requireSuperadmin(userPlan, request) {
   if (userPlan.role !== 'superadmin') {
-    return errResponse('superadmin_required', 403, origin);
+    return errResponse('superadmin_required', 403, request);
   }
   return null;
 }
@@ -82,11 +88,9 @@ function requireSuperadmin(userPlan, origin) {
 
 export default {
   async fetch(request, env) {
-    const origin = request.headers.get('Origin') || '';
-
     // CORS preflight — must fire before any route or auth logic
     if (request.method === 'OPTIONS') {
-      return new Response(null, { status: 204, headers: corsHeaders() });
+      return new Response(null, { status: 204, headers: corsHeaders(request) });
     }
 
     // Validate access key
@@ -96,12 +100,12 @@ export default {
 
     // Validate user email
     const email = (request.headers.get('x-user-email') || '').trim();
-    if (!email) return errResponse('missing_email', 401, origin);
+    if (!email) return errResponse('missing_email', 401, request);
 
     // Resolve user + plan
     const userPlan = await resolveUserPlan(email, env.DB);
-    if (!userPlan)              return errResponse('plan_resolve_failed', 500, origin);
-    if (userPlan.is_active === 0) return errResponse('account_disabled', 403, origin);
+    if (!userPlan)              return errResponse('plan_resolve_failed', 500, request);
+    if (userPlan.is_active === 0) return errResponse('account_disabled', 403, request);
 
     const url    = new URL(request.url);
     const path   = decodeURIComponent(url.pathname.slice(1)); // strip leading /
@@ -119,7 +123,7 @@ export default {
         max_books:       userPlan.max_books,
         allow_extracted: userPlan.allow_extracted,
         filter_types:    userPlan.filter_types,
-      }, 200, origin);
+      }, 200, request);
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -135,19 +139,19 @@ export default {
         `)
         .bind(userPlan.plan_id)
         .all();
-      return jsonResponse(rows.results || [], 200, origin);
+      return jsonResponse(rows.results || [], 200, request);
     }
 
     // ────────────────────────────────────────────────────────────────────────
     // Admin routes — require admin or superadmin
     // ────────────────────────────────────────────────────────────────────────
     if (path.startsWith('admin/') || path === 'admin') {
-      const adminErr = requireAdmin(userPlan, origin);
+      const adminErr = requireAdmin(userPlan, request);
       if (adminErr) return adminErr;
 
       // ── GET /admin/users  (superadmin only) ──────────────────────────────
       if (path === 'admin/users' && method === 'GET') {
-        const guard = requireSuperadmin(userPlan, origin);
+        const guard = requireSuperadmin(userPlan, request);
         if (guard) return guard;
         const rows = await env.DB
           .prepare(`
@@ -158,12 +162,12 @@ export default {
             ORDER BY u.created_at DESC
           `)
           .all();
-        return jsonResponse(rows.results || [], 200, origin);
+        return jsonResponse(rows.results || [], 200, request);
       }
 
       // ── POST /admin/users/update  (superadmin only) ──────────────────────
       if (path === 'admin/users/update' && method === 'POST') {
-        const guard = requireSuperadmin(userPlan, origin);
+        const guard = requireSuperadmin(userPlan, request);
         if (guard) return guard;
         const body = await request.json();
         await env.DB
@@ -175,12 +179,12 @@ export default {
           .run();
         const updated = await env.DB
           .prepare('SELECT * FROM users WHERE email=?').bind(body.email).first();
-        return jsonResponse(updated, 200, origin);
+        return jsonResponse(updated, 200, request);
       }
 
       // ── POST /admin/users/create  (superadmin only) ──────────────────────
       if (path === 'admin/users/create' && method === 'POST') {
-        const guard = requireSuperadmin(userPlan, origin);
+        const guard = requireSuperadmin(userPlan, request);
         if (guard) return guard;
         const body = await request.json();
         await env.DB
@@ -192,20 +196,20 @@ export default {
           .run();
         const created = await env.DB
           .prepare('SELECT * FROM users WHERE email=?').bind(body.email).first();
-        return jsonResponse(created, 201, origin);
+        return jsonResponse(created, 201, request);
       }
 
       // ── GET /admin/plans  (superadmin only) ──────────────────────────────
       if (path === 'admin/plans' && method === 'GET') {
-        const guard = requireSuperadmin(userPlan, origin);
+        const guard = requireSuperadmin(userPlan, request);
         if (guard) return guard;
         const rows = await env.DB.prepare('SELECT * FROM plans ORDER BY created_at').all();
-        return jsonResponse(rows.results || [], 200, origin);
+        return jsonResponse(rows.results || [], 200, request);
       }
 
       // ── POST /admin/plans/update  (superadmin only) ──────────────────────
       if (path === 'admin/plans/update' && method === 'POST') {
-        const guard = requireSuperadmin(userPlan, origin);
+        const guard = requireSuperadmin(userPlan, request);
         if (guard) return guard;
         const body = await request.json();
         await env.DB
@@ -217,12 +221,12 @@ export default {
           .run();
         const updated = await env.DB
           .prepare('SELECT * FROM plans WHERE id=?').bind(body.id).first();
-        return jsonResponse(updated, 200, origin);
+        return jsonResponse(updated, 200, request);
       }
 
       // ── POST /admin/plans/create  (superadmin only) ──────────────────────
       if (path === 'admin/plans/create' && method === 'POST') {
-        const guard = requireSuperadmin(userPlan, origin);
+        const guard = requireSuperadmin(userPlan, request);
         if (guard) return guard;
         const body = await request.json();
         await env.DB
@@ -234,7 +238,7 @@ export default {
           .run();
         const created = await env.DB
           .prepare('SELECT * FROM plans WHERE id=?').bind(body.id).first();
-        return jsonResponse(created, 201, origin);
+        return jsonResponse(created, 201, request);
       }
 
       // ── GET /admin/announcements  (both roles) ───────────────────────────
@@ -242,12 +246,12 @@ export default {
         const rows = await env.DB
           .prepare('SELECT * FROM announcements ORDER BY created_at DESC')
           .all();
-        return jsonResponse(rows.results || [], 200, origin);
+        return jsonResponse(rows.results || [], 200, request);
       }
 
       // ── POST /admin/announcements/create  (superadmin only) ──────────────
       if (path === 'admin/announcements/create' && method === 'POST') {
-        const guard = requireSuperadmin(userPlan, origin);
+        const guard = requireSuperadmin(userPlan, request);
         if (guard) return guard;
         const body = await request.json();
         const id   = crypto.randomUUID();
@@ -260,17 +264,17 @@ export default {
           .run();
         const created = await env.DB
           .prepare('SELECT * FROM announcements WHERE id=?').bind(id).first();
-        return jsonResponse(created, 201, origin);
+        return jsonResponse(created, 201, request);
       }
 
       // ── DELETE /admin/announcements/:id  (superadmin only) ───────────────
       if (path.startsWith('admin/announcements/') && method === 'DELETE') {
-        const guard = requireSuperadmin(userPlan, origin);
+        const guard = requireSuperadmin(userPlan, request);
         if (guard) return guard;
         const annId = path.slice('admin/announcements/'.length);
         await env.DB
           .prepare('DELETE FROM announcements WHERE id=?').bind(annId).run();
-        return jsonResponse({ deleted: true }, 200, origin);
+        return jsonResponse({ deleted: true }, 200, request);
       }
 
       // ── GET /admin/messages  (both roles) ────────────────────────────────
@@ -281,7 +285,7 @@ export default {
           `)
           .bind(email)
           .all();
-        return jsonResponse(rows.results || [], 200, origin);
+        return jsonResponse(rows.results || [], 200, request);
       }
 
       // ── POST /admin/messages/send  (both roles) ──────────────────────────
@@ -297,7 +301,7 @@ export default {
           .run();
         const created = await env.DB
           .prepare('SELECT * FROM messages WHERE id=?').bind(id).first();
-        return jsonResponse(created, 201, origin);
+        return jsonResponse(created, 201, request);
       }
 
       // ── POST /admin/messages/reply  (both roles) ─────────────────────────
@@ -313,7 +317,7 @@ export default {
           .run();
         const created = await env.DB
           .prepare('SELECT * FROM messages WHERE id=?').bind(id).first();
-        return jsonResponse(created, 201, origin);
+        return jsonResponse(created, 201, request);
       }
 
       // ── POST /admin/messages/read  (both roles) ──────────────────────────
@@ -323,7 +327,7 @@ export default {
           .prepare('UPDATE messages SET is_read=1 WHERE id=? AND to_email=?')
           .bind(body.id, email)
           .run();
-        return jsonResponse({ updated: true }, 200, origin);
+        return jsonResponse({ updated: true }, 200, request);
       }
 
       // ── GET /admin/user-notes/:email  (both roles) ───────────────────────
@@ -333,7 +337,7 @@ export default {
           .prepare('SELECT * FROM user_notes WHERE user_email=? ORDER BY created_at DESC')
           .bind(targetEmail)
           .all();
-        return jsonResponse(rows.results || [], 200, origin);
+        return jsonResponse(rows.results || [], 200, request);
       }
 
       // ── POST /admin/user-notes/create  (both roles) ──────────────────────
@@ -349,11 +353,11 @@ export default {
           .run();
         const created = await env.DB
           .prepare('SELECT * FROM user_notes WHERE id=?').bind(id).first();
-        return jsonResponse(created, 201, origin);
+        return jsonResponse(created, 201, request);
       }
 
       // Unknown admin route
-      return errResponse('not_found', 404, origin);
+      return errResponse('not_found', 404, request);
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -373,10 +377,10 @@ export default {
         if (Array.isArray(registry.books)) {
           registry.books = registry.books.slice(0, userPlan.max_books);
         }
-        return jsonResponse(registry, 200, origin);
+        return jsonResponse(registry, 200, request);
       } catch {
         return new Response(body, {
-          headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+          headers: { 'Content-Type': 'application/json', ...corsHeaders(request) },
         });
       }
     }
@@ -392,17 +396,17 @@ export default {
         if (userPlan.allow_extracted === 0 && Array.isArray(questions)) {
           questions = questions.filter(q => q.source_type !== 'extracted');
         }
-        return jsonResponse(questions, 200, origin);
+        return jsonResponse(questions, 200, request);
       } catch {
         return new Response(body, {
-          headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+          headers: { 'Content-Type': 'application/json', ...corsHeaders(request) },
         });
       }
     }
 
     // All other files (_index.json etc.) — serve unmodified
     return new Response(body, {
-      headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders(request) },
     });
   },
 };
