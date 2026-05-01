@@ -1,0 +1,12 @@
+name = "competitionhub-qbank"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "competitionhub-db"
+database_id = "106c8ea8-e03d-4bda-8062-2c51d0eaa86f"
+
+[[r2_buckets]]
+binding = "QBANK"
+bucket_name = "competitionhub-qbank"
