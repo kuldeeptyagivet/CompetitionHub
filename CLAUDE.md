@@ -255,6 +255,15 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   app.examsindia.org and competitionhub.pages.dev; local mode
   shows email only, no Sign Out link; styled with existing CSS
   variables
+- Wrangler auto-deploy pipeline complete: wrangler.toml at repo
+  root configured with Worker name competitionhub-qbank, D1
+  binding DB (competitionhub-db), R2 binding QBANK
+  (competitionhub-qbank); GitHub Actions workflow at
+  .github/workflows/deploy-worker.yml triggers on changes to
+  worker.js or wrangler.toml only; CLOUDFLARE_API_TOKEN and
+  CLOUDFLARE_ACCOUNT_ID stored as GitHub repo secrets; pipeline
+  verified green on first run; Worker deploys automatically
+  within ~30 seconds of any push touching worker.js
 
 **Not yet built:**
 - Payment integration (Razorpay/Stripe webhook)
@@ -340,6 +349,13 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
 2026-05-01 — Sign Out href team domain derived via
   hostname.replace(/^app\./, '') at runtime; no hardcoded
   domain so the same code works on both production domains.
+2026-05-01 — Worker auto-deploy via Wrangler GitHub Action;
+  secrets stored in GitHub encrypted secrets store, never in
+  repo files; workflow scoped to worker.js and wrangler.toml
+  path filters so index.html pushes do not trigger Worker deploy.
+2026-05-01 — schema.sql omitted from repo; D1 schema managed
+  entirely by initTables() in worker.js; no migrations file to
+  drift out of sync with live tables.
 
 ---
 
