@@ -266,8 +266,8 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   within ~30 seconds of any push touching worker.js
 - Source Type filter bifurcated into five computed categories: extracted (leaf), extracted_parent (has ≥1 child in loaded set), extracted_child, modified, created; extracted_child unchecked by default; checking it reveals inline "Max per parent" number input stored in filterState.childCapPerParent; parameters panel duration estimate includes expected children time weighted by cap and updates live on cap input change
 - buildParentChildIndexes() builds childrenByParent map and extractedParentIds Set after every chapter load/evict cycle using q.parent_id field; sourceTypeMatchesMain(q) helper resolves all source type filter logic for main questions
-- paperGenerate() appends shuffled-then-capped children from childrenByParent immediately after each selected parent; paper.questions is finalQuestions containing both main and child questions; duration computed from finalQuestions including children
-- Count bar shows + up to X practice parts when extracted_child is enabled and parents exist in filtered pool; Type/Difficulty/Bloom facet counts exclude extracted_child questions
+- paperGenerate() iterates shuffled main pool with a remaining counter; each main question costs 1 slot, its children consume min(children.length, cap, remaining) additional slots; stops when remaining === 0; total always ≤ N; paper.questions is finalQuestions containing both main and child questions
+- Count bar shows static muted note "— children fill slots when parent selected" only when extracted_child is checked and cap > 0; Type/Difficulty/Bloom facet counts exclude extracted_child questions
 
 **Not yet built:**
 - Payment integration (Razorpay/Stripe webhook)
@@ -365,6 +365,7 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
 2026-05-09 — Duration calculation includes children in both paperGenerate() and the parameters panel estimate; children are real time cost; parameters panel estimate updates reactively when cap input changes.
 2026-05-09 — Duration in paperGenerate() computed from finalQuestions (main + children); parameters panel estimate uses paramComputeDuration() extended with expected children time; cap input wired to paramUpdateDerived() for live update.
 2026-05-09 — extracted_child questions link to their parent via parent_id field, not modified_from; buildParentChildIndexes() uses parent_id exclusively for child-parent mapping.
+2026-05-09 — Children consume slots from the same N budget as main questions; total paper size is always ≤ N; parent is always prioritised over its children when slots are tight.
 
 ---
 

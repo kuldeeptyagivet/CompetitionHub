@@ -1910,7 +1910,6 @@
       }
 
       let count = 0;
-      let parentCount = 0;
       for (const key of Object.keys(loadedQuestions)) {
         if (!filterState.chapters.has(key)) continue;
         for (const q of loadedQuestions[key]) {
@@ -1919,19 +1918,16 @@
             filterState.difficulties.has(q.difficulty) &&
             filterState.bloomLevels.has(q.bloom_level) &&
             sourceTypeMatchesMain(q)
-          ) {
-            count++;
-            if (extractedParentIds.has(q.question_id)) parentCount++;
-          }
+          ) count++;
         }
       }
       numEl.textContent = count;
       numEl.classList.remove('filter-count-loading');
-      let countLabel = 'questions matching filters';
-      if (filterState.extractedChild && filterState.childCapPerParent > 0 && parentCount > 0) {
-        countLabel += ' + up to ' + (parentCount * filterState.childCapPerParent) + ' practice parts';
+      if (filterState.extractedChild && filterState.childCapPerParent > 0) {
+        labelEl.innerHTML = 'questions matching filters <span style="color:var(--muted);font-size:0.85em">— children fill slots when parent selected</span>';
+      } else {
+        labelEl.textContent = 'questions matching filters';
       }
-      labelEl.textContent = countLabel;
       filterUpdateFacets();
       paramUpdateMax();
     }
@@ -2299,30 +2295,27 @@
 
     function paramComputeDuration(pool) {
       if (pool.length === 0) return '—';
-      let totalSec = 0;
-      for (const q of pool) {
-        totalSec += (q.avg_time_sec != null ? q.avg_time_sec : 90);
-      }
-      const mean   = totalSec / pool.length;
-      let estSec = mean * paperParams.questionCount;
 
-      // Add expected children time, scaled to selected question count
-      if (filterState.extractedChild && filterState.childCapPerParent > 0) {
-        let childrenPoolSec = 0;
-        for (const q of pool) {
-          if (extractedParentIds.has(q.question_id)) {
-            const children = childrenByParent[q.question_id] || [];
-            const cappedCount = Math.min(children.length, filterState.childCapPerParent);
-            if (cappedCount > 0) {
-              let childSum = 0;
-              for (const c of children) childSum += (c.avg_time_sec != null ? c.avg_time_sec : 90);
-              childrenPoolSec += cappedCount * (childSum / children.length);
-            }
+      // Build total time and total slots across pool (main + expected children per parent)
+      let totalSec   = 0;
+      let totalSlots = 0;
+      for (const q of pool) {
+        totalSec   += (q.avg_time_sec != null ? q.avg_time_sec : 90);
+        totalSlots += 1;
+        if (filterState.extractedChild && filterState.childCapPerParent > 0 && extractedParentIds.has(q.question_id)) {
+          const children = childrenByParent[q.question_id] || [];
+          const take = Math.min(children.length, filterState.childCapPerParent);
+          if (take > 0) {
+            let childSum = 0;
+            for (const c of children) childSum += (c.avg_time_sec != null ? c.avg_time_sec : 90);
+            totalSec   += take * (childSum / children.length);
+            totalSlots += take;
           }
         }
-        estSec += childrenPoolSec * (paperParams.questionCount / pool.length);
       }
 
+      // Average time per slot × N slots (naturally caps total at N)
+      const estSec   = (totalSec / totalSlots) * paperParams.questionCount;
       const totalMin = Math.round(estSec / 60);
       const hr  = Math.floor(totalMin / 60);
       const min = totalMin % 60;
@@ -2461,19 +2454,23 @@
         const j = Math.floor(Math.random() * (i + 1));
         [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
       }
-      const selected = shuffled.slice(0, paperParams.questionCount);
 
-      // Append extracted children immediately after their parents
+      // Fill N slots: each main question costs 1 slot; its children fill remaining slots
       const finalQuestions = [];
-      for (const q of selected) {
+      let remaining = paperParams.questionCount;
+      for (const q of shuffled) {
+        if (remaining === 0) break;
         finalQuestions.push(q);
-        if (filterState.extractedChild && filterState.childCapPerParent > 0 && extractedParentIds.has(q.question_id)) {
+        remaining--;
+        if (filterState.extractedChild && filterState.childCapPerParent > 0 && remaining > 0 && extractedParentIds.has(q.question_id)) {
           const children = [...(childrenByParent[q.question_id] || [])];
           for (let ci = children.length - 1; ci > 0; ci--) {
             const cj = Math.floor(Math.random() * (ci + 1));
             [children[ci], children[cj]] = [children[cj], children[ci]];
           }
-          finalQuestions.push(...children.slice(0, filterState.childCapPerParent));
+          const take = Math.min(children.length, filterState.childCapPerParent, remaining);
+          finalQuestions.push(...children.slice(0, take));
+          remaining -= take;
         }
       }
 
