@@ -265,7 +265,7 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   verified green on first run; Worker deploys automatically
   within ~30 seconds of any push touching worker.js
 - Source Type filter bifurcated into five computed categories: extracted (leaf), extracted_parent (has ≥1 child in loaded set), extracted_child, modified, created; extracted_child unchecked by default; checking it reveals inline "Max per parent" number input stored in filterState.childCapPerParent; parameters panel duration estimate includes expected children time weighted by cap and updates live on cap input change
-- buildParentChildIndexes() builds childrenByParent map and extractedParentIds Set after every chapter load/evict cycle; sourceTypeMatchesMain(q) helper resolves all source type filter logic for main questions
+- buildParentChildIndexes() builds childrenByParent map and extractedParentIds Set after every chapter load/evict cycle using q.parent_id field; sourceTypeMatchesMain(q) helper resolves all source type filter logic for main questions
 - paperGenerate() appends shuffled-then-capped children from childrenByParent immediately after each selected parent; paper.questions is finalQuestions containing both main and child questions; duration computed from finalQuestions including children
 - Count bar shows + up to X practice parts when extracted_child is enabled and parents exist in filtered pool; Type/Difficulty/Bloom facet counts exclude extracted_child questions
 
@@ -364,6 +364,7 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
 2026-05-09 — Child inclusion is per-parent capped: after main question selection, each selected parent contributes up to childCapPerParent randomly shuffled children; cap=0 suppresses all children regardless of checkbox state.
 2026-05-09 — Duration calculation includes children in both paperGenerate() and the parameters panel estimate; children are real time cost; parameters panel estimate updates reactively when cap input changes.
 2026-05-09 — Duration in paperGenerate() computed from finalQuestions (main + children); parameters panel estimate uses paramComputeDuration() extended with expected children time; cap input wired to paramUpdateDerived() for live update.
+2026-05-09 — extracted_child questions link to their parent via parent_id field, not modified_from; buildParentChildIndexes() uses parent_id exclusively for child-parent mapping.
 
 ---
 

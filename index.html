@@ -1753,9 +1753,9 @@
       extractedParentIds = new Set();
       for (const qs of Object.values(loadedQuestions)) {
         for (const q of qs) {
-          if (q.source_type === 'extracted_child' && q.modified_from) {
-            if (!childrenByParent[q.modified_from]) childrenByParent[q.modified_from] = [];
-            childrenByParent[q.modified_from].push(q);
+          if (q.source_type === 'extracted_child' && q.parent_id) {
+            if (!childrenByParent[q.parent_id]) childrenByParent[q.parent_id] = [];
+            childrenByParent[q.parent_id].push(q);
           }
         }
       }
