@@ -1744,7 +1744,41 @@
     let folderHandle = null;
     let remoteReady = false;
     let bookData = [];
-    let loadedQuestions = {};
+    let loadedQuestions    = {};
+    let childrenByParent   = {};
+    let extractedParentIds = new Set();
+
+    function buildParentChildIndexes() {
+      childrenByParent   = {};
+      extractedParentIds = new Set();
+      for (const qs of Object.values(loadedQuestions)) {
+        for (const q of qs) {
+          if (q.source_type === 'extracted_child' && q.modified_from) {
+            if (!childrenByParent[q.modified_from]) childrenByParent[q.modified_from] = [];
+            childrenByParent[q.modified_from].push(q);
+          }
+        }
+      }
+      for (const qs of Object.values(loadedQuestions)) {
+        for (const q of qs) {
+          if (q.source_type === 'extracted' && childrenByParent[q.question_id]) {
+            extractedParentIds.add(q.question_id);
+          }
+        }
+      }
+    }
+
+    function sourceTypeMatchesMain(q) {
+      if (q.source_type === 'extracted_child') return false;
+      if (q.source_type === 'extracted') {
+        return extractedParentIds.has(q.question_id)
+          ? filterState.extractedParent
+          : filterState.extractedLeaf;
+      }
+      if (q.source_type === 'modified') return filterState.modifiedSrc;
+      if (q.source_type === 'created')  return filterState.createdSrc;
+      return true;
+    }
 
     const FILTER_TYPES       = ['mcq_single', 'mcq_multi', 'assertion_reason', 'statement_based', 'match_following'];
     const FILTER_DIFFICULTIES = ['easy', 'medium', 'hard'];
@@ -1752,12 +1786,17 @@
     const FILTER_SOURCE       = ['extracted', 'modified', 'created'];
 
     let filterState = {
-      books:       new Set(),
-      chapters:    new Set(),
-      types:       new Set(),
-      difficulties: new Set(),
-      bloomLevels: new Set(),
-      sourceTypes: new Set()
+      books:             new Set(),
+      chapters:          new Set(),
+      types:             new Set(),
+      difficulties:      new Set(),
+      bloomLevels:       new Set(),
+      extractedLeaf:     true,
+      extractedParent:   true,
+      extractedChild:    false,
+      modifiedSrc:       true,
+      createdSrc:        true,
+      childCapPerParent: 1
     };
 
     let paperParams = {
@@ -1843,12 +1882,17 @@
     // ── Filter state helpers ────────────────────────────────────────────────
 
     function filterInitState() {
-      filterState.books        = new Set();
-      filterState.chapters     = new Set();
-      filterState.types        = new Set(FILTER_TYPES);
-      filterState.difficulties = new Set(FILTER_DIFFICULTIES);
-      filterState.bloomLevels  = new Set(FILTER_BLOOM);
-      filterState.sourceTypes  = new Set(FILTER_SOURCE);
+      filterState.books             = new Set();
+      filterState.chapters          = new Set();
+      filterState.types             = new Set(FILTER_TYPES);
+      filterState.difficulties      = new Set(FILTER_DIFFICULTIES);
+      filterState.bloomLevels       = new Set(FILTER_BLOOM);
+      filterState.extractedLeaf     = true;
+      filterState.extractedParent   = true;
+      filterState.extractedChild    = false;
+      filterState.modifiedSrc       = true;
+      filterState.createdSrc        = true;
+      filterState.childCapPerParent = 1;
       loadedQuestions = {};
     }
 
@@ -1866,6 +1910,7 @@
       }
 
       let count = 0;
+      let parentCount = 0;
       for (const key of Object.keys(loadedQuestions)) {
         if (!filterState.chapters.has(key)) continue;
         for (const q of loadedQuestions[key]) {
@@ -1873,13 +1918,20 @@
             filterState.types.has(q.type) &&
             filterState.difficulties.has(q.difficulty) &&
             filterState.bloomLevels.has(q.bloom_level) &&
-            filterState.sourceTypes.has(q.source_type)
-          ) count++;
+            sourceTypeMatchesMain(q)
+          ) {
+            count++;
+            if (extractedParentIds.has(q.question_id)) parentCount++;
+          }
         }
       }
       numEl.textContent = count;
       numEl.classList.remove('filter-count-loading');
-      labelEl.textContent = 'questions matching filters';
+      let countLabel = 'questions matching filters';
+      if (filterState.extractedChild && filterState.childCapPerParent > 0 && parentCount > 0) {
+        countLabel += ' + up to ' + (parentCount * filterState.childCapPerParent) + ' practice parts';
+      }
+      labelEl.textContent = countLabel;
       filterUpdateFacets();
       paramUpdateMax();
     }
@@ -1897,7 +1949,7 @@
                 filterState.types.has(q.type) &&
                 filterState.difficulties.has(q.difficulty) &&
                 filterState.bloomLevels.has(q.bloom_level) &&
-                filterState.sourceTypes.has(q.source_type)
+                sourceTypeMatchesMain(q)
               ) exact++;
             }
           } else {
@@ -1920,7 +1972,7 @@
             filterState.types.has(q.type) &&
             filterState.difficulties.has(q.difficulty) &&
             filterState.bloomLevels.has(q.bloom_level) &&
-            filterState.sourceTypes.has(q.source_type)
+            sourceTypeMatchesMain(q)
           ) count++;
         }
         return count;
@@ -1935,7 +1987,7 @@
               q.type === value &&
               filterState.difficulties.has(q.difficulty) &&
               filterState.bloomLevels.has(q.bloom_level) &&
-              filterState.sourceTypes.has(q.source_type)
+              sourceTypeMatchesMain(q)
             ) count++;
           }
         }
@@ -1951,7 +2003,7 @@
               filterState.types.has(q.type) &&
               q.difficulty === value &&
               filterState.bloomLevels.has(q.bloom_level) &&
-              filterState.sourceTypes.has(q.source_type)
+              sourceTypeMatchesMain(q)
             ) count++;
           }
         }
@@ -1967,7 +2019,7 @@
               filterState.types.has(q.type) &&
               filterState.difficulties.has(q.difficulty) &&
               q.bloom_level === value &&
-              filterState.sourceTypes.has(q.source_type)
+              sourceTypeMatchesMain(q)
             ) count++;
           }
         }
@@ -1979,12 +2031,32 @@
         for (const key of Object.keys(loadedQuestions)) {
           if (!filterState.chapters.has(key)) continue;
           for (const q of loadedQuestions[key]) {
-            if (
-              filterState.types.has(q.type) &&
-              filterState.difficulties.has(q.difficulty) &&
-              filterState.bloomLevels.has(q.bloom_level) &&
-              q.source_type === value
-            ) count++;
+            if (value === 'extracted_child') {
+              if (q.source_type === 'extracted_child') count++;
+            } else if (value === 'extracted') {
+              if (
+                q.source_type === 'extracted' &&
+                !extractedParentIds.has(q.question_id) &&
+                filterState.types.has(q.type) &&
+                filterState.difficulties.has(q.difficulty) &&
+                filterState.bloomLevels.has(q.bloom_level)
+              ) count++;
+            } else if (value === 'extracted_parent') {
+              if (
+                q.source_type === 'extracted' &&
+                extractedParentIds.has(q.question_id) &&
+                filterState.types.has(q.type) &&
+                filterState.difficulties.has(q.difficulty) &&
+                filterState.bloomLevels.has(q.bloom_level)
+              ) count++;
+            } else {
+              if (
+                q.source_type === value &&
+                filterState.types.has(q.type) &&
+                filterState.difficulties.has(q.difficulty) &&
+                filterState.bloomLevels.has(q.bloom_level)
+              ) count++;
+            }
           }
         }
         return count;
@@ -2025,6 +2097,7 @@
         );
       }
       await Promise.all(fetches);
+      buildParentChildIndexes();
       filterUpdateCount();
     }
 
@@ -2095,6 +2168,70 @@
       });
     }
 
+    function filterRenderSourceGroup() {
+      const container = document.getElementById('filter-source-list');
+      container.innerHTML = '';
+
+      const rows = [
+        { key: 'extracted',        label: 'extracted',        flag: 'extractedLeaf'   },
+        { key: 'extracted_parent', label: 'extracted parent', flag: 'extractedParent' },
+        { key: 'extracted_child',  label: 'extracted child',  flag: 'extractedChild'  },
+        { key: 'modified',         label: 'modified',         flag: 'modifiedSrc'     },
+        { key: 'created',          label: 'created',          flag: 'createdSrc'      }
+      ];
+
+      rows.forEach(row => {
+        // Pre-create capWrap for extracted_child so the change listener can reference it
+        let capWrap = null;
+        if (row.key === 'extracted_child') {
+          capWrap = document.createElement('span');
+          capWrap.style.cssText = 'display:' + (filterState.extractedChild ? 'inline' : 'none') + ';margin-left:0.5rem';
+
+          const capLabel = document.createElement('label');
+          capLabel.style.cssText = 'font-size:0.8rem;color:var(--muted)';
+          capLabel.textContent = 'Max per parent:';
+
+          const capInput = document.createElement('input');
+          capInput.type  = 'number';
+          capInput.min   = '0';
+          capInput.value = filterState.childCapPerParent;
+          capInput.style.cssText = 'width:3.5rem;margin-left:0.25rem';
+          capInput.addEventListener('input', () => {
+            const v = parseInt(capInput.value, 10);
+            filterState.childCapPerParent = isNaN(v) || v < 0 ? 0 : v;
+            paramUpdateDerived();
+          });
+
+          capWrap.appendChild(capLabel);
+          capWrap.appendChild(capInput);
+        }
+
+        const label = document.createElement('label');
+        label.className = 'filter-checkbox-item';
+        label.dataset.group = 'source';
+        label.dataset.value = row.key;
+
+        const cb = document.createElement('input');
+        cb.type    = 'checkbox';
+        cb.checked = filterState[row.flag];
+        cb.addEventListener('change', () => {
+          filterState[row.flag] = cb.checked;
+          if (capWrap) capWrap.style.display = cb.checked ? 'inline' : 'none';
+          filterUpdateCount();
+        });
+
+        const facet = document.createElement('span');
+        facet.className = 'facet-count';
+
+        label.appendChild(cb);
+        label.appendChild(document.createTextNode(' ' + row.label));
+        label.appendChild(facet);
+
+        container.appendChild(label);
+        if (capWrap) container.appendChild(capWrap);
+      });
+    }
+
     function filterRenderPanel() {
       filterInitState();
 
@@ -2136,7 +2273,7 @@
       filterRenderInlineGroup('filter-types-list',        FILTER_TYPES,        filterState.types,        'type');
       filterRenderInlineGroup('filter-difficulties-list', FILTER_DIFFICULTIES, filterState.difficulties, 'difficulty');
       filterRenderInlineGroup('filter-bloom-list',        FILTER_BLOOM,        filterState.bloomLevels,  'bloom');
-      filterRenderInlineGroup('filter-source-list',       FILTER_SOURCE,       filterState.sourceTypes,  'source');
+      filterRenderSourceGroup();
 
       document.getElementById('filter-panel').style.display = 'block';
       filterUpdateCount();
@@ -2153,7 +2290,7 @@
             filterState.types.has(q.type) &&
             filterState.difficulties.has(q.difficulty) &&
             filterState.bloomLevels.has(q.bloom_level) &&
-            filterState.sourceTypes.has(q.source_type)
+            sourceTypeMatchesMain(q)
           ) pool.push(q);
         }
       }
@@ -2167,7 +2304,25 @@
         totalSec += (q.avg_time_sec != null ? q.avg_time_sec : 90);
       }
       const mean   = totalSec / pool.length;
-      const estSec = mean * paperParams.questionCount;
+      let estSec = mean * paperParams.questionCount;
+
+      // Add expected children time, scaled to selected question count
+      if (filterState.extractedChild && filterState.childCapPerParent > 0) {
+        let childrenPoolSec = 0;
+        for (const q of pool) {
+          if (extractedParentIds.has(q.question_id)) {
+            const children = childrenByParent[q.question_id] || [];
+            const cappedCount = Math.min(children.length, filterState.childCapPerParent);
+            if (cappedCount > 0) {
+              let childSum = 0;
+              for (const c of children) childSum += (c.avg_time_sec != null ? c.avg_time_sec : 90);
+              childrenPoolSec += cappedCount * (childSum / children.length);
+            }
+          }
+        }
+        estSec += childrenPoolSec * (paperParams.questionCount / pool.length);
+      }
+
       const totalMin = Math.round(estSec / 60);
       const hr  = Math.floor(totalMin / 60);
       const min = totalMin % 60;
@@ -2308,9 +2463,23 @@
       }
       const selected = shuffled.slice(0, paperParams.questionCount);
 
-      // Exact duration from selected questions
-      let totalSec = 0;
+      // Append extracted children immediately after their parents
+      const finalQuestions = [];
       for (const q of selected) {
+        finalQuestions.push(q);
+        if (filterState.extractedChild && filterState.childCapPerParent > 0 && extractedParentIds.has(q.question_id)) {
+          const children = [...(childrenByParent[q.question_id] || [])];
+          for (let ci = children.length - 1; ci > 0; ci--) {
+            const cj = Math.floor(Math.random() * (ci + 1));
+            [children[ci], children[cj]] = [children[cj], children[ci]];
+          }
+          finalQuestions.push(...children.slice(0, filterState.childCapPerParent));
+        }
+      }
+
+      // Exact duration from all questions including appended children
+      let totalSec = 0;
+      for (const q of finalQuestions) {
         totalSec += (q.avg_time_sec != null ? q.avg_time_sec : 90);
       }
       const totalMin = Math.round(totalSec / 60);
@@ -2332,7 +2501,7 @@
           negativeMarking:   paperParams.negativeMarking,
           negativeMarksPerQ: paperParams.negativeMarksPerQ
         },
-        questions: selected
+        questions: finalQuestions
       };
 
       paperSave();
