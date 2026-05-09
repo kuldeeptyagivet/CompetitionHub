@@ -2137,7 +2137,7 @@
           if (!filterState.chapters.has(key)) continue;
           for (const q of loadedQuestions[key]) {
             if (value === 'extracted_child') {
-              if (q.source_type === 'extracted_child') count++;
+              if (q.source_type === 'extracted_child' && headingPassesFilter(q, key)) count++;
             } else if (value === 'extracted') {
               if (
                 q.source_type === 'extracted' &&
