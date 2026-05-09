@@ -268,7 +268,7 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
 - buildParentChildIndexes() builds childrenByParent map and extractedParentIds Set after every chapter load/evict cycle using q.parent_id field; sourceTypeMatchesMain(q) helper resolves all source type filter logic for main questions
 - paperGenerate() iterates shuffled main pool with a remaining counter; each main question costs 1 slot, its children consume min(children.length, cap, remaining) additional slots; stops when remaining === 0; total always ≤ N; paper.questions is finalQuestions containing both main and child questions
 - Count bar shows static muted note "— children fill slots when parent selected" only when extracted_child is checked and cap > 0; Type/Difficulty/Bloom facet counts exclude extracted_child questions
-- Topic heading filter complete: each chapter row in the filter panel has a ▶/▼ chevron; clicking it expands indented heading sub-rows with checkboxes and question counts; selecting one or more headings narrows the filtered pool to matching questions only; questions with null topic_heading grouped under "Uncategorised"; heading selections cleared on chapter eviction; headingPassesFilter() applied in both filterUpdateCount() and paramGetFilteredPool(); headingIndex built after every chapter load/evict via buildHeadingIndex()
+- Topic heading filter complete: each chapter row has a ▶/▼ chevron; clicking expands indented heading sub-rows with checkboxes and question counts; selecting a chapter auto-populates all its headings into headingSelections so all heading checkboxes render checked by default; unchecking a chapter clears its headingSelections entry; user can uncheck the chapter then select individual headings to filter by specific topics only; headingPassesFilter() returns false when headingSelections is absent or empty so unselected chapters contribute zero questions; applied in both filterUpdateCount() and paramGetFilteredPool(); headingIndex built after every chapter load/evict via buildHeadingIndex()
 
 **Not yet built:**
 - Payment integration (Razorpay/Stripe webhook)
@@ -368,6 +368,7 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
 2026-05-09 — extracted_child questions link to their parent via parent_id field, not modified_from; buildParentChildIndexes() uses parent_id exclusively for child-parent mapping.
 2026-05-09 — Children consume slots from the same N budget as main questions; total paper size is always ≤ N; parent is always prioritised over its children when slots are tight.
 2026-05-09 — topic_heading used as the single filter level; topic_subheading ignored for now; null/empty topic_heading surfaced as "Uncategorised" so no questions are silently excluded from heading selection
+2026-05-09 — heading selection model: chapter checked = all headings checked and all questions pass; chapter unchecked = all headings cleared and zero questions pass; user filters by specific headings by unchecking chapter first then selecting individual headings; empty headingSelections returns false not true so chapter state is always explicit
 
 ---
 

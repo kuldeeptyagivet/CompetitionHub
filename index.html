@@ -1783,7 +1783,7 @@
 
     function headingPassesFilter(q, key) {
       const sel = filterState.headingSelections.get(key);
-      if (!sel || sel.size === 0) return true;
+      if (!sel || sel.size === 0) return false;
       const h = (q.topic_heading && q.topic_heading.trim()) ? q.topic_heading.trim() : 'Uncategorised';
       return sel.has(h);
     }
@@ -2125,6 +2125,11 @@
       await Promise.all(fetches);
       buildParentChildIndexes();
       buildHeadingIndex();
+      for (const [k, counts] of Object.entries(headingIndex)) {
+        if (!filterState.headingSelections.has(k)) {
+          filterState.headingSelections.set(k, new Set(Object.keys(counts)));
+        }
+      }
       filterUpdateCount();
     }
 
@@ -2154,8 +2159,12 @@
           cb.type    = 'checkbox';
           cb.checked = filterState.chapters.has(key);
           cb.addEventListener('change', () => {
-            if (cb.checked) filterState.chapters.add(key);
-            else            filterState.chapters.delete(key);
+            if (cb.checked) {
+              filterState.chapters.add(key);
+            } else {
+              filterState.chapters.delete(key);
+              filterState.headingSelections.delete(key);
+            }
             filterLoadSelectedChapters();
           });
 
