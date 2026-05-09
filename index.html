@@ -1947,6 +1947,20 @@
           ) count++;
         }
       }
+      if (filterState.extractedChild) {
+        for (const key of Object.keys(loadedQuestions)) {
+          if (!filterState.chapters.has(key)) continue;
+          for (const q of loadedQuestions[key]) {
+            if (
+              q.source_type === 'extracted_child' &&
+              filterState.types.has(q.type) &&
+              filterState.difficulties.has(q.difficulty) &&
+              filterState.bloomLevels.has(q.bloom_level) &&
+              headingPassesFilter(q, key)
+            ) count++;
+          }
+        }
+      }
       numEl.textContent = count;
       numEl.classList.remove('filter-count-loading');
       if (filterState.extractedChild && filterState.childCapPerParent > 0) {
@@ -1975,6 +1989,17 @@
                 headingPassesFilter(q, key)
               ) exact++;
             }
+            if (filterState.extractedChild) {
+              for (const q of loadedQuestions[key]) {
+                if (
+                  q.source_type === 'extracted_child' &&
+                  filterState.types.has(q.type) &&
+                  filterState.difficulties.has(q.difficulty) &&
+                  filterState.bloomLevels.has(q.bloom_level) &&
+                  headingPassesFilter(q, key)
+                ) exact++;
+              }
+            }
           } else {
             approx += f.count;
           }
@@ -1999,6 +2024,17 @@
             headingPassesFilter(q, value)
           ) count++;
         }
+        if (filterState.extractedChild) {
+          for (const q of loadedQuestions[value]) {
+            if (
+              q.source_type === 'extracted_child' &&
+              filterState.types.has(q.type) &&
+              filterState.difficulties.has(q.difficulty) &&
+              filterState.bloomLevels.has(q.bloom_level) &&
+              headingPassesFilter(q, value)
+            ) count++;
+          }
+        }
         return count;
       }
 
@@ -2014,6 +2050,20 @@
               sourceTypeMatchesMain(q) &&
               headingPassesFilter(q, key)
             ) count++;
+          }
+        }
+        if (filterState.extractedChild) {
+          for (const key of Object.keys(loadedQuestions)) {
+            if (!filterState.chapters.has(key)) continue;
+            for (const q of loadedQuestions[key]) {
+              if (
+                q.source_type === 'extracted_child' &&
+                q.type === value &&
+                filterState.difficulties.has(q.difficulty) &&
+                filterState.bloomLevels.has(q.bloom_level) &&
+                headingPassesFilter(q, key)
+              ) count++;
+            }
           }
         }
         return count;
@@ -2033,6 +2083,20 @@
             ) count++;
           }
         }
+        if (filterState.extractedChild) {
+          for (const key of Object.keys(loadedQuestions)) {
+            if (!filterState.chapters.has(key)) continue;
+            for (const q of loadedQuestions[key]) {
+              if (
+                q.source_type === 'extracted_child' &&
+                filterState.types.has(q.type) &&
+                q.difficulty === value &&
+                filterState.bloomLevels.has(q.bloom_level) &&
+                headingPassesFilter(q, key)
+              ) count++;
+            }
+          }
+        }
         return count;
       }
 
@@ -2048,6 +2112,20 @@
               sourceTypeMatchesMain(q) &&
               headingPassesFilter(q, key)
             ) count++;
+          }
+        }
+        if (filterState.extractedChild) {
+          for (const key of Object.keys(loadedQuestions)) {
+            if (!filterState.chapters.has(key)) continue;
+            for (const q of loadedQuestions[key]) {
+              if (
+                q.source_type === 'extracted_child' &&
+                filterState.types.has(q.type) &&
+                filterState.difficulties.has(q.difficulty) &&
+                q.bloom_level === value &&
+                headingPassesFilter(q, key)
+              ) count++;
+            }
           }
         }
         return count;
