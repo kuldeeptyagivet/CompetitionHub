@@ -1747,6 +1747,7 @@
     let loadedQuestions    = {};
     let childrenByParent   = {};
     let extractedParentIds = new Set();
+    let headingIndex       = {}; // { [chapterKey]: { [heading]: count } }
 
     function buildParentChildIndexes() {
       childrenByParent   = {};
@@ -1766,6 +1767,25 @@
           }
         }
       }
+    }
+
+    function buildHeadingIndex() {
+      headingIndex = {};
+      for (const [key, qs] of Object.entries(loadedQuestions)) {
+        const counts = {};
+        for (const q of qs) {
+          const h = (q.topic_heading && q.topic_heading.trim()) ? q.topic_heading.trim() : 'Uncategorised';
+          counts[h] = (counts[h] || 0) + 1;
+        }
+        headingIndex[key] = counts;
+      }
+    }
+
+    function headingPassesFilter(q, key) {
+      const sel = filterState.headingSelections.get(key);
+      if (!sel || sel.size === 0) return true;
+      const h = (q.topic_heading && q.topic_heading.trim()) ? q.topic_heading.trim() : 'Uncategorised';
+      return sel.has(h);
     }
 
     function sourceTypeMatchesMain(q) {
@@ -1796,7 +1816,9 @@
       extractedChild:    false,
       modifiedSrc:       true,
       createdSrc:        true,
-      childCapPerParent: 1
+      childCapPerParent: 1,
+      expandedChapters:  new Set(),
+      headingSelections: new Map()
     };
 
     let paperParams = {
@@ -1893,7 +1915,10 @@
       filterState.modifiedSrc       = true;
       filterState.createdSrc        = true;
       filterState.childCapPerParent = 1;
+      filterState.expandedChapters  = new Set();
+      filterState.headingSelections = new Map();
       loadedQuestions = {};
+      headingIndex    = {};
     }
 
     function filterUpdateCount() {
@@ -1917,7 +1942,8 @@
             filterState.types.has(q.type) &&
             filterState.difficulties.has(q.difficulty) &&
             filterState.bloomLevels.has(q.bloom_level) &&
-            sourceTypeMatchesMain(q)
+            sourceTypeMatchesMain(q) &&
+            headingPassesFilter(q, key)
           ) count++;
         }
       }
@@ -2076,7 +2102,11 @@
 
       // Evict chapters no longer selected
       for (const key of Object.keys(loadedQuestions)) {
-        if (!filterState.chapters.has(key)) delete loadedQuestions[key];
+        if (!filterState.chapters.has(key)) {
+          delete loadedQuestions[key];
+          filterState.headingSelections.delete(key);
+          filterState.expandedChapters.delete(key);
+        }
       }
 
       // Fetch chapters not yet loaded
@@ -2094,6 +2124,7 @@
       }
       await Promise.all(fetches);
       buildParentChildIndexes();
+      buildHeadingIndex();
       filterUpdateCount();
     }
 
@@ -2106,14 +2137,21 @@
       bookData.forEach(b => {
         if (!filterState.books.has(b.code)) return;
         b.files.forEach(f => {
-          const key = b.code + '::' + f.file;
+          const key      = b.code + '::' + f.file;
+          const expanded = filterState.expandedChapters.has(key);
+
+          // ── chapter row ──────────────────────────────────────────────────
+          const row = document.createElement('div');
+          row.style.cssText = 'display:flex;align-items:center;gap:0.25rem';
+
           const label = document.createElement('label');
           label.className = 'filter-checkbox-item';
+          label.style.cssText = 'flex:1;margin-bottom:0';
           label.dataset.group = 'chapter';
           label.dataset.value = key;
 
           const cb = document.createElement('input');
-          cb.type = 'checkbox';
+          cb.type    = 'checkbox';
           cb.checked = filterState.chapters.has(key);
           cb.addEventListener('change', () => {
             if (cb.checked) filterState.chapters.add(key);
@@ -2131,7 +2169,64 @@
           label.appendChild(cb);
           label.appendChild(document.createTextNode(' ' + text));
           label.appendChild(facet);
-          container.appendChild(label);
+
+          const chevron = document.createElement('span');
+          chevron.textContent    = expanded ? '▼' : '▶';
+          chevron.style.cssText  = 'cursor:pointer;font-size:0.7rem;color:var(--muted);padding:0 0.25rem;user-select:none';
+          chevron.title          = expanded ? 'Collapse topics' : 'Expand topics';
+          chevron.addEventListener('click', () => {
+            if (filterState.expandedChapters.has(key)) filterState.expandedChapters.delete(key);
+            else                                        filterState.expandedChapters.add(key);
+            filterRenderChapters();
+            filterUpdateFacets();
+          });
+
+          row.appendChild(label);
+          row.appendChild(chevron);
+          container.appendChild(row);
+
+          // ── heading sub-rows (only when expanded and data loaded) ────────
+          if (expanded && headingIndex[key]) {
+            const counts  = headingIndex[key];
+            const sel     = filterState.headingSelections.get(key) || new Set();
+            const headings = Object.keys(counts).sort((a, b) => {
+              if (a === 'Uncategorised') return 1;
+              if (b === 'Uncategorised') return -1;
+              return a.localeCompare(b);
+            });
+
+            headings.forEach(h => {
+              const hRow = document.createElement('label');
+              hRow.className       = 'filter-checkbox-item';
+              hRow.style.cssText   = 'padding-left:1.75rem;font-size:0.85rem';
+              hRow.dataset.group   = 'heading';
+              hRow.dataset.chapter = key;
+              hRow.dataset.value   = h;
+
+              const hCb = document.createElement('input');
+              hCb.type    = 'checkbox';
+              hCb.checked = sel.has(h);
+              hCb.addEventListener('change', () => {
+                let s = filterState.headingSelections.get(key);
+                if (!s) { s = new Set(); filterState.headingSelections.set(key, s); }
+                if (hCb.checked) s.add(h);
+                else             s.delete(h);
+                filterUpdateCount();
+              });
+
+              const hText = document.createElement('span');
+              hText.textContent = ' ' + h;
+
+              const hFacet = document.createElement('span');
+              hFacet.textContent   = counts[h];
+              hFacet.style.cssText = 'margin-left:0.35rem;color:var(--muted);font-size:0.8rem';
+
+              hRow.appendChild(hCb);
+              hRow.appendChild(hText);
+              hRow.appendChild(hFacet);
+              container.appendChild(hRow);
+            });
+          }
         });
       });
     }
@@ -2286,7 +2381,8 @@
             filterState.types.has(q.type) &&
             filterState.difficulties.has(q.difficulty) &&
             filterState.bloomLevels.has(q.bloom_level) &&
-            sourceTypeMatchesMain(q)
+            sourceTypeMatchesMain(q) &&
+            headingPassesFilter(q, key)
           ) pool.push(q);
         }
       }
