@@ -1971,7 +1971,8 @@
                 filterState.types.has(q.type) &&
                 filterState.difficulties.has(q.difficulty) &&
                 filterState.bloomLevels.has(q.bloom_level) &&
-                sourceTypeMatchesMain(q)
+                sourceTypeMatchesMain(q) &&
+                headingPassesFilter(q, key)
               ) exact++;
             }
           } else {
@@ -1994,7 +1995,8 @@
             filterState.types.has(q.type) &&
             filterState.difficulties.has(q.difficulty) &&
             filterState.bloomLevels.has(q.bloom_level) &&
-            sourceTypeMatchesMain(q)
+            sourceTypeMatchesMain(q) &&
+            headingPassesFilter(q, value)
           ) count++;
         }
         return count;
@@ -2009,7 +2011,8 @@
               q.type === value &&
               filterState.difficulties.has(q.difficulty) &&
               filterState.bloomLevels.has(q.bloom_level) &&
-              sourceTypeMatchesMain(q)
+              sourceTypeMatchesMain(q) &&
+              headingPassesFilter(q, key)
             ) count++;
           }
         }
@@ -2025,7 +2028,8 @@
               filterState.types.has(q.type) &&
               q.difficulty === value &&
               filterState.bloomLevels.has(q.bloom_level) &&
-              sourceTypeMatchesMain(q)
+              sourceTypeMatchesMain(q) &&
+              headingPassesFilter(q, key)
             ) count++;
           }
         }
@@ -2041,7 +2045,8 @@
               filterState.types.has(q.type) &&
               filterState.difficulties.has(q.difficulty) &&
               q.bloom_level === value &&
-              sourceTypeMatchesMain(q)
+              sourceTypeMatchesMain(q) &&
+              headingPassesFilter(q, key)
             ) count++;
           }
         }
@@ -2061,7 +2066,8 @@
                 !extractedParentIds.has(q.question_id) &&
                 filterState.types.has(q.type) &&
                 filterState.difficulties.has(q.difficulty) &&
-                filterState.bloomLevels.has(q.bloom_level)
+                filterState.bloomLevels.has(q.bloom_level) &&
+                headingPassesFilter(q, key)
               ) count++;
             } else if (value === 'extracted_parent') {
               if (
@@ -2069,14 +2075,16 @@
                 extractedParentIds.has(q.question_id) &&
                 filterState.types.has(q.type) &&
                 filterState.difficulties.has(q.difficulty) &&
-                filterState.bloomLevels.has(q.bloom_level)
+                filterState.bloomLevels.has(q.bloom_level) &&
+                headingPassesFilter(q, key)
               ) count++;
             } else {
               if (
                 q.source_type === value &&
                 filterState.types.has(q.type) &&
                 filterState.difficulties.has(q.difficulty) &&
-                filterState.bloomLevels.has(q.bloom_level)
+                filterState.bloomLevels.has(q.bloom_level) &&
+                headingPassesFilter(q, key)
               ) count++;
             }
           }
