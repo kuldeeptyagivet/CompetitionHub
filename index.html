@@ -2131,6 +2131,7 @@
         }
       }
       filterUpdateCount();
+      filterRenderChapters();
     }
 
     // ── Filter render functions ─────────────────────────────────────────────
@@ -2164,6 +2165,7 @@
             } else {
               filterState.chapters.delete(key);
               filterState.headingSelections.delete(key);
+              filterRenderChapters();
             }
             filterLoadSelectedChapters();
           });
