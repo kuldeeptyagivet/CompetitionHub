@@ -414,6 +414,32 @@
       color: var(--ink);
     }
 
+    .select-duration-panel { display: flex; flex-direction: column; gap: 0.15rem; }
+    .select-duration-rows  { display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.1rem; }
+    .select-duration-row {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.82rem;
+      color: var(--ink);
+    }
+    .select-duration-row input[type=radio]  { accent-color: var(--accent); cursor: pointer; }
+    .select-duration-row-label { min-width: 6.5rem; }
+    .select-duration-row-val   { color: var(--muted); }
+    .select-duration-row input[type=number] {
+      width: 3.8rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.82rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.1rem 0.3rem;
+      outline: none;
+      background: var(--paper);
+      color: var(--ink);
+    }
+    .select-duration-row input[type=number]:focus { border-color: var(--accent); }
+
     .select-question-list {
       list-style: none;
       display: flex;
@@ -2701,22 +2727,62 @@
 
     function paperSave() {
       const entry = {
-        id:                paper.id,
-        title:             paper.meta.title,
-        date:              paper.meta.date,
-        duration:          paper.meta.duration,
-        totalMarks:        paper.meta.totalMarks,
-        marksPerQ:         paper.meta.marksPerQ,
-        negativeMarking:   paper.meta.negativeMarking,
-        negativeMarksPerQ: paper.meta.negativeMarksPerQ,
-        questionCount:     paper.questions.length,
-        questions:         paper.questions,
-        createdAt:         new Date().toISOString()
+        id:                    paper.id,
+        title:                 paper.meta.title,
+        date:                  paper.meta.date,
+        duration:              paper.meta.duration,
+        totalMarks:            paper.meta.totalMarks,
+        marksPerQ:             paper.meta.marksPerQ,
+        negativeMarking:       paper.meta.negativeMarking,
+        negativeMarksPerQ:     paper.meta.negativeMarksPerQ,
+        questionCount:         paper.questions.length,
+        questions:             paper.questions,
+        createdAt:             new Date().toISOString(),
+        selectedDurationSource: paper.meta.selectedDurationSource || null,
+        selectedDuration:       paper.meta.selectedDuration       || null,
+        customDurationMin:      paper.meta.customDurationMin      || null
       };
       const existing = JSON.parse(localStorage.getItem('ch_papers') || '[]');
       existing.push(entry);
       localStorage.setItem('ch_papers', JSON.stringify(existing));
       workerPost('save-paper', entry);
+    }
+
+    function paperComputeDurations() {
+      let estimated = 0;
+      for (const q of paper.questions) {
+        estimated += (q.avg_time_sec != null ? q.avg_time_sec : 90);
+      }
+
+      const attempts = JSON.parse(localStorage.getItem('ch_attempts') || '[]');
+      const withTime = attempts.filter(a => a.time_per_question && Object.keys(a.time_per_question).length > 0);
+      let studentAverage = null;
+      if (withTime.length > 0) {
+        const sorted = [...withTime].sort((a, b) => b.attemptedAt.localeCompare(a.attemptedAt));
+        let sum = 0;
+        for (const q of paper.questions) {
+          const qid = q.question_id || '';
+          let val = null;
+          for (const a of sorted) {
+            if (a.time_per_question[qid] != null) { val = a.time_per_question[qid]; break; }
+          }
+          sum += (val !== null ? val : (q.avg_time_sec != null ? q.avg_time_sec : 90));
+        }
+        studentAverage = sum;
+      }
+
+      return { estimated, studentAverage };
+    }
+
+    function paperPersistSelection() {
+      const all   = JSON.parse(localStorage.getItem('ch_papers') || '[]');
+      const entry = all.find(p => p.id === paper.id);
+      if (entry) {
+        entry.selectedDurationSource = paper.meta.selectedDurationSource;
+        entry.selectedDuration       = paper.meta.selectedDuration;
+        entry.customDurationMin      = paper.meta.customDurationMin;
+        localStorage.setItem('ch_papers', JSON.stringify(all));
+      }
     }
 
     function selectRender() {
@@ -2748,7 +2814,6 @@
 
       [
         { label: 'Date',      value: paper.meta.date },
-        { label: 'Duration',  value: paper.meta.duration },
         { label: 'Marks',     value: paper.meta.totalMarks },
         { label: 'Questions', value: paper.questions.length }
       ].forEach(({ label, value }) => {
@@ -2761,6 +2826,98 @@
       });
 
       tab.appendChild(bar);
+
+      // ── Duration selector panel ──
+      const durations = paperComputeDurations();
+
+      // Initialise selection if not yet set
+      if (!paper.meta.selectedDurationSource) {
+        paper.meta.selectedDurationSource = durations.studentAverage !== null ? 'studentAverage' : 'estimated';
+        paper.meta.selectedDuration = durations.studentAverage !== null ? durations.studentAverage : durations.estimated;
+      }
+
+      const durPanel = document.createElement('div');
+      durPanel.className = 'select-summary-bar';
+      durPanel.style.marginBottom = '1rem';
+
+      const durLabel = document.createElement('div');
+      durLabel.className = 'select-meta-label';
+      durLabel.textContent = 'Duration';
+      durPanel.appendChild(durLabel);
+
+      const durRows = document.createElement('div');
+      durRows.className = 'select-duration-rows';
+
+      function makeDurRow(source, labelText, valueText, isInput) {
+        const row = document.createElement('label');
+        row.className = 'select-duration-row';
+
+        const radio = document.createElement('input');
+        radio.type  = 'radio';
+        radio.name  = 'dur-src-' + paper.id;
+        radio.value = source;
+        if (paper.meta.selectedDurationSource === source) radio.checked = true;
+
+        const lbl = document.createElement('span');
+        lbl.className   = 'select-duration-row-label';
+        lbl.textContent = labelText;
+
+        row.appendChild(radio);
+        row.appendChild(lbl);
+
+        if (isInput) {
+          const inp = document.createElement('input');
+          inp.type        = 'number';
+          inp.min         = '1';
+          inp.placeholder = 'min';
+          inp.value       = paper.meta.customDurationMin != null ? paper.meta.customDurationMin : '';
+          inp.addEventListener('input', () => {
+            const mins = parseInt(inp.value, 10);
+            paper.meta.customDurationMin = isNaN(mins) || mins < 1 ? null : mins;
+            if (paper.meta.selectedDurationSource === 'custom') {
+              paper.meta.selectedDuration = paper.meta.customDurationMin != null
+                ? paper.meta.customDurationMin * 60
+                : durations.estimated;
+            }
+            paperPersistSelection();
+          });
+          row.appendChild(inp);
+          const minLbl = document.createElement('span');
+          minLbl.className   = 'select-duration-row-val';
+          minLbl.textContent = 'min';
+          row.appendChild(minLbl);
+        } else {
+          const val = document.createElement('span');
+          val.className   = 'select-duration-row-val';
+          val.textContent = valueText;
+          row.appendChild(val);
+        }
+
+        radio.addEventListener('change', () => {
+          paper.meta.selectedDurationSource = source;
+          if (source === 'estimated') {
+            paper.meta.selectedDuration = durations.estimated;
+          } else if (source === 'studentAverage') {
+            paper.meta.selectedDuration = durations.studentAverage;
+          } else {
+            paper.meta.selectedDuration = paper.meta.customDurationMin != null
+              ? paper.meta.customDurationMin * 60
+              : durations.estimated;
+          }
+          paperPersistSelection();
+        });
+
+        return row;
+      }
+
+      durRows.appendChild(makeDurRow('estimated', 'Estimated', cbtFormatTime(durations.estimated), false));
+      if (durations.studentAverage !== null) {
+        durRows.appendChild(makeDurRow('studentAverage', 'Student Average', cbtFormatTime(durations.studentAverage), false));
+      }
+      durRows.appendChild(makeDurRow('custom', 'Custom', null, true));
+
+      durPanel.appendChild(durRows);
+      tab.appendChild(durPanel);
 
       // ── Question list ──
       const ol = document.createElement('ol');
@@ -3189,13 +3346,16 @@
               id:        entry.id,
               generated: entry.createdAt,
               meta: {
-                title:             entry.title,
-                date:              entry.date,
-                duration:          entry.duration,
-                totalMarks:        entry.totalMarks,
-                marksPerQ:         entry.marksPerQ         || 1,
-                negativeMarking:   entry.negativeMarking   || false,
-                negativeMarksPerQ: entry.negativeMarksPerQ || 0.25
+                title:                  entry.title,
+                date:                   entry.date,
+                duration:               entry.duration,
+                totalMarks:             entry.totalMarks,
+                marksPerQ:              entry.marksPerQ         || 1,
+                negativeMarking:        entry.negativeMarking   || false,
+                negativeMarksPerQ:      entry.negativeMarksPerQ || 0.25,
+                selectedDurationSource: entry.selectedDurationSource || null,
+                selectedDuration:       entry.selectedDuration       || null,
+                customDurationMin:      entry.customDurationMin      || null
               },
               questions: entry.questions
             };
@@ -3221,13 +3381,16 @@
               id:        entry.id,
               generated: entry.createdAt,
               meta: {
-                title:             entry.title,
-                date:              entry.date,
-                duration:          entry.duration,
-                totalMarks:        entry.totalMarks,
-                marksPerQ:         entry.marksPerQ         || 1,
-                negativeMarking:   entry.negativeMarking   || false,
-                negativeMarksPerQ: entry.negativeMarksPerQ || 0.25
+                title:                  entry.title,
+                date:                   entry.date,
+                duration:               entry.duration,
+                totalMarks:             entry.totalMarks,
+                marksPerQ:              entry.marksPerQ         || 1,
+                negativeMarking:        entry.negativeMarking   || false,
+                negativeMarksPerQ:      entry.negativeMarksPerQ || 0.25,
+                selectedDurationSource: entry.selectedDurationSource || null,
+                selectedDuration:       entry.selectedDuration       || null,
+                customDurationMin:      entry.customDurationMin      || null
               },
               questions: entry.questions
             };
@@ -3827,7 +3990,7 @@
           answers:        {},
           status:         {},
           timerInterval:  null,
-          timeLeft:       parseDuration(paper.meta.duration),
+          timeLeft:       paper.meta.selectedDuration || parseDuration(paper.meta.duration),
           overtime:       0,
           paused:         false,
           timeOnQuestion: {},
