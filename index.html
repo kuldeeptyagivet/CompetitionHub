@@ -4121,7 +4121,7 @@
         const ans = cbtReadAnswer(idx, isMulti, optionsDiv);
         if (ans !== null) {
           cbt.answers[idx] = ans;
-          if (cbt.status[idx] !== 'answered-review') cbt.status[idx] = 'answered';
+          cbt.status[idx] = 'answered';
         }
         if (!isLast) {
           cbtGoTo(idx + 1);
