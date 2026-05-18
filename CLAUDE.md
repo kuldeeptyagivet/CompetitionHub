@@ -294,6 +294,23 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   'answered' regardless of prior review state; review flag cleared
   on every save so palette turns green correctly after a reviewed
   question is answered
+- Three duration fields on Select tab complete: paperComputeDurations()
+  derives estimated (sum of avg_time_sec), student average (per-question
+  hybrid from ch_attempts time_per_question with avg_time_sec fallback),
+  and custom (user-supplied minutes); student average shown only when at
+  least one attempt record contains time_per_question data
+- Duration radio selector complete: three-row panel in selectRender()
+  replaces static duration display; default selection is Student Average
+  when available, otherwise Estimated; custom input accepts minutes;
+  selected source and resolved seconds stored in
+  paper.meta.selectedDurationSource and paper.meta.selectedDuration
+- paperPersistSelection() writes selectedDurationSource, selectedDuration,
+  customDurationMin back to ch_papers localStorage on every radio change
+  and custom input keystroke
+- CBT timer reads paper.meta.selectedDuration as countdown start value;
+  falls back to parseDuration for old records without the field
+- History Load paths (CBT and OMR) restore all three duration fields
+  into paper.meta on load
 
 **Not yet built:**
 - Payment integration (Razorpay/Stripe webhook)
@@ -416,6 +433,17 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
 2026-05-18 — Save always overwrites review state with answered;
   Mark for Review is a transient flag not a persistent lock; any
   subsequent save clears it unconditionally.
+2026-05-18 — Student average duration uses most recent attempt per
+  question not mean across attempts; reflects current ability not
+  historical average; field hidden entirely when no per-question
+  time data exists to avoid showing value identical to estimated.
+2026-05-18 — Custom duration stored as both minutes (customDurationMin)
+  and resolved seconds (selectedDuration); minutes preserved for
+  display, seconds used by CBT timer directly.
+2026-05-18 — CBT timer source is paper.meta.selectedDuration set at
+  Select tab; no duration recomputation inside CBT initialisation;
+  old records without the field fall back to parseDuration for
+  backward compatibility.
 
 ---
 
