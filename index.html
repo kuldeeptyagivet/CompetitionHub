@@ -3232,12 +3232,16 @@
               questions: entry.questions
             };
             cbt = {
-              paperId:       paper.id,
-              current:       0,
-              answers:       {},
-              status:        {},
-              timerInterval: null,
-              timeLeft:      0
+              paperId:        paper.id,
+              current:        0,
+              answers:        {},
+              status:         {},
+              timerInterval:  null,
+              timeLeft:       0,
+              overtime:       0,
+              paused:         false,
+              timeOnQuestion: {},
+              focusTimestamp: Date.now()
             };
             switchTab('cbt');
             omrRender();
@@ -3459,7 +3463,10 @@
 
             const m = document.createElement('div');
             m.className   = 'history-meta';
-            m.textContent = `${attempt.date} · ${chResp.length} Qs · ${cCorrect}✓ ${cIncorrect}✗ ${cUnattempted}—`;
+            const tts = typeof attempt.time_taken_seconds === 'number'
+              ? `${String(Math.floor(attempt.time_taken_seconds / 60)).padStart(2,'0')}:${String(attempt.time_taken_seconds % 60).padStart(2,'0')}`
+              : '—';
+            m.textContent = `${attempt.date} · ${chResp.length} Qs · ${cCorrect}✓ ${cIncorrect}✗ ${cUnattempted}— · ${tts}`;
             info.appendChild(m);
 
             row.appendChild(info);
@@ -3761,6 +3768,46 @@
       }[status] || 'palette-not-visited';
     }
 
+    function cbtFlushQuestionTime() {
+      if (!cbt || cbt.paused) return;
+      const q = paper && paper.questions[cbt.current];
+      if (!q) return;
+      const qid     = q.question_id || String(cbt.current);
+      const elapsed = Math.floor((Date.now() - (cbt.focusTimestamp || Date.now())) / 1000);
+      cbt.timeOnQuestion[qid] = (cbt.timeOnQuestion[qid] || 0) + elapsed;
+      cbt.focusTimestamp = Date.now();
+    }
+
+    function cbtPause() {
+      if (!cbt || cbt.paused) return;
+      cbtFlushQuestionTime();
+      cbt.paused = true;
+      const area = document.getElementById('cbt-question-area');
+      if (!area) return;
+      area.style.position = 'relative';
+      const overlay = document.createElement('div');
+      overlay.id = 'cbt-pause-overlay';
+      overlay.style.cssText = 'position:absolute;inset:0;background:rgba(255,255,255,0.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;z-index:10;border-radius:6px;';
+      const pauseText = document.createElement('div');
+      pauseText.style.cssText = 'font-size:2rem;font-weight:700;color:var(--ink);letter-spacing:0.15em;';
+      pauseText.textContent = 'PAUSED';
+      const btnResume = document.createElement('button');
+      btnResume.className   = 'btn-primary';
+      btnResume.textContent = 'Resume';
+      btnResume.addEventListener('click', cbtResume);
+      overlay.appendChild(pauseText);
+      overlay.appendChild(btnResume);
+      area.appendChild(overlay);
+    }
+
+    function cbtResume() {
+      if (!cbt || !cbt.paused) return;
+      cbt.paused = false;
+      cbt.focusTimestamp = Date.now();
+      const overlay = document.getElementById('cbt-pause-overlay');
+      if (overlay) overlay.remove();
+    }
+
     function cbtRender() {
       const tab = document.getElementById('tab-cbt');
       tab.innerHTML = '';
@@ -3775,12 +3822,16 @@
       // Init fresh if no CBT or different paper
       if (!cbt || cbt.paperId !== paper.id) {
         cbt = {
-          paperId:       paper.id,
-          current:       0,
-          answers:       {},
-          status:        {},
-          timerInterval: null,
-          timeLeft:      parseDuration(paper.meta.duration)
+          paperId:        paper.id,
+          current:        0,
+          answers:        {},
+          status:         {},
+          timerInterval:  null,
+          timeLeft:       parseDuration(paper.meta.duration),
+          overtime:       0,
+          paused:         false,
+          timeOnQuestion: {},
+          focusTimestamp: Date.now()
         };
         paper.questions.forEach((_, i) => { cbt.status[i] = 'not-visited'; });
       }
@@ -3813,8 +3864,14 @@
       btnSubmitHeader.textContent = 'Submit';
       btnSubmitHeader.addEventListener('click', cbtShowConfirm);
 
+      const btnPause = document.createElement('button');
+      btnPause.className   = 'btn-secondary';
+      btnPause.textContent = 'Pause';
+      btnPause.addEventListener('click', cbtPause);
+
       header.appendChild(headerTitle);
       header.appendChild(timerEl);
+      header.appendChild(btnPause);
       header.appendChild(btnSubmitHeader);
       container.appendChild(header);
 
@@ -3871,16 +3928,22 @@
       // Start timer
       cbtClearTimer();
       cbt.timerInterval = setInterval(() => {
-        if (!cbt) return;
-        cbt.timeLeft = Math.max(0, cbt.timeLeft - 1);
+        if (!cbt || cbt.paused) return;
         const el = document.getElementById('cbt-timer-display');
-        if (el) {
-          el.textContent = cbtFormatTime(cbt.timeLeft);
-          if (cbt.timeLeft <= 300) el.classList.add('warning');
-        }
-        if (cbt.timeLeft <= 0) {
-          cbtClearTimer();
-          cbtShowResult();
+        if (cbt.timeLeft > 0) {
+          cbt.timeLeft--;
+          if (el) {
+            el.textContent = cbtFormatTime(cbt.timeLeft);
+            if (cbt.timeLeft <= 300) el.classList.add('warning');
+          }
+        } else {
+          cbt.overtime++;
+          if (el) {
+            const m = Math.floor(cbt.overtime / 60);
+            const s = cbt.overtime % 60;
+            el.textContent = `+${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+            el.classList.add('warning');
+          }
         }
       }, 1000);
     }
@@ -4114,12 +4177,15 @@
 
     function cbtGoTo(idx) {
       if (idx < 0 || idx >= paper.questions.length) return;
+      cbtFlushQuestionTime();
       cbt.current = idx;
+      cbt.focusTimestamp = Date.now();
       cbtRenderQuestion(idx);
       cbtRenderPalette();
     }
 
     function cbtShowConfirm() {
+      cbtFlushQuestionTime();
       cbtClearTimer();
       const tab = document.getElementById('tab-cbt');
       tab.innerHTML = '';
@@ -4164,8 +4230,8 @@
       btnCancel.className   = 'btn-secondary';
       btnCancel.textContent = 'Cancel';
       btnCancel.addEventListener('click', () => {
+        cbt.focusTimestamp = Date.now();
         cbtRenderAttempt();
-        // Restore timer from remaining time (already in cbt.timeLeft)
         cbtGoTo(cbt.current);
       });
 
@@ -4181,6 +4247,7 @@
     }
 
     function cbtShowResult() {
+      cbtFlushQuestionTime();
       cbtClearTimer();
       const tab = document.getElementById('tab-cbt');
       tab.innerHTML = '';
@@ -4220,19 +4287,22 @@
       });
 
       // Save attempt to localStorage
+      const time_taken_seconds = Object.values(cbt.timeOnQuestion).reduce((a, b) => a + b, 0);
       const attemptEntry = {
-        attemptId:     crypto.randomUUID(),
-        paperId:       paper.id,
-        title:         paper.meta.title || 'Untitled Test',
-        date:          paper.meta.date,
-        attemptedAt:   new Date().toISOString(),
-        score:         totalScore,
+        attemptId:          crypto.randomUUID(),
+        paperId:            paper.id,
+        title:              paper.meta.title || 'Untitled Test',
+        date:               paper.meta.date,
+        attemptedAt:        new Date().toISOString(),
+        score:              totalScore,
         correct,
         incorrect,
         unattempted,
-        totalMarks:    paper.meta.totalMarks,
-        questionCount: paper.questions.length,
-        responses:     paper.questions.map((q, i) => {
+        totalMarks:         paper.meta.totalMarks,
+        questionCount:      paper.questions.length,
+        time_taken_seconds: time_taken_seconds,
+        time_per_question:  { ...cbt.timeOnQuestion },
+        responses:          paper.questions.map((q, i) => {
           const bd = breakdown[i];
           return {
             question_id:    q.question_id || '',

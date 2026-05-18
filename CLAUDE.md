@@ -269,6 +269,22 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
 - paperGenerate() iterates shuffled main pool with a remaining counter; each main question costs 1 slot, its children consume min(children.length, cap, remaining) additional slots; stops when remaining === 0; total always ≤ N; paper.questions is finalQuestions containing both main and child questions
 - Count bar shows static muted note "— children fill slots when parent selected" only when extracted_child is checked and cap > 0; Type/Difficulty/Bloom facet counts include extracted_child questions when extracted child Source Type checkbox is checked
 - Topic heading filter complete: each chapter row has a ▶/▼ chevron; clicking expands indented heading sub-rows with checkboxes and question counts; selecting a chapter auto-populates all its headings into headingSelections so all heading checkboxes render checked by default; unchecking a chapter clears its headingSelections entry and re-renders heading sub-rows immediately via filterRenderChapters(); user can uncheck the chapter then select individual headings to filter by specific topics only; headingPassesFilter() returns false when headingSelections is absent or empty so unselected chapters contribute zero questions; applied in both filterUpdateCount() and paramGetFilteredPool(); headingIndex built after every chapter load/evict via buildHeadingIndex() counting all questions including extracted_child; filterRenderChapters() called at end of filterLoadSelectedChapters() so heading checkboxes always reflect current headingSelections state; extracted_child questions included in all filter counts (count bar, all four facet sections, chapter counts) when extracted child Source Type checkbox is checked; headingPassesFilter() applied to extracted_child counts in all computeFacet() branches including source branch so heading deselection reduces child counts correctly everywhere
+- Per-question time tracking complete: cbtRender() gains overtime,
+  paused, timeOnQuestion, focusTimestamp fields; cbtFlushQuestionTime()
+  accumulates elapsed time for current question on every navigation
+  event; timeOnQuestion keyed by question_id, values in seconds;
+  OMR path initialised with same four fields
+- Pause/Resume complete: cbtPause() flushes time and injects PAUSED
+  overlay hiding question area; cbtResume() clears overlay and resets
+  focusTimestamp; Pause button in CBT header before Submit
+- Timer overtime complete: auto-submit on expiry removed; timer flips
+  to red +MM:SS count-up after zero; tick skipped while paused
+- Attempt record updated: cbtShowResult() attaches time_per_question
+  object and time_taken_seconds (sum of all per-question times) to
+  attempt record on submit; D1 sync picks up new fields automatically
+  via existing blob storage
+- Progress panel updated: time_taken_seconds shown as MM:SS per
+  attempt row; old records without field show —
 
 **Not yet built:**
 - Payment integration (Razorpay/Stripe webhook)
@@ -369,6 +385,19 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
 2026-05-09 — Children consume slots from the same N budget as main questions; total paper size is always ≤ N; parent is always prioritised over its children when slots are tight.
 2026-05-09 — topic_heading used as the single filter level; topic_subheading ignored for now; null/empty topic_heading surfaced as "Uncategorised" so no questions are silently excluded from heading selection
 2026-05-09 — heading selection model: chapter checked = all headings checked and all questions pass; chapter unchecked = all headings cleared and zero questions pass; user filters by specific headings by unchecking chapter first then selecting individual headings; empty headingSelections returns false not true so chapter state is always explicit; filterRenderChapters() must be called after any headingSelections mutation so DOM reflects state; extracted_child questions counted in all filter totals when extracted_child checkbox is checked; heading filter applies to child counts identically to main question counts
+2026-05-18 — Auto-submit on timer expiry removed; timer counts up in
+  red after zero with manual submit only; suits self-study context
+  where planned duration is a reference not a hard cutoff.
+2026-05-18 — Per-question time tracked as cumulative seconds in
+  timeOnQuestion object; most recent attempt used when same question
+  appears in multiple past attempts; focus timestamp reset on every
+  navigation and resume event.
+2026-05-18 — Pause freezes both countdown/countup timer and
+  timeOnQuestion accumulation; overlay hides question area during
+  pause to preserve timing integrity.
+2026-05-18 — time_taken_seconds computed as sum of timeOnQuestion
+  values not wall-clock difference; more accurate as it excludes
+  pause duration automatically.
 
 ---
 
