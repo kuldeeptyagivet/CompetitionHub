@@ -285,6 +285,15 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   via existing blob storage
 - Progress panel updated: time_taken_seconds shown as MM:SS per
   attempt row; old records without field show —
+- CBT bug fixes complete: cbtGoTo() blocks navigation while paused;
+  last question renders "Save" button label instead of "Save & Next";
+  palette re-renders explicitly after save on last question so status
+  turns green immediately; result breakdown gains Time column showing
+  MM:SS per question from time_per_question, — where absent
+- Mark for Review bug fixed: save action always sets status to
+  'answered' regardless of prior review state; review flag cleared
+  on every save so palette turns green correctly after a reviewed
+  question is answered
 
 **Not yet built:**
 - Payment integration (Razorpay/Stripe webhook)
@@ -398,6 +407,15 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
 2026-05-18 — time_taken_seconds computed as sum of timeOnQuestion
   values not wall-clock difference; more accurate as it excludes
   pause duration automatically.
+2026-05-18 — Palette navigation blocked entirely while paused rather
+  than auto-resuming; student must explicitly resume before
+  navigating to preserve timing integrity.
+2026-05-18 — Last question save button labelled "Save" only; no
+  terminal submit button at question level; student uses main Submit
+  button to end attempt; palette colour is sufficient review signal.
+2026-05-18 — Save always overwrites review state with answered;
+  Mark for Review is a transient flag not a persistent lock; any
+  subsequent save clears it unconditionally.
 
 ---
 
