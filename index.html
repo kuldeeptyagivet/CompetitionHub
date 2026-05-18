@@ -4113,16 +4113,22 @@
       btnBack.disabled    = idx === 0;
       btnBack.addEventListener('click', () => cbtGoTo(idx - 1));
 
+      const isLast = idx === paper.questions.length - 1;
       const btnSave = document.createElement('button');
       btnSave.className   = 'btn-primary';
-      btnSave.textContent = 'Save & Next';
+      btnSave.textContent = isLast ? 'Save' : 'Save & Next';
       btnSave.addEventListener('click', () => {
         const ans = cbtReadAnswer(idx, isMulti, optionsDiv);
         if (ans !== null) {
           cbt.answers[idx] = ans;
           if (cbt.status[idx] !== 'answered-review') cbt.status[idx] = 'answered';
         }
-        if (idx + 1 < paper.questions.length) cbtGoTo(idx + 1);
+        if (!isLast) {
+          cbtGoTo(idx + 1);
+        } else {
+          cbtFlushQuestionTime();
+          cbtRenderPalette();
+        }
       });
 
       const btnMark = document.createElement('button');
@@ -4176,6 +4182,7 @@
     }
 
     function cbtGoTo(idx) {
+      if (!cbt || cbt.paused) return;
       if (idx < 0 || idx >= paper.questions.length) return;
       cbtFlushQuestionTime();
       cbt.current = idx;
@@ -4354,7 +4361,7 @@
 
       const hRow = document.createElement('div');
       hRow.className = 'cbt-breakdown-row header';
-      ['#', 'Question', 'Your Answer', 'Correct', 'Marks'].forEach(h => {
+      ['#', 'Question', 'Your Answer', 'Correct', 'Marks', 'Time'].forEach(h => {
         const d = document.createElement('div');
         d.textContent = h;
         hRow.appendChild(d);
@@ -4477,7 +4484,18 @@
         if (marks > 0) marksD.className = 'cbt-result-correct';
         if (marks < 0) marksD.className = 'cbt-result-incorrect';
 
-        [numD, questionBlock, yourD, corrD, marksD].forEach(d => row.appendChild(d));
+        // Col 6: time on question
+        const timeD = document.createElement('div');
+        const qid   = q.question_id || String(i);
+        const tsecs = cbt.timeOnQuestion && cbt.timeOnQuestion[qid];
+        if (tsecs) {
+          timeD.textContent = `${String(Math.floor(tsecs / 60)).padStart(2,'0')}:${String(tsecs % 60).padStart(2,'0')}`;
+        } else {
+          timeD.textContent = '—';
+          timeD.style.color = 'var(--muted)';
+        }
+
+        [numD, questionBlock, yourD, corrD, marksD, timeD].forEach(d => row.appendChild(d));
         bk.appendChild(row);
       });
 
