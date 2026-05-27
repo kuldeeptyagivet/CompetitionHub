@@ -1287,6 +1287,15 @@
     .bk-opt-correct { border-color: var(--success); color: var(--success); font-weight: 600; background: #f0fdf4; }
     .bk-opt-wrong   { border-color: var(--warn);    color: var(--warn);    background: #fff7ed; }
 
+    .q-figure {
+      display: block;
+      max-width: 100%;
+      max-height: 220px;
+      width: auto;
+      margin: 0.4rem 0 0.2rem;
+      border-radius: 4px;
+    }
+
     /* ── OMR panel ── */
     .omr-wrap { max-width: 900px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
     .omr-header {
@@ -2946,6 +2955,13 @@
         stem.className   = 'select-q-stem';
         stem.textContent = q.stem || '';
         li.appendChild(stem);
+        if (q.stem_figure) {
+          const img = document.createElement('img');
+          img.src       = q.stem_figure;
+          img.className = 'q-figure';
+          img.alt       = 'Figure';
+          li.appendChild(img);
+        }
 
         const tags = document.createElement('div');
         tags.className = 'select-q-tags';
@@ -3084,7 +3100,7 @@
           return d;
         }
 
-        function makeStemBlock(text) {
+        function makeStemBlock(text, figUrl) {
           const d = document.createElement('div');
           d.className = 'preview-q-block';
           const num = document.createElement('span');
@@ -3095,16 +3111,30 @@
           stem.textContent = text || '';
           d.appendChild(num);
           d.appendChild(stem);
+          if (figUrl) {
+            const img = document.createElement('img');
+            img.src       = figUrl;
+            img.className = 'q-figure';
+            img.alt       = 'Figure';
+            d.appendChild(img);
+          }
           return d;
         }
 
         function makeOptionsGrid(opts) {
           const grid = document.createElement('div');
           grid.className = 'preview-options-grid';
-          opts.forEach(({ key, text }) => {
+          opts.forEach(({ key, text, figure }) => {
             const div = document.createElement('div');
             div.className   = 'preview-option';
             div.textContent = `${key}. ${text}`;
+            if (figure) {
+              const img = document.createElement('img');
+              img.src       = figure;
+              img.className = 'q-figure';
+              img.alt       = `Option ${key} figure`;
+              div.appendChild(img);
+            }
             grid.appendChild(div);
           });
           return grid;
@@ -3139,7 +3169,7 @@
           ]));
 
         } else if (type === 'statement_based') {
-          li.appendChild(makeStemBlock(q.stem));
+          li.appendChild(makeStemBlock(q.stem, q.stem_figure));
           li.appendChild(makeOptionsGrid(q.options || []));
 
         } else if (type === 'match_following') {
@@ -3185,7 +3215,7 @@
 
         } else {
           // mcq_single / mcq_multi
-          li.appendChild(makeStemBlock(q.stem));
+          li.appendChild(makeStemBlock(q.stem, q.stem_figure));
           li.appendChild(makeOptionsGrid(q.options || []));
         }
 
@@ -4201,11 +4231,25 @@
         stemEl.className   = 'cbt-q-stem';
         stemEl.textContent = q.stem || '';
         area.appendChild(stemEl);
+        if (q.stem_figure) {
+          const img = document.createElement('img');
+          img.src       = q.stem_figure;
+          img.className = 'q-figure';
+          img.alt       = 'Figure';
+          area.appendChild(img);
+        }
       } else {
         const stemEl = document.createElement('div');
         stemEl.className   = 'cbt-q-stem';
         stemEl.textContent = q.stem || '';
         area.appendChild(stemEl);
+        if (q.stem_figure) {
+          const img = document.createElement('img');
+          img.src       = q.stem_figure;
+          img.className = 'q-figure';
+          img.alt       = 'Figure';
+          area.appendChild(img);
+        }
       }
 
       // Options
@@ -4261,6 +4305,13 @@
         textSpan.textContent = `${opt.key}. ${opt.text}`;
         label.appendChild(input);
         label.appendChild(textSpan);
+        if (opt.figure) {
+          const img = document.createElement('img');
+          img.src       = opt.figure;
+          img.className = 'q-figure';
+          img.alt       = `Option ${opt.key} figure`;
+          label.appendChild(img);
+        }
         optionsDiv.appendChild(label);
       });
 
@@ -4595,11 +4646,25 @@
           stemEl.style.cssText = 'font-size:10.5pt;';
           stemEl.textContent = q.stem || '';
           questionBlock.appendChild(stemEl);
+          if (q.stem_figure) {
+            const img = document.createElement('img');
+            img.src       = q.stem_figure;
+            img.className = 'q-figure';
+            img.alt       = 'Figure';
+            questionBlock.appendChild(img);
+          }
         } else {
           const stemEl = document.createElement('div');
           stemEl.style.cssText = 'font-size:10.5pt;';
           stemEl.textContent = q.stem || '';
           questionBlock.appendChild(stemEl);
+          if (q.stem_figure) {
+            const img = document.createElement('img');
+            img.src       = q.stem_figure;
+            img.className = 'q-figure';
+            img.alt       = 'Figure';
+            questionBlock.appendChild(img);
+          }
         }
 
         // Options with highlighting
@@ -4622,6 +4687,13 @@
           const optDiv = document.createElement('div');
           optDiv.className   = 'bk-opt';
           optDiv.textContent = `${opt.key}. ${opt.text}`;
+          if (opt.figure) {
+            const img = document.createElement('img');
+            img.src       = opt.figure;
+            img.className = 'q-figure';
+            img.alt       = `Option ${opt.key} figure`;
+            optDiv.appendChild(img);
+          }
           if (correctKeys.includes(opt.key)) {
             optDiv.classList.add('bk-opt-correct');
           } else if (userKeys.includes(opt.key) && result === 'incorrect') {
@@ -4807,11 +4879,25 @@
             stemEl.style.cssText = 'font-size:10.5pt;';
             stemEl.textContent = q.stem || '';
             qBlock.appendChild(stemEl);
+            if (q.stem_figure) {
+              const img = document.createElement('img');
+              img.src       = q.stem_figure;
+              img.className = 'q-figure';
+              img.alt       = 'Figure';
+              qBlock.appendChild(img);
+            }
           } else {
             const stemEl = document.createElement('div');
             stemEl.style.cssText = 'font-size:10.5pt;';
             stemEl.textContent = q.stem || '';
             qBlock.appendChild(stemEl);
+            if (q.stem_figure) {
+              const img = document.createElement('img');
+              img.src       = q.stem_figure;
+              img.className = 'q-figure';
+              img.alt       = 'Figure';
+              qBlock.appendChild(img);
+            }
           }
 
           // Options with highlighting
@@ -4830,6 +4916,13 @@
             const optDiv = document.createElement('div');
             optDiv.className   = 'bk-opt';
             optDiv.textContent = `${opt.key}. ${opt.text}`;
+            if (opt.figure) {
+              const img = document.createElement('img');
+              img.src       = opt.figure;
+              img.className = 'q-figure';
+              img.alt       = `Option ${opt.key} figure`;
+              optDiv.appendChild(img);
+            }
             if (correctKeys.includes(opt.key)) {
               optDiv.classList.add('bk-opt-correct');
             } else if (userKeys.includes(opt.key) && result === 'incorrect') {
