@@ -311,6 +311,14 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   falls back to parseDuration for old records without the field
 - History Load paths (CBT and OMR) restore all three duration fields
   into paper.meta on load
+- Figure rendering complete: stem_figure URL from question JSON now
+  rendered as <img class="q-figure"> below the stem text in all views —
+  Select tab, Preview/Print, CBT live screen, CBT result breakdown, and
+  OMR result breakdown; option-level figure field also rendered inside
+  each option in all the same views; .q-figure CSS class caps image at
+  220px height and is responsive; makeStemBlock() in previewRender()
+  extended to accept a second figUrl argument; makeOptionsGrid() now
+  destructures figure from each option object
 
 **Not yet built:**
 - Payment integration (Razorpay/Stripe webhook)
@@ -444,6 +452,10 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   Select tab; no duration recomputation inside CBT initialisation;
   old records without the field fall back to parseDuration for
   backward compatibility.
+2026-05-27 — stem_figure and option figure fields were always present
+  in the question schema but never read by the app; all rendering paths
+  (select, preview, CBT live, CBT result, OMR result) now check for
+  these fields and inject <img> elements; no schema change required.
 
 ---
 
