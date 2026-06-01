@@ -371,6 +371,10 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   /delete-attempts-batch deletes all matching rows in a single
   DELETE ... WHERE id IN (...) AND user_email=? query, returns
   {ok: true, deleted: N}; empty array short-circuits without querying
+- workerPost() URL double-slash bug fixed: leading slash removed from
+  four call sites (save-paper, delete-paper, delete-attempt,
+  delete-attempts-batch) so all five POSTs resolve correctly against
+  CONFIG.workerUrl with no double-slash
 
 **Not yet built:**
 - Payment integration (Razorpay/Stripe webhook)
@@ -552,6 +556,11 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   called after syncFromCloud() merges complete in remote mode and after
   filterLoadBooks() in local mode so the paper Set is always up to date
   before the orphan check runs.
+2026-06-02 — workerPost template literal uses a hardcoded / separator
+  between workerUrl and path; path arguments must have no leading slash
+  to avoid double-slash URLs; four call sites corrected (save-paper,
+  delete-paper, delete-attempt, delete-attempts-batch); save-attempt
+  was already correct.
 
 ---
 

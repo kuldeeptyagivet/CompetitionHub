@@ -2822,7 +2822,7 @@
           const syncId = paper.id;
           titleSyncTimer = setTimeout(() => {
             const latest = JSON.parse(localStorage.getItem('ch_papers') || '[]').find(p => p.id === syncId);
-            if (latest) workerPost('/save-paper', latest);
+            if (latest) workerPost('save-paper', latest);
           }, 800);
         }
       });
@@ -3408,10 +3408,10 @@
             const all     = JSON.parse(localStorage.getItem('ch_papers') || '[]');
             const updated = all.filter(p => p.id !== entry.id);
             localStorage.setItem('ch_papers', JSON.stringify(updated));
-            workerPost('/delete-paper', { paper_id: entry.id });
+            workerPost('delete-paper', { paper_id: entry.id });
             const allAttempts = JSON.parse(localStorage.getItem('ch_attempts') || '[]');
             localStorage.setItem('ch_attempts', JSON.stringify(allAttempts.filter(a => a.paperId !== entry.id)));
-            workerPost('/delete-attempt', { paper_id: entry.id });
+            workerPost('delete-attempt', { paper_id: entry.id });
             historyRender();
           });
 
@@ -6241,7 +6241,7 @@
       const clean     = attempts.filter(a => paperIds.has(a.paperId));
       localStorage.setItem('ch_attempts', JSON.stringify(clean));
       const ids = orphans.map(a => a.attemptId).filter(Boolean);
-      if (ids.length) workerPost('/delete-attempts-batch', { attempt_ids: ids });
+      if (ids.length) workerPost('delete-attempts-batch', { attempt_ids: ids });
     }
 
     async function syncFromCloud() {
