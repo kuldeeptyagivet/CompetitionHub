@@ -4752,6 +4752,29 @@
 
         [numD, questionBlock, yourD, corrD, marksD, timeD].forEach(d => row.appendChild(d));
         bk.appendChild(row);
+
+        // Hint / Solution accordions
+        [{ label: 'Hint', text: q.hint }, { label: 'Solution', text: q.solution }].forEach(({ label, text }) => {
+          if (!text) return;
+          const acc = document.createElement('div');
+          acc.style.cssText = 'grid-column:1/-1;border-top:1px solid var(--border);';
+          const hdr = document.createElement('div');
+          hdr.style.cssText = 'font-family:"DM Sans",sans-serif;font-size:0.82rem;font-weight:600;color:var(--accent);padding:0.35rem 0.5rem;cursor:pointer;user-select:none;';
+          hdr.textContent = '▶ ' + label;
+          const body = document.createElement('div');
+          body.style.cssText = 'display:none;font-size:0.88rem;padding:0.4rem 0.75rem 0.5rem;line-height:1.6;';
+          body.textContent = text;
+          let rendered = false;
+          hdr.addEventListener('click', () => {
+            const open = body.style.display !== 'none';
+            body.style.display = open ? 'none' : 'block';
+            hdr.textContent = (open ? '▶ ' : '▼ ') + label;
+            if (!open && !rendered) { renderMath(body); rendered = true; }
+          });
+          acc.appendChild(hdr);
+          acc.appendChild(body);
+          bk.appendChild(acc);
+        });
       });
 
       container.appendChild(bk);

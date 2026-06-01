@@ -342,11 +342,10 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   ch_attempts for any record where attempt.paperId === entry.id; if found,
   Load button is omitted entirely and Enter Answers button is disabled and
   greyed out; View Result button in Progress tab unchanged
-- Hint/Solution accordions in View Result: cbtViewAttempt() appends
-  collapsible Hint and Solution rows after the answer comparison row for
-  each question; rows skipped if field is null or empty; renderMath()
-  called on content div on first expand only; cbtShowResult() result screen
-  and print layout untouched
+- Hint/Solution accordions in both result screens: cbtViewAttempt() and
+  cbtShowResult() both append collapsible Hint and Solution rows after each
+  question row; rows skipped if field is null or empty; renderMath() called
+  on content div on first expand only; print layout untouched
 - Stale CBT session cleanup complete: module-level cbtSessionComplete flag
   set true in cbtShowResult() and false in cbtRenderAttempt() only; tab
   click handler shows neutral "No active test" message instead of
@@ -512,6 +511,9 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   expands; full question object available in cbtViewAttempt() via
   paper lookup so hint/solution fields are accessible without schema
   changes.
+2026-06-01 — Hint/Solution accordions added to cbtShowResult() breakdown
+  identically to cbtViewAttempt(); q object is directly available in the
+  breakdown forEach loop so no additional lookup required.
 2026-06-01 — cbtSessionComplete flag separates "result visible" from
   "attempt in progress"; Back to History clears the DOM only — flag
   stays true until cbtRenderAttempt() starts a fresh session; CBT tab
