@@ -319,6 +319,13 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   220px height and is responsive; makeStemBlock() in previewRender()
   extended to accept a second figUrl argument; makeOptionsGrid() now
   destructures figure from each option object
+- Delete paper propagation to D1 complete: History tab Delete button
+  now calls workerPost('/delete-paper', { paper_id: entry.id }) after
+  the localStorage removal; Worker POST /delete-paper route validates
+  ownership (WHERE id=? AND user_email=?) before executing DELETE,
+  returns {ok: true} on success or 404 if record not found or belongs
+  to a different user; fire-and-forget per existing sync pattern;
+  syncFromCloud() and mergeRecords() untouched
 
 **Not yet built:**
 - Payment integration (Razorpay/Stripe webhook)
@@ -456,6 +463,10 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   in the question schema but never read by the app; all rendering paths
   (select, preview, CBT live, CBT result, OMR result) now check for
   these fields and inject <img> elements; no schema change required.
+2026-06-01 — Delete in History tab propagates to D1 via POST
+  /delete-paper; Worker validates user_email ownership before DELETE
+  so users cannot remove each other's records; fire-and-forget matches
+  existing save-paper pattern; no changes to sync or merge paths.
 
 ---
 

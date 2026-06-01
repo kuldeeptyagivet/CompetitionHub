@@ -449,6 +449,23 @@ export default {
     }
 
     // ────────────────────────────────────────────────────────────────────────
+    // Route: POST /delete-paper
+    // ────────────────────────────────────────────────────────────────────────
+    if (path === 'delete-paper' && method === 'POST') {
+      const body = await request.json();
+      const row = await env.DB
+        .prepare(`SELECT id FROM ch_papers WHERE id=? AND user_email=?`)
+        .bind(body.paper_id, email)
+        .first();
+      if (!row) return jsonResponse({ ok: false, error: 'not_found' }, 404, request);
+      await env.DB
+        .prepare(`DELETE FROM ch_papers WHERE id=? AND user_email=?`)
+        .bind(body.paper_id, email)
+        .run();
+      return jsonResponse({ ok: true }, 200, request);
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
     // Route: GET /get-papers
     // ────────────────────────────────────────────────────────────────────────
     if (path === 'get-papers' && method === 'GET') {

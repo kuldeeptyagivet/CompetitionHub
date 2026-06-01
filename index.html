@@ -3400,6 +3400,7 @@
             const all     = JSON.parse(localStorage.getItem('ch_papers') || '[]');
             const updated = all.filter(p => p.id !== entry.id);
             localStorage.setItem('ch_papers', JSON.stringify(updated));
+            workerPost('/delete-paper', { paper_id: entry.id });
             historyRender();
           });
 
