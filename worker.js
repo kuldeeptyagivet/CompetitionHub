@@ -466,6 +466,29 @@ export default {
     }
 
     // ────────────────────────────────────────────────────────────────────────
+    // Route: POST /delete-attempt
+    // ────────────────────────────────────────────────────────────────────────
+    if (path === 'delete-attempt' && method === 'POST') {
+      const body = await request.json();
+      const rows = await env.DB
+        .prepare(`SELECT id, attempt_json FROM ch_attempts WHERE user_email=?`)
+        .bind(email)
+        .all();
+      for (const row of (rows.results || [])) {
+        let parsed;
+        try { parsed = JSON.parse(row.attempt_json); } catch { continue; }
+        if (parsed.paperId === body.paper_id) {
+          await env.DB
+            .prepare(`DELETE FROM ch_attempts WHERE id=?`)
+            .bind(row.id)
+            .run();
+          break;
+        }
+      }
+      return jsonResponse({ ok: true }, 200, request);
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
     // Route: GET /get-papers
     // ────────────────────────────────────────────────────────────────────────
     if (path === 'get-papers' && method === 'GET') {

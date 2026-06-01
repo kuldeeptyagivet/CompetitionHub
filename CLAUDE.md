@@ -352,6 +352,14 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   re-rendering stale attempt screen when cbtSessionComplete is true; Back
   to History button wipes #tab-cbt innerHTML but does not clear the flag —
   flag resets only when a fresh attempt begins via cbtRenderAttempt()
+- Delete attempt propagation complete: History tab Delete button now
+  also removes the associated attempt from ch_attempts in localStorage
+  (filter by paperId === entry.id) and calls workerPost('/delete-attempt',
+  { paper_id: entry.id }) fire-and-forget; Worker POST /delete-attempt
+  fetches all attempt rows for the authenticated user, parses each
+  attempt_json, finds the row where parsed.paperId matches, deletes by
+  D1 primary key id, returns {ok: true} whether or not a matching row
+  existed; delete-paper route unchanged
 
 **Not yet built:**
 - Payment integration (Razorpay/Stripe webhook)
@@ -519,6 +527,12 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   stays true until cbtRenderAttempt() starts a fresh session; CBT tab
   click shows a neutral idle message rather than calling any render
   function when complete flag is set.
+2026-06-01 — Deleting a paper now cascades to its attempt: localStorage
+  ch_attempts filtered by paperId on the client, and Worker POST
+  /delete-attempt scans the user's D1 rows, parses attempt_json to find
+  the matching paperId, and deletes by primary key; always returns
+  {ok: true} so a missing attempt is not treated as an error; fire-and-
+  forget matches existing delete-paper pattern.
 
 ---
 

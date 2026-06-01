@@ -3409,6 +3409,9 @@
             const updated = all.filter(p => p.id !== entry.id);
             localStorage.setItem('ch_papers', JSON.stringify(updated));
             workerPost('/delete-paper', { paper_id: entry.id });
+            const allAttempts = JSON.parse(localStorage.getItem('ch_attempts') || '[]');
+            localStorage.setItem('ch_attempts', JSON.stringify(allAttempts.filter(a => a.paperId !== entry.id)));
+            workerPost('/delete-attempt', { paper_id: entry.id });
             historyRender();
           });
 
