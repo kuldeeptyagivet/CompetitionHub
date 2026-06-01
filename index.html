@@ -1866,7 +1866,8 @@
     let paper            = null;
     let cbt              = null;
     let titleSyncTimer   = null;
-    let cbtSessionActive = false;
+    let cbtSessionActive   = false;
+    let cbtSessionComplete = false;
 
     async function getData(path) {
       // Special route: fetch user plan (bypasses remoteReady gate)
@@ -4048,7 +4049,8 @@
     }
 
     function cbtRenderAttempt() {
-      cbtSessionActive = true;
+      cbtSessionComplete = false;
+      cbtSessionActive   = true;
       const tab = document.getElementById('tab-cbt');
       tab.innerHTML = '';
 
@@ -4484,7 +4486,8 @@
     }
 
     function cbtShowResult() {
-      cbtSessionActive = false;
+      cbtSessionActive   = false;
+      cbtSessionComplete = true;
       cbtFlushQuestionTime();
       cbtClearTimer();
       const tab = document.getElementById('tab-cbt');
@@ -4757,7 +4760,12 @@
       const btnBackHist = document.createElement('button');
       btnBackHist.className   = 'btn-secondary';
       btnBackHist.textContent = 'Back to History';
-      btnBackHist.addEventListener('click', () => { switchTab('history'); historyRender(); });
+      btnBackHist.addEventListener('click', () => {
+        switchTab('history');
+        historyRender();
+        cbtSessionComplete = false;
+        document.getElementById('tab-cbt').innerHTML = '';
+      });
       container.appendChild(btnBackHist);
 
       tab.appendChild(container);
@@ -6271,7 +6279,18 @@
         btn.classList.add('active');
         document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
         if (btn.dataset.tab === 'history') historyRender();
-        if (btn.dataset.tab === 'cbt')     cbtRender();
+        if (btn.dataset.tab === 'cbt') {
+          if (cbtSessionComplete) {
+            const cbtTab = document.getElementById('tab-cbt');
+            cbtTab.innerHTML = '';
+            const msg = document.createElement('div');
+            msg.style.cssText = 'font-family:"DM Sans",sans-serif;font-size:0.95rem;color:var(--muted);padding:2rem 1rem;';
+            msg.textContent = 'No active test. Go to History to start a new test.';
+            cbtTab.appendChild(msg);
+          } else {
+            cbtRender();
+          }
+        }
         if (btn.dataset.tab === 'admin')   adminRender();
         if (btn.dataset.tab !== 'cbt')     cbtClearTimer();
       });

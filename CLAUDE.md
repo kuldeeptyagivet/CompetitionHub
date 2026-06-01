@@ -347,6 +347,11 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   each question; rows skipped if field is null or empty; renderMath()
   called on content div on first expand only; cbtShowResult() result screen
   and print layout untouched
+- Stale CBT session cleanup complete: module-level cbtSessionComplete flag
+  set true in cbtShowResult() and false in cbtRenderAttempt(); tab click
+  handler shows neutral "No active test" message instead of re-rendering
+  stale attempt screen when cbtSessionComplete is true; Back to History
+  button clears flag and wipes #tab-cbt innerHTML immediately on click
 
 **Not yet built:**
 - Payment integration (Razorpay/Stripe webhook)
@@ -506,6 +511,11 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   expands; full question object available in cbtViewAttempt() via
   paper lookup so hint/solution fields are accessible without schema
   changes.
+2026-06-01 — cbtSessionComplete flag separates "result visible" from
+  "attempt in progress"; Back to History clears both the flag and the
+  DOM immediately so no stale content persists; CBT tab click shows a
+  neutral idle message rather than calling any render function when
+  complete flag is set.
 
 ---
 
