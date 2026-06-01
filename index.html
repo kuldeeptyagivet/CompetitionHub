@@ -1863,8 +1863,9 @@
       negativeMarksPerQ: 0.25
     };
 
-    let paper = null;
-    let cbt   = null;
+    let paper          = null;
+    let cbt            = null;
+    let titleSyncTimer = null;
 
     async function getData(path) {
       // Special route: fetch user plan (bypasses remoteReady gate)
@@ -2754,7 +2755,6 @@
       const existing = JSON.parse(localStorage.getItem('ch_papers') || '[]');
       existing.push(entry);
       localStorage.setItem('ch_papers', JSON.stringify(existing));
-      workerPost('save-paper', entry);
     }
 
     function paperComputeDurations() {
@@ -2816,6 +2816,12 @@
         if (entry) {
           entry.title = titleInput.value;
           localStorage.setItem('ch_papers', JSON.stringify(all));
+          clearTimeout(titleSyncTimer);
+          const syncId = paper.id;
+          titleSyncTimer = setTimeout(() => {
+            const latest = JSON.parse(localStorage.getItem('ch_papers') || '[]').find(p => p.id === syncId);
+            if (latest) workerPost('/save-paper', latest);
+          }, 800);
         }
       });
       titleWrap.appendChild(titleInput);

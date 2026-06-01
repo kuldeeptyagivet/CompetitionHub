@@ -326,6 +326,13 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   returns {ok: true} on success or 404 if record not found or belongs
   to a different user; fire-and-forget per existing sync pattern;
   syncFromCloud() and mergeRecords() untouched
+- Title edit sync to D1 complete: title input listener in selectRender()
+  debounces workerPost('/save-paper', ...) at 800ms via module-level
+  titleSyncTimer; entry re-read from localStorage inside timeout callback
+  so the POST always carries the latest title, not a keystroke-time
+  snapshot; paperGenerate() no longer calls workerPost — initial paper
+  save to D1 is handled by the first title-sync fire after the user edits
+  the title, preventing a race between paper generation and cloud sync
 
 **Not yet built:**
 - Payment integration (Razorpay/Stripe webhook)
@@ -467,6 +474,11 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   /delete-paper; Worker validates user_email ownership before DELETE
   so users cannot remove each other's records; fire-and-forget matches
   existing save-paper pattern; no changes to sync or merge paths.
+2026-06-01 — Title edit sync debounced at 800ms to avoid rapid-fire
+  POSTs on every keystroke; entry re-read from localStorage at timeout
+  execution time so cloud always receives the final title value;
+  paperGenerate() POST removed — new papers only reach D1 after the
+  user edits the title, which is the normal flow.
 
 ---
 
