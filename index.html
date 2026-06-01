@@ -1863,9 +1863,10 @@
       negativeMarksPerQ: 0.25
     };
 
-    let paper          = null;
-    let cbt            = null;
-    let titleSyncTimer = null;
+    let paper            = null;
+    let cbt              = null;
+    let titleSyncTimer   = null;
+    let cbtSessionActive = false;
 
     async function getData(path) {
       // Special route: fetch user plan (bypasses remoteReady gate)
@@ -3447,7 +3448,14 @@
             omrRender();
           });
 
-          btns.appendChild(btnLoad);
+          const attempts = JSON.parse(localStorage.getItem('ch_attempts') || '[]');
+          const alreadyAttempted = attempts.some(a => a.paperId === entry.id);
+          if (!alreadyAttempted) btns.appendChild(btnLoad);
+          if (alreadyAttempted) {
+            btnEnterAnswers.disabled = true;
+            btnEnterAnswers.style.opacity = '0.45';
+            btnEnterAnswers.style.cursor  = 'not-allowed';
+          }
           btns.appendChild(btnEnterAnswers);
           btns.appendChild(btnDelete);
           item.appendChild(btns);
@@ -4040,6 +4048,7 @@
     }
 
     function cbtRenderAttempt() {
+      cbtSessionActive = true;
       const tab = document.getElementById('tab-cbt');
       tab.innerHTML = '';
 
@@ -4475,6 +4484,7 @@
     }
 
     function cbtShowResult() {
+      cbtSessionActive = false;
       cbtFlushQuestionTime();
       cbtClearTimer();
       const tab = document.getElementById('tab-cbt');
@@ -4964,6 +4974,29 @@
 
         [numD, qD, yourD, corrD, marksD].forEach(d => row.appendChild(d));
         bk.appendChild(row);
+
+        // Hint / Solution accordions
+        [{ label: 'Hint', text: q ? q.hint : null }, { label: 'Solution', text: q ? q.solution : null }].forEach(({ label, text }) => {
+          if (!text) return;
+          const acc = document.createElement('div');
+          acc.style.cssText = 'grid-column:1/-1;border-top:1px solid var(--border);';
+          const hdr = document.createElement('div');
+          hdr.style.cssText = 'font-family:"DM Sans",sans-serif;font-size:0.82rem;font-weight:600;color:var(--accent);padding:0.35rem 0.5rem;cursor:pointer;user-select:none;';
+          hdr.textContent = '▶ ' + label;
+          const body = document.createElement('div');
+          body.style.cssText = 'display:none;font-size:0.88rem;padding:0.4rem 0.75rem 0.5rem;line-height:1.6;';
+          body.textContent = text;
+          let rendered = false;
+          hdr.addEventListener('click', () => {
+            const open = body.style.display !== 'none';
+            body.style.display = open ? 'none' : 'block';
+            hdr.textContent = (open ? '▶ ' : '▼ ') + label;
+            if (!open && !rendered) { renderMath(body); rendered = true; }
+          });
+          acc.appendChild(hdr);
+          acc.appendChild(body);
+          bk.appendChild(acc);
+        });
       });
 
       container.appendChild(bk);
@@ -6221,6 +6254,18 @@
 
     tabBtns.forEach(btn => {
       btn.addEventListener('click', () => {
+        if (cbtSessionActive && btn.dataset.tab !== 'cbt') {
+          const cbtTab = document.getElementById('tab-cbt');
+          if (!cbtTab.querySelector('.cbt-lock-warning')) {
+            const warn = document.createElement('div');
+            warn.className   = 'cbt-lock-warning';
+            warn.textContent = 'Submit or finish the test before switching tabs.';
+            warn.style.cssText = 'color:var(--warn,#c0392b);font-family:"DM Sans",sans-serif;font-size:0.9rem;padding:0.5rem 1rem;';
+            cbtTab.prepend(warn);
+            setTimeout(() => warn.remove(), 2000);
+          }
+          return;
+        }
         tabBtns.forEach(b => b.classList.remove('active'));
         tabPanels.forEach(p => p.classList.remove('active'));
         btn.classList.add('active');

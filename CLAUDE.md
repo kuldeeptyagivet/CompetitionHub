@@ -333,6 +333,20 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   snapshot; paperGenerate() no longer calls workerPost — initial paper
   save to D1 is handled by the first title-sync fire after the user edits
   the title, preventing a race between paper generation and cloud sync
+- CBT tab lock complete: module-level cbtSessionActive flag set true inside
+  cbtRenderAttempt() and false inside cbtShowResult(); tab click handler
+  blocks navigation to any non-CBT tab while flag is true and shows a
+  2-second inline red warning "Submit or finish the test before switching
+  tabs." inside #tab-cbt; duplicate warnings suppressed via class check
+- One attempt per paper enforced in History tab: historyRender() checks
+  ch_attempts for any record where attempt.paperId === entry.id; if found,
+  Load button is omitted entirely and Enter Answers button is disabled and
+  greyed out; View Result button in Progress tab unchanged
+- Hint/Solution accordions in View Result: cbtViewAttempt() appends
+  collapsible Hint and Solution rows after the answer comparison row for
+  each question; rows skipped if field is null or empty; renderMath()
+  called on content div on first expand only; cbtShowResult() result screen
+  and print layout untouched
 
 **Not yet built:**
 - Payment integration (Razorpay/Stripe webhook)
@@ -479,6 +493,19 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   execution time so cloud always receives the final title value;
   paperGenerate() POST removed — new papers only reach D1 after the
   user edits the title, which is the normal flow.
+2026-06-01 — CBT tab lock uses a module-level boolean rather than
+  inspecting DOM state; flag cleared before result render so the result
+  screen itself does not block navigation; duplicate warning suppressed
+  by checking for existing .cbt-lock-warning element.
+2026-06-01 — One-attempt-per-paper enforced at History render time by
+  checking ch_attempts.paperId; Load removed rather than disabled so
+  the UI does not suggest re-attempting is possible with a different
+  button; Enter Answers disabled and greyed to communicate the state.
+2026-06-01 — Hint/Solution accordions use lazy renderMath() on first
+  open to avoid unnecessary KaTeX work for questions the user never
+  expands; full question object available in cbtViewAttempt() via
+  paper lookup so hint/solution fields are accessible without schema
+  changes.
 
 ---
 
