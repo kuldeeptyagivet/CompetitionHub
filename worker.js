@@ -489,6 +489,21 @@ export default {
     }
 
     // ────────────────────────────────────────────────────────────────────────
+    // Route: POST /delete-attempts-batch
+    // ────────────────────────────────────────────────────────────────────────
+    if (path === 'delete-attempts-batch' && method === 'POST') {
+      const body = await request.json();
+      const ids  = Array.isArray(body.attempt_ids) ? body.attempt_ids : [];
+      if (ids.length === 0) return jsonResponse({ ok: true, deleted: 0 }, 200, request);
+      const placeholders = ids.map(() => '?').join(',');
+      const result = await env.DB
+        .prepare(`DELETE FROM ch_attempts WHERE id IN (${placeholders}) AND user_email=?`)
+        .bind(...ids, email)
+        .run();
+      return jsonResponse({ ok: true, deleted: result.changes ?? 0 }, 200, request);
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
     // Route: GET /get-papers
     // ────────────────────────────────────────────────────────────────────────
     if (path === 'get-papers' && method === 'GET') {

@@ -6206,6 +6206,7 @@
       userBarRender();
       adminTabInit();
       await filterLoadBooks();
+      cleanOrphanedAttempts();
     }
 
     // ── User info bar ───────────────────────────────────────────────────────
@@ -6228,6 +6229,19 @@
       const map = new Map(local.map(r => [r[idField], r]));
       for (const r of cloud) map.set(r[idField], r); // cloud wins on collision
       return Array.from(map.values());
+    }
+
+    function cleanOrphanedAttempts() {
+      const paperIds  = new Set(
+        JSON.parse(localStorage.getItem('ch_papers') || '[]').map(p => p.id)
+      );
+      const attempts  = JSON.parse(localStorage.getItem('ch_attempts') || '[]');
+      const orphans   = attempts.filter(a => !paperIds.has(a.paperId));
+      if (orphans.length === 0) return;
+      const clean     = attempts.filter(a => paperIds.has(a.paperId));
+      localStorage.setItem('ch_attempts', JSON.stringify(clean));
+      const ids = orphans.map(a => a.attemptId).filter(Boolean);
+      if (ids.length) workerPost('/delete-attempts-batch', { attempt_ids: ids });
     }
 
     async function syncFromCloud() {
@@ -6257,6 +6271,7 @@
           const merged  = mergeRecords(local, cloud, 'attemptId');
           localStorage.setItem('ch_attempts', JSON.stringify(merged));
         }
+        cleanOrphanedAttempts();
       } catch { /* silent — offline or auth failure */ }
     }
 

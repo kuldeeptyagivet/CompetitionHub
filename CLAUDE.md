@@ -360,6 +360,17 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   attempt_json, finds the row where parsed.paperId matches, deletes by
   D1 primary key id, returns {ok: true} whether or not a matching row
   existed; delete-paper route unchanged
+- Orphaned attempt cleanup complete: cleanOrphanedAttempts() reads
+  ch_papers to build a Set of known paper IDs, filters ch_attempts to
+  remove any entry whose paperId is absent from that Set, writes the
+  filtered array back to localStorage, then calls workerPost(
+  '/delete-attempts-batch', { attempt_ids: [...] }) fire-and-forget for
+  any orphaned attemptId values; called inside syncFromCloud() after
+  both merge writes complete (remote mode) and at the end of
+  filterPickFolder() after filterLoadBooks() (local mode); Worker POST
+  /delete-attempts-batch deletes all matching rows in a single
+  DELETE ... WHERE id IN (...) AND user_email=? query, returns
+  {ok: true, deleted: N}; empty array short-circuits without querying
 
 **Not yet built:**
 - Payment integration (Razorpay/Stripe webhook)
@@ -533,6 +544,14 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   the matching paperId, and deletes by primary key; always returns
   {ok: true} so a missing attempt is not treated as an error; fire-and-
   forget matches existing delete-paper pattern.
+2026-06-01 — Orphaned attempts cleaned on page load via
+  cleanOrphanedAttempts(); cross-references ch_attempts against ch_papers
+  Set so stale attempts left by earlier bugs or direct localStorage edits
+  are removed automatically; batch D1 delete uses a single parameterised
+  IN query with user_email ownership check rather than per-row deletes;
+  called after syncFromCloud() merges complete in remote mode and after
+  filterLoadBooks() in local mode so the paper Set is always up to date
+  before the orphan check runs.
 
 ---
 
