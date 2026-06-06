@@ -1273,6 +1273,7 @@
     }
 
     .cbt-breakdown-row:last-child { border-bottom: none; }
+    .cbt-breakdown-row > div:first-child { align-self: start; }
     .cbt-result-correct   { color: var(--success); font-weight: 600; }
     .cbt-result-incorrect { color: var(--warn);    font-weight: 600; }
 
@@ -4778,6 +4779,12 @@
           acc.appendChild(body);
           bk.appendChild(acc);
         });
+
+        // Question ID row
+        const idRow = document.createElement('div');
+        idRow.style.cssText = 'grid-column:1/-1;padding:0.15rem 1rem 0.3rem;border-bottom:none;color:var(--muted);font-size:11px;font-family:"DM Mono",monospace;';
+        idRow.textContent = 'ID: ' + (q.question_id || '—');
+        bk.appendChild(idRow);
       });
 
       container.appendChild(bk);
@@ -5030,6 +5037,12 @@
           acc.appendChild(body);
           bk.appendChild(acc);
         });
+
+        // Question ID row
+        const idRow = document.createElement('div');
+        idRow.style.cssText = 'grid-column:1/-1;padding:0.15rem 1rem 0.3rem;border-bottom:none;color:var(--muted);font-size:11px;font-family:"DM Mono",monospace;';
+        idRow.textContent = 'ID: ' + (q ? (q.question_id || resp.question_id || '—') : (resp.question_id || '—'));
+        bk.appendChild(idRow);
       });
 
       container.appendChild(bk);
