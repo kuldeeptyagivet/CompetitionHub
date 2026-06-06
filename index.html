@@ -4757,6 +4757,12 @@
         [numD, questionBlock, yourD, corrD, marksD, timeD].forEach(d => row.appendChild(d));
         bk.appendChild(row);
 
+        // Question ID row
+        const idRow = document.createElement('div');
+        idRow.style.cssText = 'grid-column:1/-1;padding:0.15rem 1rem 0.3rem;border-bottom:none;color:var(--muted);font-size:11px;font-family:"DM Mono",monospace;';
+        idRow.textContent = 'ID: ' + (q.question_id || '—');
+        bk.appendChild(idRow);
+
         // Hint / Solution accordions
         [{ label: 'Hint', text: q.hint }, { label: 'Solution', text: q.solution }].forEach(({ label, text }) => {
           if (!text) return;
@@ -4779,12 +4785,6 @@
           acc.appendChild(body);
           bk.appendChild(acc);
         });
-
-        // Question ID row
-        const idRow = document.createElement('div');
-        idRow.style.cssText = 'grid-column:1/-1;padding:0.15rem 1rem 0.3rem;border-bottom:none;color:var(--muted);font-size:11px;font-family:"DM Mono",monospace;';
-        idRow.textContent = 'ID: ' + (q.question_id || '—');
-        bk.appendChild(idRow);
       });
 
       container.appendChild(bk);
@@ -5015,6 +5015,12 @@
         [numD, qD, yourD, corrD, marksD].forEach(d => row.appendChild(d));
         bk.appendChild(row);
 
+        // Question ID row
+        const idRow = document.createElement('div');
+        idRow.style.cssText = 'grid-column:1/-1;padding:0.15rem 1rem 0.3rem;border-bottom:none;color:var(--muted);font-size:11px;font-family:"DM Mono",monospace;';
+        idRow.textContent = 'ID: ' + (q ? (q.question_id || resp.question_id || '—') : (resp.question_id || '—'));
+        bk.appendChild(idRow);
+
         // Hint / Solution accordions
         [{ label: 'Hint', text: q ? q.hint : null }, { label: 'Solution', text: q ? q.solution : null }].forEach(({ label, text }) => {
           if (!text) return;
@@ -5037,12 +5043,6 @@
           acc.appendChild(body);
           bk.appendChild(acc);
         });
-
-        // Question ID row
-        const idRow = document.createElement('div');
-        idRow.style.cssText = 'grid-column:1/-1;padding:0.15rem 1rem 0.3rem;border-bottom:none;color:var(--muted);font-size:11px;font-family:"DM Mono",monospace;';
-        idRow.textContent = 'ID: ' + (q ? (q.question_id || resp.question_id || '—') : (resp.question_id || '—'));
-        bk.appendChild(idRow);
       });
 
       container.appendChild(bk);
