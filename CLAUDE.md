@@ -375,6 +375,11 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   four call sites (save-paper, delete-paper, delete-attempt,
   delete-attempts-batch) so all five POSTs resolve correctly against
   CONFIG.workerUrl with no double-slash
+- Result breakdown polish: # column pinned to top via align-self:start
+  on first grid child so tall question rows no longer centre-align the
+  number; question_id shown as a muted monospace "ID: <id>" row
+  directly below the answer columns, before Hint and Solution accordions,
+  in both cbtShowResult() and cbtViewAttempt()
 
 **Not yet built:**
 - Payment integration (Razorpay/Stripe webhook)
@@ -561,6 +566,14 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   to avoid double-slash URLs; four call sites corrected (save-paper,
   delete-paper, delete-attempt, delete-attempts-batch); save-attempt
   was already correct.
+2026-06-06 — # column in result breakdown uses align-self:start on the
+  first grid child rather than a table or per-element style so the fix
+  applies to all current and future row heights without touching JS.
+2026-06-06 — question_id row rendered before Hint/Solution accordions
+  so the ID is always visible without expanding any accordion; muted
+  DM Mono 11px style keeps it unobtrusive; placed in both result paths
+  (cbtShowResult and cbtViewAttempt); cbtViewAttempt falls back to
+  resp.question_id when the full question object is unavailable.
 
 ---
 
