@@ -1080,6 +1080,11 @@
       line-height: 1.6;
     }
 
+    .cbt-locked {
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
     .cbt-q-label {
       font-family: 'DM Sans', sans-serif;
       font-size: 0.8rem;
@@ -1869,6 +1874,9 @@
     let titleSyncTimer   = null;
     let cbtSessionActive   = false;
     let cbtSessionComplete = false;
+    let tabSwitchCount     = 0;
+    let timeAwaySeconds    = 0;
+    let tabHideTimestamp   = null;
 
     async function getData(path) {
       // Special route: fetch user plan (bypasses remoteReady gate)
@@ -3679,8 +3687,21 @@
             const tts = typeof attempt.time_taken_seconds === 'number'
               ? `${String(Math.floor(attempt.time_taken_seconds / 60)).padStart(2,'0')}:${String(attempt.time_taken_seconds % 60).padStart(2,'0')}`
               : '—';
+            const tsc = typeof attempt.tab_switch_count === 'number' ? attempt.tab_switch_count : null;
+            const tas = typeof attempt.time_away_seconds === 'number' ? attempt.time_away_seconds : null;
+            const tasFmt = tas !== null
+              ? `${String(Math.floor(tas/60)).padStart(2,'0')}:${String(tas%60).padStart(2,'0')}`
+              : '—';
             m.textContent = `${attempt.date} · ${chResp.length} Qs · ${cCorrect}✓ ${cIncorrect}✗ ${cUnattempted}— · ${tts}`;
             info.appendChild(m);
+
+            const integrity = document.createElement('div');
+            integrity.className   = 'history-meta';
+            integrity.style.cssText = 'font-size:0.78rem;';
+            const integrityFlag = (tsc !== null && tsc >= 3) || (tas !== null && tas >= 30);
+            integrity.textContent = `Tab switches: ${tsc !== null ? tsc : '—'} · Time away: ${tasFmt}${integrityFlag ? ' · ⚠ Possible integrity concern' : ''}`;
+            if (integrityFlag) integrity.style.color = 'var(--warn)';
+            info.appendChild(integrity);
 
             row.appendChild(info);
 
@@ -4052,9 +4073,66 @@
       cbtRenderAttempt();
     }
 
+    function _cbtOnContextMenu(e) { e.preventDefault(); }
+    function _cbtOnCopy(e)        { e.preventDefault(); }
+    function _cbtOnKeyDown(e) {
+      if (e.key === 'F12') { e.preventDefault(); return; }
+      if (e.ctrlKey && (e.key === 'c' || e.key === 'C' ||
+                        e.key === 'u' || e.key === 'U')) { e.preventDefault(); return; }
+      if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i')) { e.preventDefault(); }
+    }
+    function _cbtOnVisChange() {
+      if (!cbtSessionActive) return;
+      if (document.hidden) {
+        tabHideTimestamp = Date.now();
+      } else {
+        if (tabHideTimestamp !== null) {
+          if (!cbt || !cbt.paused) {
+            tabSwitchCount++;
+            timeAwaySeconds += Math.round((Date.now() - tabHideTimestamp) / 1000);
+          }
+          tabHideTimestamp = null;
+        }
+      }
+    }
+    function _cbtOnBlur() {
+      if (!cbtSessionActive) return;
+      if (tabHideTimestamp === null) tabHideTimestamp = Date.now();
+    }
+    function _cbtOnFocus() {
+      if (!cbtSessionActive) return;
+      if (tabHideTimestamp !== null) {
+        if (!cbt || !cbt.paused) {
+          tabSwitchCount++;
+          timeAwaySeconds += Math.round((Date.now() - tabHideTimestamp) / 1000);
+        }
+        tabHideTimestamp = null;
+      }
+    }
+    function cbtAttachIntegrityListeners() {
+      document.addEventListener('contextmenu',      _cbtOnContextMenu);
+      document.addEventListener('copy',             _cbtOnCopy);
+      document.addEventListener('keydown',          _cbtOnKeyDown);
+      document.addEventListener('visibilitychange', _cbtOnVisChange);
+      window.addEventListener('blur',               _cbtOnBlur);
+      window.addEventListener('focus',              _cbtOnFocus);
+    }
+    function cbtDetachIntegrityListeners() {
+      document.removeEventListener('contextmenu',      _cbtOnContextMenu);
+      document.removeEventListener('copy',             _cbtOnCopy);
+      document.removeEventListener('keydown',          _cbtOnKeyDown);
+      document.removeEventListener('visibilitychange', _cbtOnVisChange);
+      window.removeEventListener('blur',               _cbtOnBlur);
+      window.removeEventListener('focus',              _cbtOnFocus);
+    }
+
     function cbtRenderAttempt() {
       cbtSessionComplete = false;
       cbtSessionActive   = true;
+      tabSwitchCount     = 0;
+      timeAwaySeconds    = 0;
+      tabHideTimestamp   = null;
+      cbtAttachIntegrityListeners();
       const tab = document.getElementById('tab-cbt');
       tab.innerHTML = '';
 
@@ -4210,7 +4288,7 @@
         aLbl.textContent = 'Assertion (A):';
         area.appendChild(aLbl);
         const aText = document.createElement('div');
-        aText.className   = 'cbt-q-stem';
+        aText.className   = 'cbt-q-stem cbt-locked';
         aText.textContent = q.assertion || '';
         area.appendChild(aText);
         const rLbl = document.createElement('div');
@@ -4218,12 +4296,12 @@
         rLbl.textContent = 'Reason (R):';
         area.appendChild(rLbl);
         const rText = document.createElement('div');
-        rText.className   = 'cbt-q-stem';
+        rText.className   = 'cbt-q-stem cbt-locked';
         rText.textContent = q.reason || '';
         area.appendChild(rText);
       } else if (type === 'match_following') {
         const table  = document.createElement('table');
-        table.className = 'cbt-match-table';
+        table.className = 'cbt-match-table cbt-locked';
         const thead  = document.createElement('thead');
         const hRow   = document.createElement('tr');
         ['List I', 'List II'].forEach(h => {
@@ -4250,25 +4328,25 @@
         table.appendChild(tbody);
         area.appendChild(table);
         const stemEl = document.createElement('div');
-        stemEl.className   = 'cbt-q-stem';
+        stemEl.className   = 'cbt-q-stem cbt-locked';
         stemEl.textContent = q.stem || '';
         area.appendChild(stemEl);
         if (q.stem_figure) {
           const img = document.createElement('img');
           img.src       = q.stem_figure;
-          img.className = 'q-figure';
+          img.className = 'q-figure cbt-locked';
           img.alt       = 'Figure';
           area.appendChild(img);
         }
       } else {
         const stemEl = document.createElement('div');
-        stemEl.className   = 'cbt-q-stem';
+        stemEl.className   = 'cbt-q-stem cbt-locked';
         stemEl.textContent = q.stem || '';
         area.appendChild(stemEl);
         if (q.stem_figure) {
           const img = document.createElement('img');
           img.src       = q.stem_figure;
-          img.className = 'q-figure';
+          img.className = 'q-figure cbt-locked';
           img.alt       = 'Figure';
           area.appendChild(img);
         }
@@ -4287,7 +4365,7 @@
       }
 
       const optionsDiv = document.createElement('div');
-      optionsDiv.className = 'cbt-options';
+      optionsDiv.className = 'cbt-options cbt-locked';
       const currentAnswer = cbt.answers[idx];
 
       opts.forEach(opt => {
@@ -4492,6 +4570,7 @@
     function cbtShowResult() {
       cbtSessionActive   = false;
       cbtSessionComplete = true;
+      cbtDetachIntegrityListeners();
       cbtFlushQuestionTime();
       cbtClearTimer();
       const tab = document.getElementById('tab-cbt');
@@ -4547,6 +4626,8 @@
         questionCount:      paper.questions.length,
         time_taken_seconds: time_taken_seconds,
         time_per_question:  { ...cbt.timeOnQuestion },
+        tab_switch_count:   tabSwitchCount,
+        time_away_seconds:  timeAwaySeconds,
         responses:          paper.questions.map((q, i) => {
           const bd = breakdown[i];
           return {
@@ -4574,11 +4655,14 @@
 
       const summary = document.createElement('div');
       summary.className = 'cbt-result-summary';
+      const taFmt = `${String(Math.floor(timeAwaySeconds/60)).padStart(2,'0')}:${String(timeAwaySeconds%60).padStart(2,'0')}`;
       [
         { val: totalScore.toFixed(2), label: 'Score' },
         { val: correct,               label: 'Correct' },
         { val: incorrect,             label: 'Incorrect' },
-        { val: unattempted,           label: 'Unattempted' }
+        { val: unattempted,           label: 'Unattempted' },
+        { val: tabSwitchCount,        label: 'Tab Switches' },
+        { val: taFmt,                 label: 'Time Away' }
       ].forEach(({ val, label }) => {
         const card = document.createElement('div');
         card.className  = 'cbt-result-card';
@@ -4592,6 +4676,12 @@
         card.appendChild(l);
         summary.appendChild(card);
       });
+      if (tabSwitchCount >= 3 || timeAwaySeconds >= 30) {
+        const flag = document.createElement('div');
+        flag.style.cssText = 'color:var(--warn);font-size:0.82rem;font-weight:600;margin-bottom:0.5rem;';
+        flag.textContent   = '⚠ Possible integrity concern';
+        container.appendChild(flag);
+      }
       container.appendChild(summary);
 
       const bk = document.createElement('div');

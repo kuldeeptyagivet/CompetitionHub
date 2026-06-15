@@ -380,6 +380,20 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   number; question_id shown as a muted monospace "ID: <id>" row
   directly below the answer columns, before Hint and Solution accordions,
   in both cbtShowResult() and cbtViewAttempt()
+- Exam integrity features complete: .cbt-locked CSS class (user-select:
+  none) applied to stem, options grid, and figure elements inside the
+  CBT attempt screen; contextmenu, copy, and keydown (Ctrl+C, Ctrl+U,
+  Ctrl+Shift+I, F12) event listeners attached on cbtRenderAttempt() and
+  removed on cbtShowResult() via named handler references; document
+  visibilitychange and window blur/focus listeners track tab switches
+  and time away; both accumulators reset to zero on each new attempt
+  and suspended while paused; tab_switch_count and time_away_seconds
+  stored on attempt record alongside time_per_question; result screen
+  shows two extra summary cards (Tab Switches, Time Away) plus a
+  "Possible integrity concern" flag when tabSwitchCount >= 3 or
+  timeAwaySeconds >= 30; Progress panel attempt rows show the same two
+  values and flag in warn colour; old records without these fields
+  display — and no flag
 
 **Not yet built:**
 - Payment integration (Razorpay/Stripe webhook)
@@ -574,6 +588,23 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   DM Mono 11px style keeps it unobtrusive; placed in both result paths
   (cbtShowResult and cbtViewAttempt); cbtViewAttempt falls back to
   resp.question_id when the full question object is unavailable.
+2026-06-15 — Exam integrity tracking uses named handler functions so
+  removeEventListener() can precisely un-register them on result;
+  anonymous arrows would leak across attempts.
+2026-06-15 — visibilitychange and blur/focus both tracked to cover
+  Alt+Tab (triggers blur without visibilitychange in some browsers)
+  and tab-switching (triggers visibilitychange); double-counting
+  avoided by checking tabHideTimestamp !== null before recording.
+2026-06-15 — Time-away accumulation skipped while cbt.paused is true
+  to match the existing pause contract where out-of-app time during
+  pause is excluded from all timing metrics.
+2026-06-15 — tab_switch_count and time_away_seconds stored on attempt
+  blob; no Worker schema change required; D1 sync picks them up via
+  existing INSERT OR REPLACE on the full JSON blob.
+2026-06-15 — Integrity flag threshold set at tabSwitchCount >= 3 or
+  timeAwaySeconds >= 30; shown in warn colour on both result screen
+  and Progress panel attempt rows; old records without the fields show
+  — values and no flag so existing data is never misread as flagged.
 
 ---
 
