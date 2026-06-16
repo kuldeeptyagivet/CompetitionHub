@@ -394,6 +394,18 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   timeAwaySeconds >= 30; Progress panel attempt rows show the same two
   values and flag in warn colour; old records without these fields
   display — and no flag
+- Paper metadata fields complete: paperGenerate() derives metaBooks,
+  metaSubject, metaClass from bookData for the selected chapters
+  (unique values comma-joined when multiple books selected); metaNotes
+  initialises as empty string; all four fields stored in paper.meta
+  and persisted to localStorage entry via both paperSave() and
+  paperPersistSelection(); Select tab summary bar renders Books as a
+  read-only span and Subject, Class, Notes as editable inputs/textarea
+  that call paperPersistSelection() on every input event; History Load
+  restores all four fields with empty-string fallbacks for old records
+  (both Select and OMR load paths updated); previewRender() shows a
+  Book / Subject / Class row below the date/marks header row, and a
+  Notes line only when metaNotes is non-empty; print layout unchanged
 
 **Not yet built:**
 - Payment integration (Razorpay/Stripe webhook)
@@ -605,6 +617,19 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   timeAwaySeconds >= 30; shown in warn colour on both result screen
   and Progress panel attempt rows; old records without the fields show
   — values and no flag so existing data is never misread as flagged.
+2026-06-16 — metaBooks is derived at paper generation time from
+  bookData filtered by the selected chapters' book codes; not stored
+  as user-editable so it always reflects the actual source material;
+  Subject and Class are editable so user can override auto-filled
+  values (e.g. rename for mixed-book papers).
+2026-06-16 — paperPersistSelection() extended to write all four meta
+  fields; no separate sync path needed — D1 picks them up via the
+  existing /save-paper POST on title edit; new papers without a title
+  edit will not reach D1 until the user types a title (consistent with
+  the existing title-edit-triggers-first-sync design decision).
+2026-06-16 — Notes rendered with white-space: pre-wrap in print
+  header so multi-line notes entered in the textarea preserve line
+  breaks in the PDF.
 
 ---
 

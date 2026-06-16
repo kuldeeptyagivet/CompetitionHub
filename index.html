@@ -414,6 +414,45 @@
       color: var(--ink);
     }
 
+    .select-meta-field--wide { flex: 1 1 200px; }
+
+    .select-meta-readonly {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .select-meta-input {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem;
+      color: var(--ink);
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      outline: none;
+      padding: 0.1rem 0;
+      width: 100%;
+      transition: border-color 0.15s;
+    }
+    .select-meta-input:focus { border-bottom-color: var(--accent); }
+    .select-meta-input::placeholder { color: var(--muted); opacity: 0.6; }
+
+    .select-meta-textarea {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      color: var(--ink);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      outline: none;
+      padding: 0.25rem 0.4rem;
+      width: 100%;
+      resize: vertical;
+      transition: border-color 0.15s;
+    }
+    .select-meta-textarea:focus { border-color: var(--accent); }
+    .select-meta-textarea::placeholder { color: var(--muted); opacity: 0.6; }
+
     .select-duration-panel { display: flex; flex-direction: column; gap: 0.15rem; }
     .select-duration-rows  { display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.1rem; }
     .select-duration-row {
@@ -840,6 +879,26 @@
     }
 
     .preview-meta-item strong { color: var(--ink); }
+
+    .preview-book-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 2rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 0.35rem;
+    }
+    .preview-book-item strong { color: var(--ink); font-weight: 600; }
+
+    .preview-notes {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem;
+      color: var(--muted);
+      font-style: italic;
+      margin-top: 0.3rem;
+      white-space: pre-wrap;
+    }
 
     .preview-hr {
       border: none;
@@ -2726,6 +2785,17 @@
                         : min === 0 ? hr + ' hr'
                         : hr + ' hr ' + min + ' min';
 
+      // Derive book metadata from selected chapters
+      const selectedBookCodes = new Set();
+      for (const key of filterState.chapters) {
+        const code = key.split('::')[0];
+        selectedBookCodes.add(code);
+      }
+      const selectedBooks = bookData.filter(b => selectedBookCodes.has(b.code));
+      const metaBooks   = [...new Set(selectedBooks.map(b => b.title))].join(', ');
+      const metaSubject = [...new Set(selectedBooks.map(b => b.subject).filter(Boolean))].join(', ');
+      const metaClass   = [...new Set(selectedBooks.map(b => b.class).filter(Boolean))].join(', ');
+
       paper = {
         id:        crypto.randomUUID(),
         generated: new Date().toISOString(),
@@ -2736,7 +2806,11 @@
           totalMarks:        parseFloat((paperParams.questionCount * paperParams.marksPerQ).toFixed(2)),
           marksPerQ:         paperParams.marksPerQ,
           negativeMarking:   paperParams.negativeMarking,
-          negativeMarksPerQ: paperParams.negativeMarksPerQ
+          negativeMarksPerQ: paperParams.negativeMarksPerQ,
+          metaBooks,
+          metaSubject,
+          metaClass,
+          metaNotes: ''
         },
         questions: finalQuestions
       };
@@ -2761,7 +2835,11 @@
         createdAt:             new Date().toISOString(),
         selectedDurationSource: paper.meta.selectedDurationSource || null,
         selectedDuration:       paper.meta.selectedDuration       || null,
-        customDurationMin:      paper.meta.customDurationMin      || null
+        customDurationMin:      paper.meta.customDurationMin      || null,
+        metaBooks:              paper.meta.metaBooks   || '',
+        metaSubject:            paper.meta.metaSubject || '',
+        metaClass:              paper.meta.metaClass   || '',
+        metaNotes:              paper.meta.metaNotes   || ''
       };
       const existing = JSON.parse(localStorage.getItem('ch_papers') || '[]');
       existing.push(entry);
@@ -2801,6 +2879,10 @@
         entry.selectedDurationSource = paper.meta.selectedDurationSource;
         entry.selectedDuration       = paper.meta.selectedDuration;
         entry.customDurationMin      = paper.meta.customDurationMin;
+        entry.metaBooks              = paper.meta.metaBooks   || '';
+        entry.metaSubject            = paper.meta.metaSubject || '';
+        entry.metaClass              = paper.meta.metaClass   || '';
+        entry.metaNotes              = paper.meta.metaNotes   || '';
         localStorage.setItem('ch_papers', JSON.stringify(all));
       }
     }
@@ -2837,6 +2919,64 @@
       });
       titleWrap.appendChild(titleInput);
       bar.appendChild(titleWrap);
+
+      // Books (read-only)
+      const booksWrap = document.createElement('div');
+      booksWrap.className = 'select-meta-field select-meta-field--wide';
+      booksWrap.innerHTML = `<span class="select-meta-label">Books</span>`;
+      const booksVal = document.createElement('span');
+      booksVal.className   = 'select-meta-value select-meta-readonly';
+      booksVal.textContent = paper.meta.metaBooks || '—';
+      booksWrap.appendChild(booksVal);
+      bar.appendChild(booksWrap);
+
+      // Subject (editable)
+      const subjectWrap = document.createElement('div');
+      subjectWrap.className = 'select-meta-field';
+      subjectWrap.innerHTML = `<span class="select-meta-label">Subject</span>`;
+      const subjectInp = document.createElement('input');
+      subjectInp.type        = 'text';
+      subjectInp.className   = 'select-meta-input';
+      subjectInp.placeholder = 'Subject';
+      subjectInp.value       = paper.meta.metaSubject || '';
+      subjectInp.addEventListener('input', () => {
+        paper.meta.metaSubject = subjectInp.value;
+        paperPersistSelection();
+      });
+      subjectWrap.appendChild(subjectInp);
+      bar.appendChild(subjectWrap);
+
+      // Class (editable)
+      const classWrap = document.createElement('div');
+      classWrap.className = 'select-meta-field';
+      classWrap.innerHTML = `<span class="select-meta-label">Class</span>`;
+      const classInp = document.createElement('input');
+      classInp.type        = 'text';
+      classInp.className   = 'select-meta-input';
+      classInp.placeholder = 'Class';
+      classInp.value       = paper.meta.metaClass || '';
+      classInp.addEventListener('input', () => {
+        paper.meta.metaClass = classInp.value;
+        paperPersistSelection();
+      });
+      classWrap.appendChild(classInp);
+      bar.appendChild(classWrap);
+
+      // Notes (editable textarea)
+      const notesWrap = document.createElement('div');
+      notesWrap.className = 'select-meta-field select-meta-field--wide';
+      notesWrap.innerHTML = `<span class="select-meta-label">Notes</span>`;
+      const notesInp = document.createElement('textarea');
+      notesInp.className   = 'select-meta-textarea';
+      notesInp.placeholder = 'Optional notes for this paper…';
+      notesInp.rows        = 2;
+      notesInp.value       = paper.meta.metaNotes || '';
+      notesInp.addEventListener('input', () => {
+        paper.meta.metaNotes = notesInp.value;
+        paperPersistSelection();
+      });
+      notesWrap.appendChild(notesInp);
+      bar.appendChild(notesWrap);
 
       [
         { label: 'Date',      value: paper.meta.date },
@@ -3074,6 +3214,29 @@
         metaRow.appendChild(item);
       });
       card.appendChild(metaRow);
+
+      // Book / Subject / Class row
+      const bookRow = document.createElement('div');
+      bookRow.className = 'preview-book-row';
+      [
+        { label: 'Book',    value: m.metaBooks   },
+        { label: 'Subject', value: m.metaSubject },
+        { label: 'Class',   value: m.metaClass   }
+      ].filter(({ value }) => value).forEach(({ label, value }) => {
+        const item = document.createElement('span');
+        item.className = 'preview-book-item';
+        item.innerHTML = `<strong>${label}:</strong> ${value}`;
+        bookRow.appendChild(item);
+      });
+      if (bookRow.children.length) card.appendChild(bookRow);
+
+      // Notes line
+      if (m.metaNotes) {
+        const notesEl = document.createElement('div');
+        notesEl.className   = 'preview-notes';
+        notesEl.textContent = m.metaNotes;
+        card.appendChild(notesEl);
+      }
 
       const hr = document.createElement('hr');
       hr.className = 'preview-hr';
@@ -3402,7 +3565,11 @@
                 negativeMarksPerQ:      entry.negativeMarksPerQ || 0.25,
                 selectedDurationSource: entry.selectedDurationSource || null,
                 selectedDuration:       entry.selectedDuration       || null,
-                customDurationMin:      entry.customDurationMin      || null
+                customDurationMin:      entry.customDurationMin      || null,
+                metaBooks:              entry.metaBooks   || '',
+                metaSubject:            entry.metaSubject || '',
+                metaClass:              entry.metaClass   || '',
+                metaNotes:              entry.metaNotes   || ''
               },
               questions: entry.questions
             };
@@ -3441,7 +3608,11 @@
                 negativeMarksPerQ:      entry.negativeMarksPerQ || 0.25,
                 selectedDurationSource: entry.selectedDurationSource || null,
                 selectedDuration:       entry.selectedDuration       || null,
-                customDurationMin:      entry.customDurationMin      || null
+                customDurationMin:      entry.customDurationMin      || null,
+                metaBooks:              entry.metaBooks   || '',
+                metaSubject:            entry.metaSubject || '',
+                metaClass:              entry.metaClass   || '',
+                metaNotes:              entry.metaNotes   || ''
               },
               questions: entry.questions
             };
