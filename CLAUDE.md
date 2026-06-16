@@ -662,6 +662,13 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   in a select-actions div row in both result screens so they sit inline
   rather than stacking; reuses existing select-actions flex layout
   without adding new CSS.
+2026-06-16 — printReviewSheet() html string built with + concatenation
+  not a template literal; all dynamic values (rsTitle, rsDate,
+  rsCountStr, rsMetaRowDiv, qHtml) pre-computed into named consts
+  before assembly; eliminates nested template literal conflicts that
+  caused ${...} expressions to render as literal text in the print
+  window; qHtml itself still uses template literals internally since
+  it is fully resolved before the outer string is built.
 
 ---
 
