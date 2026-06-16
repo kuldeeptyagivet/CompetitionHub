@@ -5051,6 +5051,12 @@
       container.appendChild(bk);
       renderMath(bk);
 
+      const btnPrintReview = document.createElement('button');
+      btnPrintReview.className   = 'btn-secondary';
+      btnPrintReview.textContent = 'Print Review Sheet';
+      btnPrintReview.addEventListener('click', () => printReviewSheet(attemptEntry, paper));
+      container.appendChild(btnPrintReview);
+
       const btnBackHist = document.createElement('button');
       btnBackHist.className   = 'btn-secondary';
       btnBackHist.textContent = 'Back to History';
@@ -5063,6 +5069,174 @@
 
       tab.appendChild(container);
       renderMath(container);
+    }
+
+    function printReviewSheet(attempt, paper) {
+      if (!paper || !paper.questions) { alert('No paper data available.'); return; }
+      const responses = attempt.responses || [];
+      const respMap = {};
+      responses.forEach(r => { respMap[r.question_id] = r; });
+
+      const filtered = paper.questions.filter(q => {
+        const resp = respMap[q.question_id];
+        if (!resp) return true; // unattempted — no response record
+        const ans = resp.your_answer;
+        const empty = Array.isArray(ans) ? ans.length === 0 : ans === '' || ans == null;
+        if (empty) return true; // unattempted
+        const correct = (resp.correct_answer || '').trim();
+        const given   = Array.isArray(ans) ? [...ans].sort().join('') : (ans || '').trim();
+        const corr2   = Array.isArray(ans) ? correct.split('').sort().join('') : correct;
+        return given !== corr2; // wrong
+      });
+
+      if (filtered.length === 0) {
+        alert('No wrong or unattempted questions.');
+        return;
+      }
+
+      const m = paper.meta || {};
+      const ROMAN = ['i','ii','iii','iv','v','vi','vii','viii','ix','x'];
+      const AR_OPTS_TEXT = [
+        'Both A and R are true and R is the correct explanation of A',
+        'Both A and R are true but R is not the correct explanation of A',
+        'A is true but R is false',
+        'A is false but R is true'
+      ];
+
+      const qHtml = filtered.map((q, idx) => {
+        const type = q.type || 'mcq_single';
+        const typeBadge = type.replace(/_/g,' ').toUpperCase();
+        const resp = respMap[q.question_id] || {};
+        const ans  = resp.your_answer;
+        const empty = !ans || (Array.isArray(ans) ? ans.length === 0 : ans === '');
+        const status = empty ? 'Unattempted' : 'Wrong';
+
+        let stemHtml = `<div class="stem">${q.stem || ''}</div>`;
+        if (q.stem_figure) stemHtml += `<img class="q-fig" src="${q.stem_figure}">`;
+
+        let bodyHtml = '';
+        if (type === 'assertion_reason') {
+          bodyHtml = `<div class="ar-block"><strong>Assertion (A):</strong> ${q.assertion || ''}</div>
+                      <div class="ar-block"><strong>Reason (R):</strong> ${q.reason || ''}</div>
+                      <div class="opts">`;
+          ['A','B','C','D'].forEach((k, i) => {
+            bodyHtml += `<div class="opt"><span class="opt-key">${k}.</span> ${AR_OPTS_TEXT[i]}</div>`;
+          });
+          bodyHtml += `</div>`;
+        } else if (type === 'statement_based') {
+          (q.statements || []).forEach((s, i) => {
+            bodyHtml += `<div class="stmt"><strong>Statement ${ROMAN[i] || i+1}:</strong> ${s}</div>`;
+          });
+          bodyHtml += `<div class="opts">`;
+          (q.options || []).forEach(o => {
+            bodyHtml += `<div class="opt"><span class="opt-key">${o.key}.</span> ${o.text || ''}`;
+            if (o.figure) bodyHtml += `<img class="q-fig" src="${o.figure}">`;
+            bodyHtml += `</div>`;
+          });
+          bodyHtml += `</div>`;
+        } else if (type === 'match_following') {
+          bodyHtml = `<div class="match-cols"><div class="match-col"><strong>List I</strong>`;
+          (q.list_i || []).forEach((s, i) => { bodyHtml += `<div class="match-item">${ROMAN[i] || i+1}. ${s}</div>`; });
+          bodyHtml += `</div><div class="match-col"><strong>List II</strong>`;
+          (q.list_ii || []).forEach((s, i) => { bodyHtml += `<div class="match-item">${String.fromCharCode(65+i)}. ${s}</div>`; });
+          bodyHtml += `</div></div><div class="opts">`;
+          (q.options || []).forEach(o => { bodyHtml += `<div class="opt"><span class="opt-key">${o.key}.</span> ${o.text || ''}</div>`; });
+          bodyHtml += `</div>`;
+        } else {
+          bodyHtml = `<div class="opts">`;
+          (q.options || []).forEach(o => {
+            bodyHtml += `<div class="opt"><span class="opt-key">${o.key}.</span> ${o.text || ''}`;
+            if (o.figure) bodyHtml += `<img class="q-fig" src="${o.figure}">`;
+            bodyHtml += `</div>`;
+          });
+          bodyHtml += `</div>`;
+        }
+
+        const hintHtml  = q.hint     ? `<div class="hs-block"><strong>Hint:</strong> ${q.hint}</div>` : '';
+        const solHtml   = q.solution ? `<div class="hs-block"><strong>Solution:</strong> ${q.solution}</div>` : '';
+        const idHtml    = `<div class="qid">ID: ${q.question_id || '—'}</div>`;
+
+        return `<div class="q-block">
+          <div class="q-top">
+            <span class="q-num">Q${idx + 1}</span>
+            <span class="badge">${typeBadge}</span>
+            <span class="status-badge ${status === 'Wrong' ? 'wrong' : 'unattempted'}">${status}</span>
+            <span class="correct-ans">Correct: <strong>${q.correct || '—'}</strong></span>
+          </div>
+          ${stemHtml}${bodyHtml}${hintHtml}${solHtml}${idHtml}
+        </div>`;
+      }).join('');
+
+      const metaRow = [
+        m.metaBooks   ? `Book: ${m.metaBooks}`     : '',
+        m.metaSubject ? `Subject: ${m.metaSubject}` : '',
+        m.metaClass   ? `Class: ${m.metaClass}`     : ''
+      ].filter(Boolean).join(' &nbsp;|&nbsp; ');
+
+      const html = `<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8">
+<title>Review Sheet — ${m.title || 'Test'}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/auto-render.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"DM Sans",sans-serif;font-size:13px;color:#1a1a1a;background:#fff;padding:1.5cm 1.8cm;}
+h1{font-family:"DM Serif Display",serif;font-size:1.3rem;margin-bottom:0.2rem;}
+.meta-row{font-size:0.8rem;color:#666;margin-bottom:0.25rem;}
+.header-block{border-bottom:2px solid #1a1a1a;padding-bottom:0.6rem;margin-bottom:1.2rem;}
+.q-block{page-break-inside:avoid;margin-bottom:1.6rem;padding-bottom:1.2rem;border-bottom:1px solid #ddd;}
+.q-top{display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem;flex-wrap:wrap;}
+.q-num{font-family:"DM Mono",monospace;font-weight:600;font-size:0.95rem;}
+.badge{font-size:0.68rem;background:#e8e0f0;color:#5a3e8a;padding:1px 6px;border-radius:3px;font-weight:600;letter-spacing:0.03em;}
+.status-badge{font-size:0.68rem;padding:1px 6px;border-radius:3px;font-weight:600;}
+.status-badge.wrong{background:#fde8e8;color:#c0392b;}
+.status-badge.unattempted{background:#fff3cd;color:#856404;}
+.correct-ans{font-size:0.8rem;color:#27ae60;font-weight:600;margin-left:auto;}
+.stem{line-height:1.6;margin-bottom:0.5rem;}
+.ar-block,.stmt{margin:0.2rem 0;line-height:1.5;}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:0.2rem 1rem;margin:0.4rem 0;}
+.opt{line-height:1.5;}
+.opt-key{font-weight:600;font-family:"DM Mono",monospace;}
+.match-cols{display:flex;gap:2rem;margin:0.4rem 0;}
+.match-col{flex:1;}
+.match-item{line-height:1.5;}
+.hs-block{background:#f5f5f5;border-left:3px solid #888;padding:0.3rem 0.6rem;margin:0.3rem 0;line-height:1.6;font-size:0.88rem;}
+.qid{font-family:"DM Mono",monospace;font-size:10px;color:#aaa;margin-top:0.3rem;}
+.q-fig{max-height:180px;max-width:100%;display:block;margin:0.3rem 0;}
+@media print{body{padding:1cm 1.2cm;}@page{margin:1cm;}}
+</style>
+</head><body>
+<div class="header-block">
+  <h1>${m.title || 'Untitled Test'}</h1>
+  <div class="meta-row">${m.date || ''} &nbsp;|&nbsp; Review Sheet: ${filtered.length} question${filtered.length !== 1 ? 's' : ''}</div>
+  ${metaRow ? `<div class="meta-row">${metaRow}</div>` : ''}
+</div>
+${qHtml}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.renderMathInElement) {
+    renderMathInElement(document.body, {
+      delimiters: [
+        {left:'$$',right:'$$',display:true},
+        {left:'$',right:'$',display:false},
+        {left:'\\\\(',right:'\\\\)',display:false},
+        {left:'\\\\[',right:'\\\\]',display:true}
+      ],
+      throwOnError: false
+    });
+  }
+});
+<\/script>
+</body></html>`;
+
+      const win = window.open('', '_blank');
+      if (!win) { alert('Pop-up blocked. Please allow pop-ups for this site.'); return; }
+      win.document.write(html);
+      win.document.close();
+      setTimeout(() => win.print(), 1200);
     }
 
     function cbtViewAttempt(attempt) {
@@ -5308,6 +5482,14 @@
 
       container.appendChild(bk);
       renderMath(bk);
+
+      if (saved) {
+        const btnPrintReview2 = document.createElement('button');
+        btnPrintReview2.className   = 'btn-secondary';
+        btnPrintReview2.textContent = 'Print Review Sheet';
+        btnPrintReview2.addEventListener('click', () => printReviewSheet(attempt, saved));
+        container.appendChild(btnPrintReview2);
+      }
 
       const btnBack = document.createElement('button');
       btnBack.className   = 'btn-secondary';

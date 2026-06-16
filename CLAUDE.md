@@ -406,6 +406,22 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   (both Select and OMR load paths updated); previewRender() shows a
   Book / Subject / Class row below the date/marks header row, and a
   Notes line only when metaNotes is non-empty; print layout unchanged
+- Print Review Sheet complete: printReviewSheet(attempt, paper)
+  standalone function filters paper.questions to wrong and unattempted
+  questions only (wrong = non-empty answer that differs from correct;
+  unattempted = no response record or empty answer); alerts and returns
+  early when filtered list is empty; opens a self-contained HTML
+  document in a new window containing KaTeX CDN, Google Fonts, print-
+  ready CSS with page-break-inside:avoid per question, header block
+  with paper title/date/Book/Subject/Class, and per-question blocks
+  showing question number, type badge, wrong/unattempted status badge,
+  correct answer, stem, stem_figure, full options grid (with option
+  figures), hint block, solution block, and question_id in muted mono;
+  calls window.print() after 1200ms setTimeout so KaTeX auto-render
+  completes before the print dialog opens; "Print Review Sheet" button
+  added to cbtShowResult() (passes attemptEntry and paper) and to
+  cbtViewAttempt() (passes attempt and saved paper, guarded by if
+  (saved)) alongside the existing Back to History button
 
 **Not yet built:**
 - Payment integration (Razorpay/Stripe webhook)
@@ -630,6 +646,17 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
 2026-06-16 — Notes rendered with white-space: pre-wrap in print
   header so multi-line notes entered in the textarea preserve line
   breaks in the PDF.
+2026-06-16 — printReviewSheet() writes a fully self-contained HTML
+  document into window.open('','_blank') rather than using a hidden
+  iframe or dynamic DOM; this keeps the function stateless and avoids
+  CSP issues with blob URLs on Cloudflare Pages.
+2026-06-16 — wrong/unattempted filter uses your_answer field from
+  attempt.responses; empty string or empty array = unattempted;
+  non-empty answer that doesn't match correct_answer = wrong; correct
+  questions silently excluded so the review sheet stays concise.
+2026-06-16 — KaTeX auto-render in the review window triggered via
+  DOMContentLoaded listener on the opened document; print() delayed
+  1200ms so rendering completes before the dialog opens.
 
 ---
 
