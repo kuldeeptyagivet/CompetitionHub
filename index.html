@@ -2796,11 +2796,26 @@
       const metaSubject = [...new Set(selectedBooks.map(b => b.subject).filter(Boolean))].join(', ');
       const metaClass   = [...new Set(selectedBooks.map(b => b.class).filter(Boolean))].join(', ');
 
+      // Build default title from class | subject | books | Ch N, Ch N...
+      const chapterNums = [];
+      for (const key of filterState.chapters) {
+        const [code, filename] = key.split('::');
+        const book = bookData.find(b => b.code === code);
+        if (book) {
+          const fileEntry = (book.files || []).find(f => f.file === filename);
+          if (fileEntry && fileEntry.chapter != null) chapterNums.push(fileEntry.chapter);
+        }
+      }
+      chapterNums.sort((a, b) => a - b);
+      const chStr = chapterNums.map(n => 'Ch ' + n).join(', ');
+      const titleParts = [metaClass, metaSubject, metaBooks, chStr].filter(Boolean);
+      const defaultTitle = titleParts.join(' | ');
+
       paper = {
         id:        crypto.randomUUID(),
         generated: new Date().toISOString(),
         meta: {
-          title:             '',
+          title:             defaultTitle,
           date:              new Date().toLocaleDateString('en-IN'),
           duration:          durationStr,
           totalMarks:        parseFloat((paperParams.questionCount * paperParams.marksPerQ).toFixed(2)),
@@ -5108,81 +5123,126 @@
         'A is false but R is true'
       ];
 
+      const rsTitle    = m.title || 'Untitled Test';
+      const rsDate     = m.date  || '';
+      const rsCount    = filtered.length;
+      const rsCountStr = rsCount + ' question' + (rsCount !== 1 ? 's' : '');
+
       const qHtml = filtered.map((q, idx) => {
-        const type = q.type || 'mcq_single';
+        const reviewNum = idx + 1;
+        const testNum   = paper.questions.findIndex(pq => pq.question_id === q.question_id) + 1;
+        const type      = q.type || 'mcq_single';
         const typeBadge = type.replace(/_/g,' ').toUpperCase();
-        const resp = respMap[q.question_id] || {};
-        const ans  = resp.your_answer;
+        const resp  = respMap[q.question_id] || {};
+        const ans   = resp.your_answer;
         const empty = !ans || (Array.isArray(ans) ? ans.length === 0 : ans === '');
         const status = empty ? 'Unattempted' : 'Wrong';
 
-        let stemHtml = `<div class="stem">${q.stem || ''}</div>`;
-        if (q.stem_figure) stemHtml += `<img class="q-fig" src="${q.stem_figure}">`;
+        const markedLine = empty
+          ? '<div class="marked-ans unattempted-ans">Not attempted</div>'
+          : '<div class="marked-ans wrong-ans">Wrong option marked: <strong>' + (Array.isArray(ans) ? ans.join(', ') : ans) + '</strong></div>';
+
+        let stemHtml = '<div class="stem">' + (q.stem || '') + '</div>';
+        if (q.stem_figure) stemHtml += '<img class="q-fig" src="' + q.stem_figure + '">';
 
         let bodyHtml = '';
         if (type === 'assertion_reason') {
-          bodyHtml = `<div class="ar-block"><strong>Assertion (A):</strong> ${q.assertion || ''}</div>
-                      <div class="ar-block"><strong>Reason (R):</strong> ${q.reason || ''}</div>
-                      <div class="opts">`;
+          bodyHtml = '<div class="ar-block"><strong>Assertion (A):</strong> ' + (q.assertion || '') + '</div>' +
+                     '<div class="ar-block"><strong>Reason (R):</strong> ' + (q.reason || '') + '</div>' +
+                     '<div class="opts">';
           ['A','B','C','D'].forEach((k, i) => {
-            bodyHtml += `<div class="opt"><span class="opt-key">${k}.</span> ${AR_OPTS_TEXT[i]}</div>`;
+            bodyHtml += '<div class="opt"><span class="opt-key">' + k + '.</span> ' + AR_OPTS_TEXT[i] + '</div>';
           });
-          bodyHtml += `</div>`;
+          bodyHtml += '</div>';
         } else if (type === 'statement_based') {
           (q.statements || []).forEach((s, i) => {
-            bodyHtml += `<div class="stmt"><strong>Statement ${ROMAN[i] || i+1}:</strong> ${s}</div>`;
+            bodyHtml += '<div class="stmt"><strong>Statement ' + (ROMAN[i] || i+1) + ':</strong> ' + s + '</div>';
           });
-          bodyHtml += `<div class="opts">`;
+          bodyHtml += '<div class="opts">';
           (q.options || []).forEach(o => {
-            bodyHtml += `<div class="opt"><span class="opt-key">${o.key}.</span> ${o.text || ''}`;
-            if (o.figure) bodyHtml += `<img class="q-fig" src="${o.figure}">`;
-            bodyHtml += `</div>`;
+            bodyHtml += '<div class="opt"><span class="opt-key">' + o.key + '.</span> ' + (o.text || '');
+            if (o.figure) bodyHtml += '<img class="q-fig" src="' + o.figure + '">';
+            bodyHtml += '</div>';
           });
-          bodyHtml += `</div>`;
+          bodyHtml += '</div>';
         } else if (type === 'match_following') {
-          bodyHtml = `<div class="match-cols"><div class="match-col"><strong>List I</strong>`;
-          (q.list_i || []).forEach((s, i) => { bodyHtml += `<div class="match-item">${ROMAN[i] || i+1}. ${s}</div>`; });
-          bodyHtml += `</div><div class="match-col"><strong>List II</strong>`;
-          (q.list_ii || []).forEach((s, i) => { bodyHtml += `<div class="match-item">${String.fromCharCode(65+i)}. ${s}</div>`; });
-          bodyHtml += `</div></div><div class="opts">`;
-          (q.options || []).forEach(o => { bodyHtml += `<div class="opt"><span class="opt-key">${o.key}.</span> ${o.text || ''}</div>`; });
-          bodyHtml += `</div>`;
+          bodyHtml = '<div class="match-cols"><div class="match-col"><strong>List I</strong>';
+          (q.list_i || []).forEach((s, i) => { bodyHtml += '<div class="match-item">' + (ROMAN[i] || i+1) + '. ' + s + '</div>'; });
+          bodyHtml += '</div><div class="match-col"><strong>List II</strong>';
+          (q.list_ii || []).forEach((s, i) => { bodyHtml += '<div class="match-item">' + String.fromCharCode(65+i) + '. ' + s + '</div>'; });
+          bodyHtml += '</div></div><div class="opts">';
+          (q.options || []).forEach(o => { bodyHtml += '<div class="opt"><span class="opt-key">' + o.key + '.</span> ' + (o.text || '') + '</div>'; });
+          bodyHtml += '</div>';
         } else {
-          bodyHtml = `<div class="opts">`;
+          bodyHtml = '<div class="opts">';
           (q.options || []).forEach(o => {
-            bodyHtml += `<div class="opt"><span class="opt-key">${o.key}.</span> ${o.text || ''}`;
-            if (o.figure) bodyHtml += `<img class="q-fig" src="${o.figure}">`;
-            bodyHtml += `</div>`;
+            bodyHtml += '<div class="opt"><span class="opt-key">' + o.key + '.</span> ' + (o.text || '');
+            if (o.figure) bodyHtml += '<img class="q-fig" src="' + o.figure + '">';
+            bodyHtml += '</div>';
           });
-          bodyHtml += `</div>`;
+          bodyHtml += '</div>';
         }
 
-        const hintHtml  = q.hint     ? `<div class="hs-block"><strong>Hint:</strong> ${q.hint}</div>` : '';
-        const solHtml   = q.solution ? `<div class="hs-block"><strong>Solution:</strong> ${q.solution}</div>` : '';
-        const idHtml    = `<div class="qid">ID: ${q.question_id || '—'}</div>`;
+        const idHtml = '<div class="qid">ID: ' + (q.question_id || '—') + '</div>';
 
-        return `<div class="q-block">
-          <div class="q-top">
-            <span class="q-num">Q${idx + 1}</span>
-            <span class="badge">${typeBadge}</span>
-            <span class="status-badge ${status === 'Wrong' ? 'wrong' : 'unattempted'}">${status}</span>
-            <span class="correct-ans">Correct: <strong>${q.correct || '—'}</strong></span>
-          </div>
-          ${stemHtml}${bodyHtml}${hintHtml}${solHtml}${idHtml}
-        </div>`;
+        return '<div class="q-block">' +
+          '<div class="q-top">' +
+          '<span class="q-num">Q' + reviewNum + ' <span class="test-qnum">(Test Q' + testNum + ')</span></span>' +
+          '<span class="badge">' + typeBadge + '</span>' +
+          '<span class="status-badge ' + (status === 'Wrong' ? 'wrong' : 'unattempted') + '">' + status + '</span>' +
+          '</div>' +
+          stemHtml + bodyHtml + markedLine + idHtml +
+          '</div>';
       }).join('');
 
-      const metaRow = [
-        m.metaBooks   ? `Book: ${m.metaBooks}`     : '',
-        m.metaSubject ? `Subject: ${m.metaSubject}` : '',
-        m.metaClass   ? `Class: ${m.metaClass}`     : ''
-      ].filter(Boolean).join(' &nbsp;|&nbsp; ');
+      // Terminal sections
+      const hasHints = filtered.some(q => q.hint);
+      const hasSols  = filtered.some(q => q.solution);
 
-      const rsTitle      = m.title || 'Untitled Test';
-      const rsDate       = m.date  || '';
-      const rsCount      = filtered.length;
-      const rsCountStr   = rsCount + ' question' + (rsCount !== 1 ? 's' : '');
-      const rsMetaRowDiv = metaRow ? '<div class="meta-row">' + metaRow + '</div>' : '';
+      let hintsHtml = '';
+      if (hasHints) {
+        hintsHtml = '<div class="terminal-section"><h2>Hints</h2>';
+        filtered.forEach((q, idx) => {
+          if (!q.hint) return;
+          const rn = idx + 1;
+          const tn = paper.questions.findIndex(pq => pq.question_id === q.question_id) + 1;
+          hintsHtml += '<div class="terminal-item"><span class="t-qnum">Q' + rn + ' (Test Q' + tn + '):</span> ' + q.hint + '</div>';
+        });
+        hintsHtml += '</div>';
+      }
+
+      let solsHtml = '';
+      if (hasSols) {
+        solsHtml = '<div class="terminal-section"><h2>Solutions</h2>';
+        filtered.forEach((q, idx) => {
+          if (!q.solution) return;
+          const rn = idx + 1;
+          const tn = paper.questions.findIndex(pq => pq.question_id === q.question_id) + 1;
+          solsHtml += '<div class="terminal-item"><span class="t-qnum">Q' + rn + ' (Test Q' + tn + '):</span> ' + q.solution + '</div>';
+        });
+        solsHtml += '</div>';
+      }
+
+      let akHtml = '<div class="terminal-section"><h2>Answer Key</h2>';
+      filtered.forEach((q, idx) => {
+        const rn = idx + 1;
+        const tn = paper.questions.findIndex(pq => pq.question_id === q.question_id) + 1;
+        akHtml += '<div class="terminal-item"><span class="t-qnum">Q' + rn + ' (Test Q' + tn + '):</span> <strong>' + (q.correct || '—') + '</strong></div>';
+      });
+      akHtml += '</div>';
+
+      const terminalHtml = hintsHtml + solsHtml + akHtml;
+
+      const headerHtml =
+        '<div class="header-block">' +
+        '<h1>' + rsTitle + '</h1>' +
+        (rsDate    ? '<div class="meta-row">' + rsDate + '</div>' : '') +
+        (m.metaBooks   ? '<div class="meta-row"><strong>Book:</strong> ' + m.metaBooks + '</div>'     : '') +
+        (m.metaSubject ? '<div class="meta-row"><strong>Subject:</strong> ' + m.metaSubject + '</div>' : '') +
+        (m.metaClass   ? '<div class="meta-row"><strong>Class:</strong> ' + m.metaClass + '</div>'     : '') +
+        (m.metaNotes   ? '<div class="meta-row notes-row">' + m.metaNotes + '</div>'                   : '') +
+        '<div class="meta-row">Review Sheet: ' + rsCountStr + '</div>' +
+        '</div>';
 
       const html =
         '<!DOCTYPE html><html lang="en"><head>' +
@@ -5197,16 +5257,21 @@
         '*{box-sizing:border-box;margin:0;padding:0;}' +
         'body{font-family:"DM Sans",sans-serif;font-size:13px;color:#1a1a1a;background:#fff;padding:1.5cm 1.8cm;}' +
         'h1{font-family:"DM Serif Display",serif;font-size:1.3rem;margin-bottom:0.2rem;}' +
+        'h2{font-family:"DM Serif Display",serif;font-size:1.1rem;margin-bottom:0.6rem;}' +
         '.meta-row{font-size:0.8rem;color:#666;margin-bottom:0.25rem;}' +
+        '.notes-row{white-space:pre-wrap;}' +
         '.header-block{border-bottom:2px solid #1a1a1a;padding-bottom:0.6rem;margin-bottom:1.2rem;}' +
         '.q-block{page-break-inside:avoid;margin-bottom:1.6rem;padding-bottom:1.2rem;border-bottom:1px solid #ddd;}' +
         '.q-top{display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem;flex-wrap:wrap;}' +
         '.q-num{font-family:"DM Mono",monospace;font-weight:600;font-size:0.95rem;}' +
+        '.test-qnum{font-weight:400;font-size:0.8rem;color:#888;}' +
         '.badge{font-size:0.68rem;background:#e8e0f0;color:#5a3e8a;padding:1px 6px;border-radius:3px;font-weight:600;letter-spacing:0.03em;}' +
         '.status-badge{font-size:0.68rem;padding:1px 6px;border-radius:3px;font-weight:600;}' +
         '.status-badge.wrong{background:#fde8e8;color:#c0392b;}' +
         '.status-badge.unattempted{background:#fff3cd;color:#856404;}' +
-        '.correct-ans{font-size:0.8rem;color:#27ae60;font-weight:600;margin-left:auto;}' +
+        '.marked-ans{font-size:0.8rem;margin:0.3rem 0 0.1rem;padding:0.2rem 0.5rem;border-radius:3px;}' +
+        '.wrong-ans{background:#fde8e8;color:#c0392b;}' +
+        '.unattempted-ans{background:#fff3cd;color:#856404;}' +
         '.stem{line-height:1.6;margin-bottom:0.5rem;}' +
         '.ar-block,.stmt{margin:0.2rem 0;line-height:1.5;}' +
         '.opts{display:grid;grid-template-columns:1fr 1fr;gap:0.2rem 1rem;margin:0.4rem 0;}' +
@@ -5215,17 +5280,16 @@
         '.match-cols{display:flex;gap:2rem;margin:0.4rem 0;}' +
         '.match-col{flex:1;}' +
         '.match-item{line-height:1.5;}' +
-        '.hs-block{background:#f5f5f5;border-left:3px solid #888;padding:0.3rem 0.6rem;margin:0.3rem 0;line-height:1.6;font-size:0.88rem;}' +
         '.qid{font-family:"DM Mono",monospace;font-size:10px;color:#aaa;margin-top:0.3rem;}' +
         '.q-fig{max-height:180px;max-width:100%;display:block;margin:0.3rem 0;}' +
+        '.terminal-section{page-break-before:always;padding-top:0.8rem;margin-bottom:1.5rem;}' +
+        '.terminal-item{margin-bottom:0.5rem;line-height:1.6;padding-bottom:0.4rem;border-bottom:1px solid #eee;}' +
+        '.t-qnum{font-family:"DM Mono",monospace;font-weight:600;font-size:0.88rem;margin-right:0.4rem;}' +
         '@media print{body{padding:1cm 1.2cm;}@page{margin:1cm;}}' +
         '</style></head><body>' +
-        '<div class="header-block">' +
-        '<h1>' + rsTitle + '</h1>' +
-        '<div class="meta-row">' + rsDate + ' &nbsp;|&nbsp; Review Sheet: ' + rsCountStr + '</div>' +
-        rsMetaRowDiv +
-        '</div>' +
+        headerHtml +
         qHtml +
+        terminalHtml +
         '<script>' +
         'document.addEventListener(\'DOMContentLoaded\',function(){' +
         'if(window.renderMathInElement){' +

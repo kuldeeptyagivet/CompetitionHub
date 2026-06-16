@@ -423,6 +423,26 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   cbtShowResult() (passes attemptEntry and paper) and cbtViewAttempt()
   (passes attempt and saved paper, guarded by if (saved) so the button
   only appears when the full paper object is available)
+- Auto-generated paper title complete: paperGenerate() collects chapter
+  numbers from filterState.chapters by looking up each bookCode::filename
+  key in bookData[].files; numbers sorted ascending; default title built
+  as "{metaClass} | {metaSubject} | {metaBooks} | Ch N, Ch N…" and
+  written into paper.meta.title; existing stored titles on old records
+  are preserved as-is; user can still edit the title in the Select tab
+- printReviewSheet() enhanced: header block now shows title as h1, then
+  separate meta-row lines for date, Book, Subject, Class, and Notes
+  (notes only when metaNotes is non-empty, rendered with white-space:
+  pre-wrap); each question header shows dual numbering "Q{reviewNum}
+  (Test Q{testNum})" where testNum is derived via findIndex on
+  paper.questions; correct answer removed from the inline question
+  block; after the options grid each question shows a coloured inline
+  line — "Wrong option marked: {key}" (red) or "Not attempted" (amber);
+  hint and solution blocks removed from inline question blocks and moved
+  to terminal page-break sections: Hints, Solutions, Answer Key each
+  preceded by page-break-before:always; Hints and Solutions sections
+  omitted entirely when no non-null entries exist for that section;
+  Answer Key always present, lists Q{reviewNum} (Test Q{testNum}):
+  {correct} for every filtered question
 
 **Not yet built:**
 - Payment integration (Razorpay/Stripe webhook)
@@ -669,6 +689,25 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   caused ${...} expressions to render as literal text in the print
   window; qHtml itself still uses template literals internally since
   it is fully resolved before the outer string is built.
+2026-06-16 — Default paper title auto-built in paperGenerate() from
+  class | subject | books | sorted chapter numbers; derived at
+  generation time from the same bookData already in scope; user can
+  overwrite it in the Select tab title input; old records in
+  localStorage are unaffected because only the title field of the
+  newly created paper object is written.
+2026-06-16 — Dual question numbering (Q{reviewNum}, Test Q{testNum})
+  used throughout the review sheet — inline headers, Hints, Solutions,
+  and Answer Key — so the student can cross-reference the original
+  test paper without needing sequential numbering to match.
+2026-06-16 — Wrong option marked inline below the options grid rather
+  than in the header row so it is visually separated from the type
+  and status badges; colour coding (red/amber) mirrors the status
+  badge to give a consistent visual language.
+2026-06-16 — Hints and Solutions moved to terminal page-break sections
+  so the question block stays compact for active recall practice;
+  Answer Key always present as the final terminal section; either
+  of Hints or Solutions omitted entirely when all values are null
+  to avoid empty headed sections.
 
 ---
 
