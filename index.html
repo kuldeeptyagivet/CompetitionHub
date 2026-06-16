@@ -5051,11 +5051,14 @@
       container.appendChild(bk);
       renderMath(bk);
 
+      const actionsShow = document.createElement('div');
+      actionsShow.className = 'select-actions';
+
       const btnPrintReview = document.createElement('button');
       btnPrintReview.className   = 'btn-secondary';
       btnPrintReview.textContent = 'Print Review Sheet';
       btnPrintReview.addEventListener('click', () => printReviewSheet(attemptEntry, paper));
-      container.appendChild(btnPrintReview);
+      actionsShow.appendChild(btnPrintReview);
 
       const btnBackHist = document.createElement('button');
       btnBackHist.className   = 'btn-secondary';
@@ -5065,7 +5068,9 @@
         historyRender();
         document.getElementById('tab-cbt').innerHTML = '';
       });
-      container.appendChild(btnBackHist);
+      actionsShow.appendChild(btnBackHist);
+
+      container.appendChild(actionsShow);
 
       tab.appendChild(container);
       renderMath(container);
@@ -5483,19 +5488,24 @@ document.addEventListener('DOMContentLoaded', () => {
       container.appendChild(bk);
       renderMath(bk);
 
+      const actionsView = document.createElement('div');
+      actionsView.className = 'select-actions';
+
       if (saved) {
         const btnPrintReview2 = document.createElement('button');
         btnPrintReview2.className   = 'btn-secondary';
         btnPrintReview2.textContent = 'Print Review Sheet';
         btnPrintReview2.addEventListener('click', () => printReviewSheet(attempt, saved));
-        container.appendChild(btnPrintReview2);
+        actionsView.appendChild(btnPrintReview2);
       }
 
       const btnBack = document.createElement('button');
       btnBack.className   = 'btn-secondary';
       btnBack.textContent = 'Back to History';
       btnBack.addEventListener('click', () => { switchTab('history'); historyRender(); });
-      container.appendChild(btnBack);
+      actionsView.appendChild(btnBack);
+
+      container.appendChild(actionsView);
 
       tab.appendChild(container);
       renderMath(container);

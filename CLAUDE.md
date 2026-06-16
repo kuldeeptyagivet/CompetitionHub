@@ -419,9 +419,10 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   figures), hint block, solution block, and question_id in muted mono;
   calls window.print() after 1200ms setTimeout so KaTeX auto-render
   completes before the print dialog opens; "Print Review Sheet" button
-  added to cbtShowResult() (passes attemptEntry and paper) and to
-  cbtViewAttempt() (passes attempt and saved paper, guarded by if
-  (saved)) alongside the existing Back to History button
+  placed in a select-actions row div alongside Back to History in both
+  cbtShowResult() (passes attemptEntry and paper) and cbtViewAttempt()
+  (passes attempt and saved paper, guarded by if (saved) so the button
+  only appears when the full paper object is available)
 
 **Not yet built:**
 - Payment integration (Razorpay/Stripe webhook)
@@ -657,6 +658,10 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
 2026-06-16 — KaTeX auto-render in the review window triggered via
   DOMContentLoaded listener on the opened document; print() delayed
   1200ms so rendering completes before the dialog opens.
+2026-06-16 — Print Review Sheet and Back to History buttons wrapped
+  in a select-actions div row in both result screens so they sit inline
+  rather than stacking; reuses existing select-actions flex layout
+  without adding new CSS.
 
 ---
 
