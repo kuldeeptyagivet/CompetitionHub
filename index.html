@@ -1716,7 +1716,13 @@
             <div id="filter-books-list" class="filter-list"></div>
           </div>
           <div class="filter-group">
-            <span class="filter-group-label">Chapters</span>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.35rem">
+              <span class="filter-group-label" style="margin-bottom:0">Chapters</span>
+              <span style="display:flex;gap:0.4rem">
+                <button id="chapters-select-all" onclick="chaptersSelectAll()" style="font-size:0.7rem;padding:0.1rem 0.5rem;border:1px solid var(--border);border-radius:4px;background:var(--paper);color:var(--ink);cursor:pointer">Select All</button>
+                <button id="chapters-deselect-all" onclick="chaptersDeselectAll()" style="font-size:0.7rem;padding:0.1rem 0.5rem;border:1px solid var(--border);border-radius:4px;background:var(--paper);color:var(--ink);cursor:pointer">Deselect All</button>
+              </span>
+            </div>
             <div id="filter-chapters-list" class="filter-list"></div>
           </div>
         </div>
@@ -2327,6 +2333,27 @@
     }
 
     // ── Filter render functions ─────────────────────────────────────────────
+
+    function chaptersSelectAll() {
+      bookData.forEach(b => {
+        if (!filterState.books.has(b.code)) return;
+        b.files.forEach(f => filterState.chapters.add(b.code + '::' + f.file));
+      });
+      filterLoadSelectedChapters();
+    }
+
+    function chaptersDeselectAll() {
+      bookData.forEach(b => {
+        if (!filterState.books.has(b.code)) return;
+        b.files.forEach(f => {
+          const key = b.code + '::' + f.file;
+          filterState.chapters.delete(key);
+          filterState.headingSelections.delete(key);
+        });
+      });
+      filterRenderChapters();
+      filterLoadSelectedChapters();
+    }
 
     function filterRenderChapters() {
       const container = document.getElementById('filter-chapters-list');
