@@ -1028,6 +1028,50 @@
       text-align: center;
     }
 
+    /* OMR sheet (one page, sits before the answer key) */
+    .preview-omr {
+      margin-top: 2.5rem;
+      height: 24.5cm;
+      overflow: hidden;
+      page-break-inside: avoid;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .preview-omr-head {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-end;
+      font-size: 0.8rem;
+      padding-bottom: 0.3rem;
+      border-bottom: 1.5px solid #000;
+      height: 1.5cm;
+      box-sizing: border-box;
+    }
+    .preview-omr-head .omr-name { flex: 2; border-bottom: 1px solid #000; min-height: 1em; }
+    .preview-omr-head .omr-field { white-space: nowrap; }
+    .preview-omr-grid { display: grid; gap: 0 0.5cm; height: 22.8cm; padding-top: 0.2cm; box-sizing: border-box; }
+    .omr-col { display: flex; flex-direction: column; }
+    .omr-row {
+      display: flex;
+      align-items: center;
+      gap: 0.18cm;
+      padding-left: 0.1cm;
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .omr-row.alt { background: #eef7e3; }
+    .omr-num { width: 0.8cm; text-align: right; font-family: 'DM Mono', monospace; font-size: 9pt; margin-right: 0.1cm; }
+    .omr-bubble {
+      border: 1px solid #000;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 6.5pt;
+      line-height: 1;
+      box-sizing: border-box;
+    }
+
     /* Hints & Solutions */
     .preview-hints-section { margin-top: 2.5rem; }
 
@@ -1669,6 +1713,7 @@
       }
       body { background: white; color: black; }
       .preview-answer-key { page-break-before: always; }
+      .preview-omr { page-break-before: always; margin-top: 0; }
       .preview-question-item { page-break-inside: avoid; }
       @page { margin: 2cm; }
     }
@@ -3208,6 +3253,60 @@
       tab.appendChild(actions);
     }
 
+    function previewBuildOmr(m, n) {
+      const GRID_CM = 22.4, MIN_ROW_CM = 0.6, MAX_ROW_CM = 1.0, MAX_COLS = 5;
+      const maxRows = Math.floor(GRID_CM / MIN_ROW_CM);
+      let cols = 2;
+      while (cols < MAX_COLS && Math.ceil(n / cols) > maxRows) cols++;
+      const rowsPerCol = Math.max(1, Math.ceil(n / cols));
+      // Shrink rows to fit when even the 5th column isn't enough; never spill to a 2nd page
+      const rowCm    = Math.min(MAX_ROW_CM, GRID_CM / rowsPerCol);
+      const bubbleCm = Math.min(0.5, rowCm * 0.78);
+
+      const wrap = document.createElement('div');
+      wrap.className = 'preview-omr';
+
+      const head = document.createElement('div');
+      head.className = 'preview-omr-head';
+      const esc = s => String(s == null ? '' : s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+      head.innerHTML =
+        '<span class="omr-field">Name:</span><span class="omr-name"></span>' +
+        '<span class="omr-field"><strong>Subject:</strong> ' + esc(m.metaSubject) + '</span>' +
+        '<span class="omr-field"><strong>No. of questions:</strong> ' + n + '</span>' +
+        '<span class="omr-field"><strong>Date:</strong> ' + esc(m.date) + '</span>';
+      wrap.appendChild(head);
+
+      const grid = document.createElement('div');
+      grid.className = 'preview-omr-grid';
+      grid.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
+      for (let c = 0; c < cols; c++) {
+        const col = document.createElement('div');
+        col.className = 'omr-col';
+        for (let r = 0; r < rowsPerCol; r++) {
+          const qn = c * rowsPerCol + r + 1;
+          if (qn > n) break;
+          const row = document.createElement('div');
+          row.className = 'omr-row' + (r % 2 ? ' alt' : '');
+          row.style.height = rowCm + 'cm';
+          const num = document.createElement('span');
+          num.className = 'omr-num';
+          num.textContent = qn;
+          row.appendChild(num);
+          ['A', 'B', 'C', 'D'].forEach(letter => {
+            const b = document.createElement('span');
+            b.className = 'omr-bubble';
+            b.style.width = b.style.height = bubbleCm + 'cm';
+            b.textContent = letter;
+            row.appendChild(b);
+          });
+          col.appendChild(row);
+        }
+        grid.appendChild(col);
+      }
+      wrap.appendChild(grid);
+      return wrap;
+    }
+
     function previewRender() {
       const tab = document.getElementById('tab-preview');
       tab.innerHTML = '';
@@ -3445,6 +3544,9 @@
       });
 
       card.appendChild(ol);
+
+      // ── OMR sheet (one page; columns grow with question count) ──
+      card.appendChild(previewBuildOmr(m, paper.questions.length));
 
       // ── Answer key ──
       const ak = document.createElement('div');
