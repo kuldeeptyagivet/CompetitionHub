@@ -444,6 +444,15 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   Answer Key always present, lists Q{reviewNum} (Test Q{testNum}):
   {correct} for every filtered question
 
+- Print OMR sheet complete: previewBuildOmr(m, n) returns a one-page OMR block
+  inserted in previewRender() between the question paper and the Answer Key;
+  header shows Name (blank line), Subject (metaSubject), No. of questions, Date;
+  one row per question with A/B/C/D lettered bubbles and alternating light-green
+  row shading; columns chosen as the fewest in 2-5 keeping rows >= 0.6cm, and if
+  5 columns still overflow row height shrinks so the sheet never spills to a
+  second page; fixed 24.5cm block with page-break-before:always in print CSS;
+  also visible in the on-screen preview
+
 **Not yet built:**
 - Payment integration (Razorpay/Stripe webhook)
 - Question flagging by users
@@ -708,6 +717,12 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   Answer Key always present as the final terminal section; either
   of Hints or Solutions omitted entirely when all values are null
   to avoid empty headed sections.
+
+2026-10-12 — OMR sheet uses a fixed-height container (24.5cm) with a
+  fixed-height grid so it cannot overflow onto a second page regardless of
+  question count; column count grows 2 to 5 first, then row height and bubble
+  size shrink; bubbles are always A-D for every question type; no multi-correct
+  marker, roll number or alignment marks by design.
 
 ---
 
