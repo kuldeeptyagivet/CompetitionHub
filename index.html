@@ -3280,7 +3280,7 @@
       head.className = 'preview-omr-head';
       const esc = s => String(s == null ? '' : s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
       head.innerHTML =
-        '<div class="omr-subject"><strong>Subject:</strong> ' + esc(m.metaSubject) + '</div>' +
+        '<div class="omr-subject"><strong>Test:</strong> ' + esc(m.title || 'Untitled Test') + '</div>' +
         '<div class="omr-row2">' +
           '<span class="omr-field">Name:</span><span class="omr-name"></span>' +
           '<span class="omr-field"><strong>No. of questions:</strong> ' + n + '</span>' +

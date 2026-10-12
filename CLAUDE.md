@@ -446,7 +446,8 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
 
 - Print OMR sheet complete: previewBuildOmr(m, n) returns a one-page OMR block
   inserted in previewRender() between the question paper and the Answer Key;
-  two-row header: Subject (metaSubject) full width on row 1, wrapping; row 2 has
+  two-row header: "Test:" + paper.meta.title (auto/edited title) full width on
+  row 1, wrapping; row 2 has
   Name (stretching blank line), No. of questions, Date;
   one row per question with A/B/C/D lettered bubbles and alternating light-green
   row shading; columns chosen as the fewest in 2-5 keeping rows >= 0.6cm, and if
@@ -729,6 +730,9 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   bubbles overflowed ~21% and clipped in Chrome); grid uses minmax(0,1fr).
   Header is two rows so a long Subject wraps across the full width instead of
   a narrow cell; A4 only, fixed 24.5cm sheet height.
+2026-10-12 — OMR header row 1 shows paper.meta.title (labelled Test:)
+  instead of metaSubject, so the combined class | subject | book | chapters
+  string appears on the sheet and follows any title edit.
 
 ---
 
