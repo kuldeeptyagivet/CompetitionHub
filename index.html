@@ -1038,32 +1038,39 @@
     }
     .preview-omr-head {
       display: flex;
-      gap: 1rem;
-      align-items: flex-end;
+      flex-direction: column;
+      justify-content: space-between;
       font-size: 0.8rem;
+      line-height: 1.25;
       padding-bottom: 0.3rem;
       border-bottom: 1.5px solid #000;
-      height: 1.5cm;
+      height: 1.8cm;
       box-sizing: border-box;
+      overflow: hidden;
     }
-    .preview-omr-head .omr-name { flex: 2; border-bottom: 1px solid #000; min-height: 1em; }
+    .preview-omr-head .omr-subject { white-space: normal; overflow-wrap: anywhere; }
+    .preview-omr-head .omr-row2 { display: flex; gap: 1rem; align-items: flex-end; flex: none; }
+    .preview-omr-head .omr-name { flex: 1 1 0; min-width: 0; border-bottom: 1px solid #000; min-height: 1em; }
     .preview-omr-head .omr-field { white-space: nowrap; }
-    .preview-omr-grid { display: grid; gap: 0 0.5cm; height: 22.8cm; padding-top: 0.2cm; box-sizing: border-box; }
-    .omr-col { display: flex; flex-direction: column; }
+    .preview-omr-grid { display: grid; gap: 0 0.3cm; height: 22.6cm; padding-top: 0.2cm; box-sizing: border-box; }
+    .omr-col { display: flex; flex-direction: column; min-width: 0; }
     .omr-row {
       display: flex;
       align-items: center;
-      gap: 0.18cm;
+      gap: 0.12cm;
       padding-left: 0.1cm;
       box-sizing: border-box;
+      min-width: 0;
+      overflow: hidden;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
     .omr-row.alt { background: #eef7e3; }
-    .omr-num { width: 0.8cm; text-align: right; font-family: 'DM Mono', monospace; font-size: 9pt; margin-right: 0.1cm; }
+    .omr-num { width: 0.7cm; flex: none; text-align: right; font-family: 'DM Mono', monospace; font-size: 9pt; }
     .omr-bubble {
       border: 1px solid #000;
       border-radius: 50%;
+      flex: none;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -3261,7 +3268,10 @@
       const rowsPerCol = Math.max(1, Math.ceil(n / cols));
       // Shrink rows to fit when even the 5th column isn't enough; never spill to a 2nd page
       const rowCm    = Math.min(MAX_ROW_CM, GRID_CM / rowsPerCol);
-      const bubbleCm = Math.min(0.5, rowCm * 0.78);
+      // Also bound bubbles by column width (17cm printable, 0.3cm column gaps)
+      const colCm    = (17 - (cols - 1) * 0.3) / cols;
+      const widthCm  = (colCm - 0.1 - 0.7 - 0.12 * 4 - 0.12) / 4;
+      const bubbleCm = Math.min(0.5, rowCm * 0.78, widthCm);
 
       const wrap = document.createElement('div');
       wrap.className = 'preview-omr';
@@ -3270,15 +3280,17 @@
       head.className = 'preview-omr-head';
       const esc = s => String(s == null ? '' : s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
       head.innerHTML =
-        '<span class="omr-field">Name:</span><span class="omr-name"></span>' +
-        '<span class="omr-field"><strong>Subject:</strong> ' + esc(m.metaSubject) + '</span>' +
-        '<span class="omr-field"><strong>No. of questions:</strong> ' + n + '</span>' +
-        '<span class="omr-field"><strong>Date:</strong> ' + esc(m.date) + '</span>';
+        '<div class="omr-subject"><strong>Subject:</strong> ' + esc(m.metaSubject) + '</div>' +
+        '<div class="omr-row2">' +
+          '<span class="omr-field">Name:</span><span class="omr-name"></span>' +
+          '<span class="omr-field"><strong>No. of questions:</strong> ' + n + '</span>' +
+          '<span class="omr-field"><strong>Date:</strong> ' + esc(m.date) + '</span>' +
+        '</div>';
       wrap.appendChild(head);
 
       const grid = document.createElement('div');
       grid.className = 'preview-omr-grid';
-      grid.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
+      grid.style.gridTemplateColumns = 'repeat(' + cols + ', minmax(0, 1fr))';
       for (let c = 0; c < cols; c++) {
         const col = document.createElement('div');
         col.className = 'omr-col';

@@ -446,7 +446,8 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
 
 - Print OMR sheet complete: previewBuildOmr(m, n) returns a one-page OMR block
   inserted in previewRender() between the question paper and the Answer Key;
-  header shows Name (blank line), Subject (metaSubject), No. of questions, Date;
+  two-row header: Subject (metaSubject) full width on row 1, wrapping; row 2 has
+  Name (stretching blank line), No. of questions, Date;
   one row per question with A/B/C/D lettered bubbles and alternating light-green
   row shading; columns chosen as the fewest in 2-5 keeping rows >= 0.6cm, and if
   5 columns still overflow row height shrinks so the sheet never spills to a
@@ -723,6 +724,11 @@ QuestionBankCreation app palette — --ink, --paper, --cream,
   question count; column count grows 2 to 5 first, then row height and bubble
   size shrink; bubbles are always A-D for every question type; no multi-correct
   marker, roll number or alignment marks by design.
+2026-10-12 — OMR bubble size is derived from column width as well as row
+  height so 5 columns fit the 17cm A4 printable width (earlier fixed 0.5cm
+  bubbles overflowed ~21% and clipped in Chrome); grid uses minmax(0,1fr).
+  Header is two rows so a long Subject wraps across the full width instead of
+  a narrow cell; A4 only, fixed 24.5cm sheet height.
 
 ---
 
